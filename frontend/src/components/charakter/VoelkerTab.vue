@@ -22,8 +22,8 @@
           md="4"
         >
           <v-card
-            :color="selectedVolk === name ? 'primary' : undefined"
-            :variant="selectedVolk === name ? 'elevated' : 'outlined'"
+            :color="selectedVolk === String(name) ? 'primary' : undefined"
+            :variant="selectedVolk === String(name) ? 'elevated' : 'outlined'"
             hover
             @click="waehleVolk(String(name))"
           >

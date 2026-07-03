@@ -28,6 +28,16 @@
         >
           1 Punkt → 1 Fertigkeitspunkt
         </v-btn>
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-cash-plus"
+          :disabled="verbleibendePunkte < 1"
+          @click="einloesen('startgeld')"
+        >
+          1 Punkt → Startkapital erneut
+        </v-btn>
         <span class="text-caption align-self-center">
           Talente kosten direkt 2 Punkte im Talente-Tab
         </span>
@@ -129,7 +139,7 @@ async function entferneHandicap(name: string) {
   }
 }
 
-async function einloesen(option: 'attribut' | 'fertigkeit') {
+async function einloesen(option: 'attribut' | 'fertigkeit' | 'startgeld') {
   const result = await store.spiellogikAktion('handicap-punkte/einloesen', option)
   if (!result.success && result.message) {
     meldung.value = result.message

@@ -21,6 +21,17 @@ from app.services.talent_voraussetzungen import (
     macht_kapazitaet,
     pruefe_voraussetzungen,
 )
+from app.services.ausruestung import (
+    gesamtgewicht,
+    kaufe_ausruestung,
+    panzerung_torso,
+    schild_parade,
+    setze_angelegt,
+    traegt_ruestung,
+    traglast_kg,
+    verfuegbares_geld,
+    verkaufe_ausruestung,
+)
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 from app.services.volk_wahlen import wende_volk_spezialwahl_an
 
@@ -329,7 +340,7 @@ def handicap_entfernen(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
-HANDICAP_EINLOESE_KOSTEN = {"attribut": 2, "fertigkeit": 1, "talent": 2}
+HANDICAP_EINLOESE_KOSTEN = {"attribut": 2, "fertigkeit": 1, "talent": 2, "startgeld": 1}
 
 
 @router.post("/handicap-punkte/einloesen", response_model=SpiellogikResponse)
@@ -340,7 +351,7 @@ def handicap_punkte_einloesen(req: SpiellogikRequest):
     if kosten is None:
         return SpiellogikResponse(
             success=False,
-            message=f"Unbekannte Einlöse-Option '{option}' (gültig: attribut, fertigkeit, talent)",
+            message=f"Unbekannte Einlöse-Option '{option}' (gültig: attribut, fertigkeit, talent, startgeld)",
         )
 
     verbleibend = daten.get("verbleibende_handicap_punkte", 0)
@@ -354,6 +365,9 @@ def handicap_punkte_einloesen(req: SpiellogikRequest):
     daten["verbleibende_handicap_punkte"] = verbleibend - kosten
     if option == "talent":
         daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
+    elif option == "startgeld":
+        # 1 Punkt → zusätzliches Geld in Höhe des Startkapitals (SWAE)
+        daten["startgeld_bonus_punkte"] = daten.get("startgeld_bonus_punkte", 0) + 1
     else:
         feld = "attributsteigerungen" if option == "attribut" else "fertigkeitssteigerungen"
         daten[f"verbleibende_{feld}"] = daten.get(f"verbleibende_{feld}", 0) + 1
@@ -673,7 +687,52 @@ def volk_wahl(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
-_BERECHNE_STATS = ("parade", "robustheit", "bewegungsweite", "groesse", "bennys")
+@router.post("/ausruestung/kaufen", response_model=SpiellogikResponse)
+def ausruestung_kaufen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+    ok, message = kaufe_ausruestung(daten, setting, req.element_name or "")
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+@router.post("/ausruestung/verkaufen", response_model=SpiellogikResponse)
+def ausruestung_verkaufen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+    ok, message = verkaufe_ausruestung(daten, setting, req.element_name or "")
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+@router.post("/ausruestung/anlegen", response_model=SpiellogikResponse)
+def ausruestung_anlegen(req: SpiellogikRequest):
+    return _ausruestung_angelegt(req, True)
+
+
+@router.post("/ausruestung/ablegen", response_model=SpiellogikResponse)
+def ausruestung_ablegen(req: SpiellogikRequest):
+    return _ausruestung_angelegt(req, False)
+
+
+def _ausruestung_angelegt(req: SpiellogikRequest, angelegt: bool) -> SpiellogikResponse:
+    daten = req.charakter_daten
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+    ok, message = setze_angelegt(daten, setting, req.element_name or "", angelegt)
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+_BERECHNE_STATS = ("parade", "robustheit", "bewegungsweite", "groesse", "bennys", "traglast_kg")
 
 
 def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
@@ -689,9 +748,9 @@ def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
             continue
         effekt = dict(effekt)
         gruppe = effekt.pop("nicht_kumulativ_gruppe", None)
-        # bedingung "keine_getragene_ruestung": Rüstung wird noch nicht verwaltet,
-        # die Bedingung gilt daher immer als erfüllt
-        effekt.pop("bedingung", None)
+        bedingung = effekt.pop("bedingung", None)
+        if bedingung == "keine_getragene_ruestung" and traegt_ruestung(daten, setting):
+            continue
         ziel = gruppen.setdefault(gruppe, {}) if gruppe else None
         for stat, wert in effekt.items():
             if stat not in boni:
@@ -751,11 +810,13 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
     macht_slots, machtpunkte = macht_kapazitaet(daten, setting.get("talente", {}))
 
     groesse = boni["groesse"]
-    parade = 2 + (kaempfen_wert // 2) + boni["parade"]
-    # Größe fließt nach SWAE in die Robustheit ein
-    robustheit = 2 + (kon_wert // 2) + boni["robustheit"] + groesse
+    panzerung = panzerung_torso(daten, setting)
+    parade = 2 + (kaempfen_wert // 2) + boni["parade"] + schild_parade(daten, setting)
+    # Größe und Torso-Panzerung fließen nach SWAE in die Robustheit ein
+    robustheit = 2 + (kon_wert // 2) + boni["robustheit"] + groesse + panzerung
     bewegungsweite = 6 + boni["bewegungsweite"]
     bennys = 3 + boni["bennys"]
+    geld_verfuegbar, geld_gesamt = verfuegbares_geld(daten, setting)
 
     return {
         "parade": parade,
@@ -763,6 +824,11 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
         "bewegungsweite": bewegungsweite,
         "groesse": groesse,
         "bennys": bennys,
+        "panzerung": panzerung,
+        "vermoegen": geld_verfuegbar,
+        "startkapital_gesamt": geld_gesamt,
+        "traglast": traglast_kg(daten, boni["traglast_kg"]),
+        "gesamtgewicht": gesamtgewicht(daten, setting),
         "machtpunkte": machtpunkte,
         "verbleibende_maechte": max(0, macht_slots - len(daten.get("selected_maechte", []))),
         "verbleibende_attributsteigerungen": daten.get("verbleibende_attributsteigerungen", 5),

@@ -23,6 +23,18 @@
               <strong>{{ abgeleiteteWerte.bewegungsweite }}</strong>
             </div>
           </v-card>
+          <v-card variant="outlined" class="mb-2 pa-3">
+            <div class="d-flex justify-space-between">
+              <span>Größe</span>
+              <strong>{{ abgeleiteteWerte.groesse }}</strong>
+            </div>
+          </v-card>
+          <v-card variant="outlined" class="mb-2 pa-3">
+            <div class="d-flex justify-space-between">
+              <span>Bennys</span>
+              <strong>{{ abgeleiteteWerte.bennys }}</strong>
+            </div>
+          </v-card>
         </v-col>
 
         <!-- Profil-Zusammenfassung -->
@@ -107,21 +119,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 
 const store = useCharakterStore()
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 
-const abgeleiteteWerte = computed(() => {
-  const kon = daten.value.attribute?.Konstitution?.wert ?? 4
-  const kaempfen = daten.value.fertigkeiten?.['Kämpfen']?.wuerfel?.value ?? 4
-  return {
-    parade: 2 + Math.floor(kaempfen / 2),
-    robustheit: 2 + Math.floor(kon / 2),
-    bewegungsweite: 6,
-  }
+const abgeleiteteWerte = computed(
+  () =>
+    store.abgeleiteteWerte ?? {
+      parade: 2,
+      robustheit: 4,
+      bewegungsweite: 6,
+      groesse: 0,
+      bennys: 3,
+    },
+)
+
+onMounted(() => {
+  if (!store.abgeleiteteWerte) store.berechneWerte()
 })
 
 const aktiveFertigkeiten = computed(() => {

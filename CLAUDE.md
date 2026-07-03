@@ -20,7 +20,7 @@ uvicorn main:app --reload --port 8000     # dev server, run from backend/
 - API docs: http://localhost:8000/api/docs (Swagger), health check at `/api/health`.
 - SQLite DB is created automatically at `backend/data/chargen.db` on startup (`Base.metadata.create_all`; no Alembic migrations yet — schema changes require deleting the DB or writing a migration).
 - Config via env vars with `CHARGEN_` prefix (see `app/config.py`): `CHARGEN_SECRET_KEY`, `CHARGEN_DATABASE_URL`, etc.
-- Tests: `backend/tests/` exists but is empty; no test runner configured yet.
+- Tests: `pip install -r requirements-dev.txt`, then `python -m pytest tests/` (run from `backend/`). Single test: `python -m pytest tests/test_spiellogik.py -k <name>`. The spiellogik endpoints are stateless dict-transformers, so those tests need no DB.
 
 ### Frontend (Vue 3 + Vuetify 3 + Pinia + Vite, TypeScript)
 

@@ -28,6 +28,8 @@ Beim ersten Start wird automatisch eine SQLite-Datenbank unter `backend/data/cha
 - Health-Check: http://localhost:8000/api/health
 - API-Dokumentation (Swagger): http://localhost:8000/api/docs
 
+Tests: `pip install -r requirements-dev.txt && python -m pytest tests/` (im Ordner `backend/`).
+
 ### 2. Frontend
 
 In einem zweiten Terminal:

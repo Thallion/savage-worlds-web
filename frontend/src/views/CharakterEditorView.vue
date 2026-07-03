@@ -27,8 +27,11 @@
         <v-chip :color="(daten.gesamt_handicap_punkte ?? 0) < 4 ? 'primary' : 'success'">
           Handicap-Punkte: {{ daten.gesamt_handicap_punkte ?? 0 }} / 4
         </v-chip>
-        <v-chip color="secondary">
-          Talente: {{ daten.selected_talente?.length ?? 0 }}
+        <v-chip :color="(daten.verbleibende_talente ?? 0) > 0 ? 'primary' : 'secondary'">
+          Talent-Slots: {{ daten.verbleibende_talente ?? 0 }}
+        </v-chip>
+        <v-chip v-if="zeigeMaechte" color="secondary">
+          Mächte: {{ store.abgeleiteteWerte?.verbleibende_maechte ?? 0 }} frei
         </v-chip>
       </v-card-text>
     </v-card>
@@ -39,6 +42,7 @@
       <v-tab value="eigenschaften">Eigenschaften</v-tab>
       <v-tab value="handicaps">Handicaps</v-tab>
       <v-tab value="talente">Talente</v-tab>
+      <v-tab v-if="zeigeMaechte" value="maechte">Mächte</v-tab>
       <v-tab value="uebersicht">Übersicht</v-tab>
     </v-tabs>
 
@@ -57,6 +61,9 @@
       </v-tabs-window-item>
       <v-tabs-window-item value="talente">
         <TalenteTab />
+      </v-tabs-window-item>
+      <v-tabs-window-item v-if="zeigeMaechte" value="maechte">
+        <MaechteTab />
       </v-tabs-window-item>
       <v-tabs-window-item value="uebersicht">
         <UebersichtTab />
@@ -80,6 +87,7 @@ import VoelkerTab from '@/components/charakter/VoelkerTab.vue'
 import EigenschaftenTab from '@/components/charakter/EigenschaftenTab.vue'
 import HandicapsTab from '@/components/charakter/HandicapsTab.vue'
 import TalenteTab from '@/components/charakter/TalenteTab.vue'
+import MaechteTab from '@/components/charakter/MaechteTab.vue'
 import UebersichtTab from '@/components/charakter/UebersichtTab.vue'
 
 const route = useRoute()
@@ -91,6 +99,16 @@ const activeTab = ref('profil')
 const saving = ref(false)
 
 const daten = computed(() => store.aktuellerCharakter?.charakter_daten ?? ({} as any))
+
+// Mächte-Tab nur bei arkanem Hintergrund (AH-Talent gewählt oder Mächte vorhanden)
+const zeigeMaechte = computed(() => {
+  const w = store.abgeleiteteWerte
+  return (
+    (w?.machtpunkte ?? 0) > 0 ||
+    (w?.verbleibende_maechte ?? 0) > 0 ||
+    (daten.value.selected_maechte?.length ?? 0) > 0
+  )
+})
 
 onMounted(async () => {
   const id = Number(route.params.id)

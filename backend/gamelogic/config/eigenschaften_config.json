@@ -14,6 +14,7 @@
     "Willenskraft": {"wert": 4, "modifier": 0}
   },
   "start_attributsteigerungen": 5,
+  "start_fertigkeitssteigerungen": 12,
   "max_wuerfel_wert": 12,
   "kosten": {
     "attribut_chargen": 1,

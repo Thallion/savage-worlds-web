@@ -30,6 +30,10 @@ export interface CharakterDaten {
   selected_talente: string[]
   selected_maechte: string[]
   voelker_selected: Record<string, any>
+  // Ausrüstung: {name: {anzahl, angelegt}}; Geld wird in /berechne hergeleitet
+  ausruestung_selected?: Record<string, { anzahl: number; angelegt?: boolean }>
+  ausruestung_ausgegeben?: number
+  startgeld_bonus_punkte?: number
   verbleibende_attributsteigerungen?: number
   verbleibende_fertigkeitssteigerungen?: number
   maximale_attributsteigerungen?: number
@@ -86,6 +90,11 @@ export interface AbgeleiteteWerte {
   bewegungsweite: number
   groesse: number
   bennys: number
+  panzerung: number
+  vermoegen: number
+  startkapital_gesamt: number
+  traglast: number
+  gesamtgewicht: number
   machtpunkte: number
   verbleibende_maechte: number
   verbleibende_attributsteigerungen: number

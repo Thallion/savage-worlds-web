@@ -282,6 +282,11 @@ def test_berechne_basiswerte(daten):
     # Kämpfen ungelernt -> Parade 2; Konstitution W4 -> Robustheit 4
     assert w == {
         "parade": 2, "robustheit": 4, "bewegungsweite": 6, "groesse": 0, "bennys": 3,
+        "panzerung": 0,
+        "vermoegen": 500,
+        "startkapital_gesamt": 500,
+        "traglast": 40,
+        "gesamtgewicht": 0,
         "machtpunkte": 0,
         "verbleibende_maechte": 0,
         "verbleibende_attributsteigerungen": 5,
@@ -849,3 +854,114 @@ def test_volk_wechsel_nimmt_magieaffin_zurueck(daten):
     d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
     assert "AH (Magie)" not in d["selected_talente"]
     assert d["fertigkeiten"]["Zaubern"]["wuerfel"]["modifier"] == -2
+
+
+# --- Ausrüstung & Startgeld (ausruestung.py) ---
+
+def test_ausruestung_kaufen_und_geld(daten):
+    assert berechne(daten)["vermoegen"] == 500  # SWAE ohne startgeld -> Standard
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Fackel")["charakter_daten"]
+    assert d["ausruestung_selected"]["Fackel"]["anzahl"] == 2
+    w = berechne(d)
+    assert w["vermoegen"] == 490
+    assert w["gesamtgewicht"] == 1.0
+
+
+def test_ausruestung_zu_teuer_abgelehnt(daten):
+    daten["ausruestung_ausgegeben"] = 480
+    r = aktion("ausruestung/kaufen", daten, "Kleiner Schild")  # kostet 50
+    assert not r["success"]
+    assert "Nicht genug Geld" in r["message"]
+
+
+def test_ausruestung_unbekannt_abgelehnt(daten):
+    r = aktion("ausruestung/kaufen", daten, "Bazooka")
+    assert not r["success"]
+
+
+def test_ausruestung_verkaufen_erstattet_bei_erschaffung_voll(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
+    d = aktion("ausruestung/verkaufen", d, "Fackel")["charakter_daten"]
+    assert "Fackel" not in d["ausruestung_selected"]
+    assert berechne(d)["vermoegen"] == 500
+
+
+def test_ausruestung_verkaufen_nach_erschaffung_halber_preis(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]  # -5
+    d = aktion("erschaffung/abschliessen", d)["charakter_daten"]
+    d = aktion("ausruestung/verkaufen", d, "Fackel")["charakter_daten"]  # +2.5
+    assert berechne(d)["vermoegen"] == 497.5
+
+
+def test_ausruestung_verkaufen_ohne_besitz_abgelehnt(daten):
+    r = aktion("ausruestung/verkaufen", daten, "Fackel")
+    assert not r["success"]
+
+
+def test_ruestung_anlegen_erhoeht_robustheit(daten):
+    d = aktion("ausruestung/kaufen", daten, "Jacke (dünn)")["charakter_daten"]
+    basis = berechne(d)
+    assert basis["panzerung"] == 0
+    d = aktion("ausruestung/anlegen", d, "Jacke (dünn)")["charakter_daten"]
+    w = berechne(d)
+    assert w["panzerung"] == 1
+    assert w["robustheit"] == basis["robustheit"] + 1
+    d = aktion("ausruestung/ablegen", d, "Jacke (dünn)")["charakter_daten"]
+    assert berechne(d)["panzerung"] == 0
+
+
+def test_schild_anlegen_erhoeht_parade(daten):
+    d = aktion("ausruestung/kaufen", daten, "Kleiner Schild")["charakter_daten"]
+    basis = berechne(d)["parade"]
+    d = aktion("ausruestung/anlegen", d, "Kleiner Schild")["charakter_daten"]
+    assert berechne(d)["parade"] == basis + 1
+
+
+def test_allgemein_item_nicht_anlegbar(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
+    r = aktion("ausruestung/anlegen", d, "Fackel")
+    assert not r["success"]
+    assert "nur Rüstungen und Schilde" in r["message"]
+
+
+def test_einloesen_startgeld(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # 2 Punkte
+    d = aktion("handicap-punkte/einloesen", d, "startgeld")["charakter_daten"]
+    assert d["startgeld_bonus_punkte"] == 1
+    assert d["verbleibende_handicap_punkte"] == 1
+    assert berechne(d)["vermoegen"] == 1000
+
+
+def test_vermoegen_arm_halbiert(daten):
+    daten["selected_handicaps"] = ["Arm"]
+    assert berechne(daten)["vermoegen"] == 250
+
+
+def test_vermoegen_reich_verdreifacht(daten):
+    daten["selected_talente"] = ["Reich"]
+    assert berechne(daten)["vermoegen"] == 1500
+    daten["selected_talente"] = ["Reich", "Stinkreich"]
+    assert berechne(daten)["vermoegen"] == 2500  # Stinkreich zählt, nicht kumulativ
+
+
+def test_startgeld_aus_setting(daten):
+    d = aktion("setting/wechseln", daten, "Deadlands")["charakter_daten"]
+    assert berechne(d)["vermoegen"] == 250
+
+
+def test_traglast_aus_staerke_und_talent(daten):
+    w = berechne(daten)
+    assert w["traglast"] == 40  # Stärke W4 x 10 kg
+    daten["attribute"]["Stärke"]["wert"] = 8
+    daten["selected_talente"] = ["Kräftig"]
+    assert berechne(daten)["traglast"] == 100  # 80 + 20 (Kräftig)
+
+
+def test_bedingung_keine_getragene_ruestung(daten):
+    daten["selected_talente"] = ["Kämpferische Disziplin"]  # +1 Robustheit ohne Rüstung
+    ohne = berechne(daten)["robustheit"]
+    d = aktion("ausruestung/kaufen", daten, "Jacke (dünn)")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Jacke (dünn)")["charakter_daten"]
+    # Talent-Bonus entfällt mit getragener Rüstung, dafür +1 Panzerung
+    assert berechne(d)["robustheit"] == ohne

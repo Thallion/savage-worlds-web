@@ -109,6 +109,7 @@
       <v-tab value="handicaps">Handicaps</v-tab>
       <v-tab value="talente">Talente</v-tab>
       <v-tab v-if="zeigeMaechte" value="maechte">Mächte</v-tab>
+      <v-tab value="ausruestung">Ausrüstung</v-tab>
       <v-tab value="uebersicht">Übersicht</v-tab>
     </v-tabs>
 
@@ -130,6 +131,9 @@
       </v-tabs-window-item>
       <v-tabs-window-item v-if="zeigeMaechte" value="maechte">
         <MaechteTab />
+      </v-tabs-window-item>
+      <v-tabs-window-item value="ausruestung">
+        <AusruestungTab />
       </v-tabs-window-item>
       <v-tabs-window-item value="uebersicht">
         <UebersichtTab />
@@ -154,6 +158,7 @@ import EigenschaftenTab from '@/components/charakter/EigenschaftenTab.vue'
 import HandicapsTab from '@/components/charakter/HandicapsTab.vue'
 import TalenteTab from '@/components/charakter/TalenteTab.vue'
 import MaechteTab from '@/components/charakter/MaechteTab.vue'
+import AusruestungTab from '@/components/charakter/AusruestungTab.vue'
 import UebersichtTab from '@/components/charakter/UebersichtTab.vue'
 
 const route = useRoute()

@@ -28,16 +28,9 @@
         >
           1 Punkt → 1 Fertigkeitspunkt
         </v-btn>
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-star"
-          :disabled="verbleibendePunkte < 2"
-          @click="einloesen('talent')"
-        >
-          2 Punkte → 1 Talent
-        </v-btn>
+        <span class="text-caption align-self-center">
+          Talente kosten direkt 2 Punkte im Talente-Tab
+        </span>
       </div>
 
       <v-snackbar v-model="meldungSichtbar" :timeout="3000">{{ meldung }}</v-snackbar>
@@ -136,7 +129,7 @@ async function entferneHandicap(name: string) {
   }
 }
 
-async function einloesen(option: 'attribut' | 'fertigkeit' | 'talent') {
+async function einloesen(option: 'attribut' | 'fertigkeit') {
   const result = await store.spiellogikAktion('handicap-punkte/einloesen', option)
   if (!result.success && result.message) {
     meldung.value = result.message

@@ -63,16 +63,19 @@ export const useCharakterStore = defineStore('charakter', () => {
   async function spiellogikAktion(
     aktion: string,
     elementName?: string,
-  ): Promise<{ success: boolean; message: string }> {
+    ignorierePruefungen = false,
+  ): Promise<{ success: boolean; message: string; bestaetigung_moeglich?: boolean }> {
     if (!aktuellerCharakter.value) return { success: false, message: 'Kein Charakter geladen' }
 
     const result = await api.post<{
       success: boolean
       message: string
       charakter_daten?: CharakterDaten
+      bestaetigung_moeglich?: boolean
     }>(`/spiellogik/${aktion}`, {
       charakter_daten: aktuellerCharakter.value.charakter_daten,
       element_name: elementName,
+      ignoriere_pruefungen: ignorierePruefungen,
     })
 
     if (result.success && result.charakter_daten) {

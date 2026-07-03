@@ -13,11 +13,107 @@ MAX_WUERFEL = 12
 MIN_WUERFEL = 4
 
 
+def verfuegbare_volk_wahl(volk_data: dict) -> dict | None:
+    """Offene Wahlmöglichkeit eines Volkes: {"optionen": [...], "attribute": [...]|None}.
+
+    "talent" = +1 Talent-Slot, "fertigkeitspunkte" = +2 Fertigkeitssteigerungen,
+    "attribut" = ein Attribut um einen Würfeltyp erhöhen ("attribute" schränkt
+    die wählbaren Attribute ein, None = alle). freies_talent wird weiterhin
+    automatisch beim Volk-Anwenden vergeben, nicht hier.
+    """
+    wm = (volk_data.get("effects") or {}).get("wahlmoeglichkeiten") or {}
+    if wm.get("freies_talent_oder_attribut"):
+        return {"optionen": ["talent", "attribut"], "attribute": None}
+    if wm.get("freies_talent_oder_fertigkeitspunkte"):
+        return {"optionen": ["talent", "fertigkeitspunkte"], "attribute": None}
+    if wm.get("freies_attribut"):
+        return {"optionen": ["attribut"], "attribute": None}
+    if wm.get("attribut_staerke_oder_konstitution"):
+        return {"optionen": ["attribut"], "attribute": ["Stärke", "Konstitution"]}
+    return None
+
+
+def _entferne_volk_wahl(daten: dict) -> None:
+    wahl = daten.get("volk_effekte", {}).pop("wahl", None)
+    if not wahl:
+        return
+    typ = wahl.get("typ")
+    if typ == "talent":
+        daten["verbleibende_talente"] = max(0, daten.get("verbleibende_talente", 0) - 1)
+    elif typ == "fertigkeitspunkte":
+        daten["verbleibende_fertigkeitssteigerungen"] = max(
+            0, daten.get("verbleibende_fertigkeitssteigerungen", 0) - 2
+        )
+        daten["maximale_fertigkeitssteigerungen"] = max(
+            0, daten.get("maximale_fertigkeitssteigerungen", 0) - 2
+        )
+    elif typ == "attribut":
+        attr = daten.get("attribute", {}).get(wahl.get("ziel", ""))
+        if attr:
+            if wahl.get("feld") == "modifier":
+                attr["modifier"] = attr.get("modifier", 0) - 1
+            else:
+                attr["wert"] = max(MIN_WUERFEL, attr.get("wert", MIN_WUERFEL) - 2)
+
+
+def wende_volk_wahl_an(daten: dict, element: str) -> tuple[bool, str]:
+    """Löst die Wahlmöglichkeit des gewählten Volkes ein.
+
+    element ist "talent", "fertigkeitspunkte" oder ein Attributname.
+    Eine bestehende Wahl wird ersetzt (Wechsel ist erlaubt).
+    """
+    voelker = daten.get("voelker_selected") or {}
+    if not voelker:
+        return False, "Kein Volk gewählt"
+    volk_name, volk_data = next(iter(voelker.items()))
+
+    wahl_def = verfuegbare_volk_wahl(volk_data)
+    if not wahl_def:
+        return False, f"'{volk_name}' bietet keine Wahlmöglichkeit"
+
+    typ = element if element in ("talent", "fertigkeitspunkte") else "attribut"
+    if typ not in wahl_def["optionen"]:
+        gueltig = ", ".join(wahl_def["optionen"])
+        return False, f"'{element}' ist keine gültige Wahl für '{volk_name}' (möglich: {gueltig})"
+
+    if typ == "attribut":
+        if element not in daten.get("attribute", {}):
+            return False, f"Attribut '{element}' nicht gefunden"
+        erlaubt = wahl_def["attribute"]
+        if erlaubt and element not in erlaubt:
+            return False, f"'{volk_name}' erlaubt nur: {', '.join(erlaubt)}"
+
+    _entferne_volk_wahl(daten)
+
+    if typ == "talent":
+        daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
+        wahl = {"typ": "talent"}
+    elif typ == "fertigkeitspunkte":
+        daten["verbleibende_fertigkeitssteigerungen"] = (
+            daten.get("verbleibende_fertigkeitssteigerungen", 0) + 2
+        )
+        daten["maximale_fertigkeitssteigerungen"] = daten.get("maximale_fertigkeitssteigerungen", 0) + 2
+        wahl = {"typ": "fertigkeitspunkte"}
+    else:
+        attr = daten["attribute"][element]
+        if attr.get("wert", MIN_WUERFEL) < MAX_WUERFEL:
+            attr["wert"] = attr.get("wert", MIN_WUERFEL) + 2
+            wahl = {"typ": "attribut", "ziel": element, "feld": "wert"}
+        else:
+            attr["modifier"] = attr.get("modifier", 0) + 1
+            wahl = {"typ": "attribut", "ziel": element, "feld": "modifier"}
+
+    daten.setdefault("volk_effekte", {})["wahl"] = wahl
+    return True, ""
+
+
 def entferne_volk_effekte(daten: dict) -> dict:
     angewendet = daten.get("volk_effekte")
     if not angewendet:
         daten["voelker_selected"] = {}
         return daten
+
+    _entferne_volk_wahl(daten)
 
     for attr_name, delta in angewendet.get("attribute", {}).items():
         attr = daten.get("attribute", {}).get(attr_name)
@@ -100,7 +196,8 @@ def wende_volk_an(daten: dict, volk_name: str, volk_data: dict) -> dict:
             angewendet["handicaps"].append(handicap)
 
     # Freies Anfängertalent (z. B. Mensch "Anpassungsfähig") als Talent-Slot
-    if (effekte.get("wahlmoeglichkeiten") or {}).get("freies_talent"):
+    wm = effekte.get("wahlmoeglichkeiten") or {}
+    if wm.get("freies_talent") or wm.get("freies_anfaenger_talent"):
         daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
         angewendet["talent_slots"] = 1
 

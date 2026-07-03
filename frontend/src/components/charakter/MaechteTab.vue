@@ -11,6 +11,21 @@
 
       <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
 
+      <!-- "Trotzdem auswählen" bei zu hohem Rang -->
+      <v-dialog v-model="bestaetigungSichtbar" max-width="480">
+        <v-card>
+          <v-card-title>Prüfung nicht bestanden</v-card-title>
+          <v-card-text>{{ bestaetigungMeldung }}</v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="bestaetigungSichtbar = false">Abbrechen</v-btn>
+            <v-btn color="warning" variant="tonal" @click="trotzdemWaehlen">
+              Trotzdem auswählen
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <!-- Ausgewählte Mächte -->
       <div v-if="selectedMaechte.length" class="mb-4">
         <h3 class="text-subtitle-1 mb-2">Ausgewählt</h3>
@@ -84,6 +99,10 @@ const hatArkanenHintergrund = computed(
 const meldung = ref('')
 const meldungSichtbar = ref(false)
 
+const bestaetigungSichtbar = ref(false)
+const bestaetigungMeldung = ref('')
+const bestaetigungMacht = ref('')
+
 const maechte = computed(() => einstellungenStore.aktuellesSetting?.maechte ?? {})
 
 const gefilterteMaechte = computed(() => {
@@ -101,6 +120,19 @@ const gefilterteMaechte = computed(() => {
 
 async function waehleMacht(name: string) {
   const result = await store.spiellogikAktion('macht/waehlen', name)
+  if (!result.success && result.bestaetigung_moeglich) {
+    bestaetigungMacht.value = name
+    bestaetigungMeldung.value = `${result.message}. Trotzdem auswählen?`
+    bestaetigungSichtbar.value = true
+  } else if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
+
+async function trotzdemWaehlen() {
+  bestaetigungSichtbar.value = false
+  const result = await store.spiellogikAktion('macht/waehlen', bestaetigungMacht.value, true)
   if (!result.success && result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true

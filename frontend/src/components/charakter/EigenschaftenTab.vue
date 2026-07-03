@@ -80,13 +80,30 @@
                   size="x-small"
                   variant="outlined"
                   color="primary"
-                  @click="store.spiellogikAktion('fertigkeit/steigern', String(name))"
+                  @click="steigereFertigkeit(String(name))"
                 />
               </div>
             </div>
           </v-card>
         </v-col>
       </v-row>
+
+      <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
+
+      <!-- Warnung bei doppelten Kosten (Fertigkeit über Attribut) -->
+      <v-dialog v-model="bestaetigungSichtbar" max-width="480">
+        <v-card>
+          <v-card-title>Doppelte Kosten</v-card-title>
+          <v-card-text>{{ bestaetigungMeldung }}</v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="bestaetigungSichtbar = false">Abbrechen</v-btn>
+            <v-btn color="warning" variant="tonal" @click="trotzdemSteigern">
+              Trotzdem steigern
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-card-text>
   </v-card>
 </template>
@@ -99,6 +116,37 @@ const store = useCharakterStore()
 const sucheFertigkeit = ref('')
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
+
+const meldung = ref('')
+const meldungSichtbar = ref(false)
+const bestaetigungSichtbar = ref(false)
+const bestaetigungMeldung = ref('')
+const bestaetigungFertigkeit = ref('')
+
+async function steigereFertigkeit(name: string) {
+  const result = await store.spiellogikAktion('fertigkeit/steigern', name)
+  if (!result.success && result.bestaetigung_moeglich) {
+    bestaetigungFertigkeit.value = name
+    bestaetigungMeldung.value = `${result.message}. Trotzdem steigern?`
+    bestaetigungSichtbar.value = true
+  } else if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
+
+async function trotzdemSteigern() {
+  bestaetigungSichtbar.value = false
+  const result = await store.spiellogikAktion(
+    'fertigkeit/steigern',
+    bestaetigungFertigkeit.value,
+    true,
+  )
+  if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
 
 const gefilterteFertigkeiten = computed(() => {
   const all = daten.value.fertigkeiten || {}

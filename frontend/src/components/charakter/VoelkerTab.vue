@@ -5,6 +5,49 @@
         Gewähltes Volk: <strong>{{ selectedVolk }}</strong>
       </v-alert>
 
+      <!-- Wahlmöglichkeit des Volkes (z. B. Halbelf: Talent ODER Attribut) -->
+      <v-card v-if="volkWahl" variant="tonal" color="primary" class="mb-4">
+        <v-card-title class="text-body-1">Wahlmöglichkeit: {{ selectedVolk }}</v-card-title>
+        <v-card-text>
+          <div class="d-flex ga-2 flex-wrap align-center">
+            <v-btn
+              v-if="volkWahl.optionen.includes('talent')"
+              size="small"
+              :variant="aktuelleWahl?.typ === 'talent' ? 'elevated' : 'outlined'"
+              prepend-icon="mdi-star"
+              @click="waehleVolkWahl('talent')"
+            >
+              Freies Talent (+1 Slot)
+            </v-btn>
+            <v-btn
+              v-if="volkWahl.optionen.includes('fertigkeitspunkte')"
+              size="small"
+              :variant="aktuelleWahl?.typ === 'fertigkeitspunkte' ? 'elevated' : 'outlined'"
+              prepend-icon="mdi-school"
+              @click="waehleVolkWahl('fertigkeitspunkte')"
+            >
+              +2 Fertigkeitspunkte
+            </v-btn>
+            <v-select
+              v-if="volkWahl.optionen.includes('attribut')"
+              :model-value="aktuelleWahl?.typ === 'attribut' ? aktuelleWahl.ziel : null"
+              :items="wahlAttribute"
+              label="Freies Attribut (+1 Würfeltyp)"
+              density="compact"
+              hide-details
+              style="max-width: 280px"
+              @update:model-value="(name: string) => waehleVolkWahl(name)"
+            />
+          </div>
+          <div v-if="aktuelleWahl" class="text-caption mt-2">
+            Aktuelle Wahl:
+            <strong>{{ wahlBeschreibung }}</strong> — erneut wählen zum Wechseln.
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
+
       <v-text-field
         v-model="suche"
         label="Volk suchen..."
@@ -70,6 +113,44 @@ const selectedVolk = computed(() => {
 })
 
 const voelker = computed(() => einstellungenStore.aktuellesSetting?.voelker ?? {})
+
+const meldung = ref('')
+const meldungSichtbar = ref(false)
+
+// Spiegelt verfuegbare_volk_wahl aus backend/app/services/volk_effekte.py
+const volkWahl = computed<{ optionen: string[]; attribute: string[] | null } | null>(() => {
+  if (!selectedVolk.value) return null
+  const wm = (voelker.value as any)[selectedVolk.value]?.effects?.wahlmoeglichkeiten ?? {}
+  if (wm.freies_talent_oder_attribut) return { optionen: ['talent', 'attribut'], attribute: null }
+  if (wm.freies_talent_oder_fertigkeitspunkte)
+    return { optionen: ['talent', 'fertigkeitspunkte'], attribute: null }
+  if (wm.freies_attribut) return { optionen: ['attribut'], attribute: null }
+  if (wm.attribut_staerke_oder_konstitution)
+    return { optionen: ['attribut'], attribute: ['Stärke', 'Konstitution'] }
+  return null
+})
+
+const wahlAttribute = computed(
+  () => volkWahl.value?.attribute ?? Object.keys(daten.value.attribute ?? {}),
+)
+
+const aktuelleWahl = computed(() => daten.value.volk_effekte?.wahl ?? null)
+
+const wahlBeschreibung = computed(() => {
+  const w = aktuelleWahl.value
+  if (!w) return ''
+  if (w.typ === 'talent') return 'Freies Talent (+1 Slot)'
+  if (w.typ === 'fertigkeitspunkte') return '+2 Fertigkeitspunkte'
+  return `Attribut ${w.ziel} (+1 Würfeltyp)`
+})
+
+async function waehleVolkWahl(element: string) {
+  const result = await store.spiellogikAktion('volk/wahl', element)
+  if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
 
 const gefilterteVoelker = computed(() => {
   if (!suche.value) return voelker.value

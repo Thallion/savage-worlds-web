@@ -9,6 +9,8 @@ in die Attribute geschrieben, sondern zur Laufzeit in /spiellogik/berechne aus
 voelker_selected gelesen.
 """
 
+from app.services.volk_wahlen import entferne_alle_spezialwahlen
+
 MAX_WUERFEL = 12
 MIN_WUERFEL = 4
 
@@ -113,6 +115,7 @@ def entferne_volk_effekte(daten: dict) -> dict:
         daten["voelker_selected"] = {}
         return daten
 
+    entferne_alle_spezialwahlen(daten)
     _entferne_volk_wahl(daten)
 
     for attr_name, delta in angewendet.get("attribute", {}).items():

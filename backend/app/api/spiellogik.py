@@ -2,12 +2,25 @@ from fastapi import APIRouter, HTTPException
 
 from app.schemas.spiellogik import SpiellogikRequest, SpiellogikResponse
 from app.services.charakter_init import initialisiere_charakter_daten, load_config, load_setting
+from app.services.handicap_effekte import wende_handicap_punkte_effekte_an
+from app.services.aufstiege import (
+    AUFSTIEG_KOSTEN_ATTRIBUT,
+    AUFSTIEG_KOSTEN_FERTIGKEIT,
+    AUFSTIEG_KOSTEN_TALENT,
+    charakter_rang,
+    rang_erlaubt,
+)
+from app.services.talent_effekte import (
+    entferne_talent_effekte,
+    ist_auto_element,
+    wende_talent_effekte_an,
+)
 from app.services.talent_voraussetzungen import (
     RANG_NAMEN,
     macht_kapazitaet,
     pruefe_voraussetzungen,
 )
-from app.services.volk_effekte import wende_volk_an
+from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 
 router = APIRouter(prefix="/api/spiellogik", tags=["spiellogik"])
 
@@ -26,8 +39,16 @@ def attribut_steigern(req: SpiellogikRequest):
     if not attr_name or attr_name not in daten.get("attribute", {}):
         return SpiellogikResponse(success=False, message=f"Attribut '{attr_name}' nicht gefunden")
 
-    verbleibend = daten.get("verbleibende_attributsteigerungen", 0)
-    if verbleibend <= 0:
+    # Nach der Erschaffung zahlt eine Attributssteigerung 1 Aufstieg
+    abgeschlossen = daten.get("char_gen_completed", False)
+    if abgeschlossen:
+        if daten.get("verbleibende_aufstiege", 0) < AUFSTIEG_KOSTEN_ATTRIBUT:
+            return SpiellogikResponse(
+                success=False,
+                message="Kein Aufstieg verfügbar (Attribut kostet 1 Aufstieg)",
+                charakter_daten=daten,
+            )
+    elif daten.get("verbleibende_attributsteigerungen", 0) <= 0:
         return SpiellogikResponse(
             success=False,
             message="Keine Attributsteigerungen mehr verfügbar",
@@ -52,7 +73,10 @@ def attribut_steigern(req: SpiellogikRequest):
     else:
         attr["wert"] = wert + 2
 
-    daten["verbleibende_attributsteigerungen"] = verbleibend - 1
+    if abgeschlossen:
+        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_ATTRIBUT
+    else:
+        daten["verbleibende_attributsteigerungen"] = daten.get("verbleibende_attributsteigerungen", 0) - 1
     daten["attribute"][attr_name] = attr
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
@@ -67,6 +91,7 @@ def attribut_senken(req: SpiellogikRequest):
     attr = daten["attribute"][attr_name]
     wert = attr.get("wert", 4)
     modifier = attr.get("modifier", 0)
+    abgeschlossen = daten.get("char_gen_completed", False)
     max_steig = daten.get("maximale_attributsteigerungen", 5)
     verbleibend = daten.get("verbleibende_attributsteigerungen", 0)
 
@@ -77,7 +102,7 @@ def attribut_senken(req: SpiellogikRequest):
             charakter_daten=daten,
         )
 
-    if verbleibend >= max_steig:
+    if not abgeschlossen and verbleibend >= max_steig:
         return SpiellogikResponse(
             success=False,
             message="Keine Steigerungen zum Rückgängigmachen",
@@ -91,7 +116,10 @@ def attribut_senken(req: SpiellogikRequest):
     else:
         return SpiellogikResponse(success=False, message="Minimum erreicht", charakter_daten=daten)
 
-    daten["verbleibende_attributsteigerungen"] = verbleibend + 1
+    if abgeschlossen:
+        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + AUFSTIEG_KOSTEN_ATTRIBUT
+    else:
+        daten["verbleibende_attributsteigerungen"] = verbleibend + 1
     daten["attribute"][attr_name] = attr
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
@@ -103,14 +131,6 @@ def fertigkeit_steigern(req: SpiellogikRequest):
     if not fert_name or fert_name not in daten.get("fertigkeiten", {}):
         return SpiellogikResponse(success=False, message=f"Fertigkeit '{fert_name}' nicht gefunden")
 
-    verbleibend = daten.get("verbleibende_fertigkeitssteigerungen", 0)
-    if verbleibend <= 0:
-        return SpiellogikResponse(
-            success=False,
-            message="Keine Fertigkeitssteigerungen mehr verfügbar",
-            charakter_daten=daten,
-        )
-
     fert = daten["fertigkeiten"][fert_name]
     wuerfel = fert.get("wuerfel", {"value": 4, "modifier": -2})
     wert = wuerfel.get("value", 4)
@@ -119,15 +139,44 @@ def fertigkeit_steigern(req: SpiellogikRequest):
     attr_name = fert.get("attribut", "")
     attr_wert = daten.get("attribute", {}).get(attr_name, {}).get("wert", 4)
 
-    # Steigerung ÜBER das verknüpfte Attribut kostet 2 Punkte —
-    # maßgeblich ist der neue Wert, also wert >= attr_wert vor der Steigerung
-    kosten = 1
-    if wert >= attr_wert:
-        kosten = 2
+    # Steigerung ÜBER das verknüpfte Attribut kostet das Doppelte —
+    # maßgeblich ist der neue Wert, also wert >= attr_wert vor der Steigerung.
+    # Der erste Kauf (ungelernt -> W4) kostet immer einfach.
+    doppelt = modifier != -2 and wert >= attr_wert
+
+    abgeschlossen = daten.get("char_gen_completed", False)
+    basis = AUFSTIEG_KOSTEN_FERTIGKEIT if abgeschlossen else 1
+    kosten = basis * 2 if doppelt else basis
+
+    if doppelt and not req.ignoriere_pruefungen:
+        einheit = "Aufstiege" if abgeschlossen else "Punkte"
+        return SpiellogikResponse(
+            success=False,
+            message=f"{fert_name} liegt über dem verknüpften Attribut ({attr_name} W{attr_wert}) "
+            f"— die Steigerung kostet das Doppelte ({kosten:g} {einheit})",
+            bestaetigung_moeglich=True,
+            charakter_daten=daten,
+        )
+
+    if abgeschlossen:
+        verbleibend = daten.get("verbleibende_aufstiege", 0)
+        if verbleibend < kosten:
+            return SpiellogikResponse(
+                success=False,
+                message=f"Nicht genug Aufstiege ({kosten:g} benötigt, {verbleibend:g} verfügbar)",
+                charakter_daten=daten,
+            )
+    else:
+        verbleibend = daten.get("verbleibende_fertigkeitssteigerungen", 0)
+        if verbleibend < kosten:
+            return SpiellogikResponse(
+                success=False,
+                message=f"Nicht genug Punkte ({kosten:g} benötigt, {verbleibend} verfügbar)",
+                charakter_daten=daten,
+            )
 
     if modifier == -2:
         wuerfel["modifier"] = 0
-        kosten = 1
     elif wert == 12 and modifier < 2:
         wuerfel["modifier"] = modifier + 1
     elif wert < 12:
@@ -135,17 +184,13 @@ def fertigkeit_steigern(req: SpiellogikRequest):
     else:
         return SpiellogikResponse(success=False, message="Maximum erreicht", charakter_daten=daten)
 
-    if verbleibend < kosten:
-        return SpiellogikResponse(
-            success=False,
-            message=f"Nicht genug Punkte ({kosten} benötigt, {verbleibend} verfügbar)",
-            charakter_daten=daten,
-        )
-
     fert["wuerfel"] = wuerfel
     fert["ausgewaehlt"] = True
     daten["fertigkeiten"][fert_name] = fert
-    daten["verbleibende_fertigkeitssteigerungen"] = verbleibend - kosten
+    if abgeschlossen:
+        daten["verbleibende_aufstiege"] = verbleibend - kosten
+    else:
+        daten["verbleibende_fertigkeitssteigerungen"] = verbleibend - kosten
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -172,7 +217,9 @@ def fertigkeit_senken(req: SpiellogikRequest):
 
     attr_name = fert.get("attribut", "")
     attr_wert = daten.get("attribute", {}).get(attr_name, {}).get("wert", 4)
-    refund = 2 if wert > attr_wert else 1
+    abgeschlossen = daten.get("char_gen_completed", False)
+    basis = AUFSTIEG_KOSTEN_FERTIGKEIT if abgeschlossen else 1
+    refund = basis * 2 if wert > attr_wert else basis
 
     if wert == 12 and modifier > 0:
         wuerfel["modifier"] = modifier - 1
@@ -180,7 +227,7 @@ def fertigkeit_senken(req: SpiellogikRequest):
         wuerfel["value"] = wert - 2
     elif wert == 4 and modifier == 0 and not grundfertigkeit:
         wuerfel["modifier"] = -2
-        refund = 1
+        refund = basis
     else:
         return SpiellogikResponse(success=False, message="Minimum erreicht", charakter_daten=daten)
 
@@ -188,7 +235,10 @@ def fertigkeit_senken(req: SpiellogikRequest):
     if wuerfel["value"] == 4 and wuerfel["modifier"] == -2:
         fert["ausgewaehlt"] = False
     daten["fertigkeiten"][fert_name] = fert
-    daten["verbleibende_fertigkeitssteigerungen"] = daten.get("verbleibende_fertigkeitssteigerungen", 0) + refund
+    if abgeschlossen:
+        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + refund
+    else:
+        daten["verbleibende_fertigkeitssteigerungen"] = daten.get("verbleibende_fertigkeitssteigerungen", 0) + refund
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -221,6 +271,8 @@ def handicap_waehlen(req: SpiellogikRequest):
     daten["selected_handicaps"] = selected
     daten["gesamt_handicap_punkte"] = gesamt + punkte
     daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + punkte
+    # Spezialeffekte wie "Alt" (+5 Fertigkeitspunkte) oder "Jung" (weniger Steigerungen)
+    wende_handicap_punkte_effekte_an(daten, handicap_name, stufe)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -237,6 +289,13 @@ def handicap_entfernen(req: SpiellogikRequest):
         return SpiellogikResponse(
             success=False,
             message=f"'{handicap_name}' stammt vom gewählten Volk und kann nicht entfernt werden",
+        )
+
+    if ist_auto_element(daten, "handicaps", handicap_name):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{handicap_name}' wurde automatisch durch ein Talent gewährt "
+            "und kann nur mit diesem entfernt werden",
         )
 
     setting_name = daten.get("active_setting_name", "SWAE")
@@ -260,6 +319,7 @@ def handicap_entfernen(req: SpiellogikRequest):
     daten["selected_handicaps"] = selected
     daten["gesamt_handicap_punkte"] = max(0, daten.get("gesamt_handicap_punkte", 0) - punkte)
     daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) - punkte
+    wende_handicap_punkte_effekte_an(daten, handicap_name, stufe, vorzeichen=-1)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -314,34 +374,57 @@ def talent_waehlen(req: SpiellogikRequest):
     if not talent_data:
         return SpiellogikResponse(success=False, message=f"Talent '{talent_name}' nicht gefunden")
 
-    # Während der Erschaffung ist der Charakter Anfänger
+    # Rang-Gate gegen den Charakterrang (aus ausgegebenen Aufstiegen; bei der
+    # Erschaffung Anfänger); wie im Original per Bestätigung überspringbar
     rang = talent_data.get("rang", "A")
-    if not daten.get("char_gen_completed") and rang != "A":
+    if not rang_erlaubt(rang, daten) and not req.ignoriere_pruefungen:
         return SpiellogikResponse(
             success=False,
             message=f"'{talent_name}' erfordert Rang {RANG_NAMEN.get(rang, rang)} — "
-            "bei der Erschaffung sind nur Anfänger-Talente wählbar",
+            f"der Charakter ist {charakter_rang(daten)}",
+            bestaetigung_moeglich=True,
         )
 
     fehlend = pruefe_voraussetzungen(talent_data, daten, setting_talente)
-    if fehlend:
+    if fehlend and not req.ignoriere_pruefungen:
         return SpiellogikResponse(
             success=False,
             message=f"Voraussetzungen nicht erfüllt: {', '.join(fehlend)}",
+            bestaetigung_moeglich=True,
         )
 
-    verbleibend = daten.get("verbleibende_talente", 0)
-    if verbleibend <= 0:
+    # Bezahlung wie im Original: erst freie Slots (Volks-Talent, eingelöste Punkte);
+    # während der Erschaffung sonst 2 Handicap-Punkte, danach 1 Aufstieg
+    talent_kosten = HANDICAP_EINLOESE_KOSTEN["talent"]
+    abgeschlossen = daten.get("char_gen_completed", False)
+    if daten.get("verbleibende_talente", 0) > 0:
+        zahlungsquelle = "slot"
+        daten["verbleibende_talente"] = daten["verbleibende_talente"] - 1
+    elif not abgeschlossen and daten.get("verbleibende_handicap_punkte", 0) >= talent_kosten:
+        zahlungsquelle = "handicap_punkte"
+        daten["verbleibende_handicap_punkte"] = daten["verbleibende_handicap_punkte"] - talent_kosten
+    elif abgeschlossen and daten.get("verbleibende_aufstiege", 0) >= AUFSTIEG_KOSTEN_TALENT:
+        zahlungsquelle = "aufstieg"
+        daten["verbleibende_aufstiege"] = daten["verbleibende_aufstiege"] - AUFSTIEG_KOSTEN_TALENT
+    elif abgeschlossen:
         return SpiellogikResponse(
             success=False,
-            message="Kein Talent-Slot verfügbar — Handicap-Punkte einlösen (2 Punkte) "
-            "oder ein Volk mit freiem Talent wählen",
+            message="Kein Aufstieg verfügbar (Talent kostet 1 Aufstieg)",
+            charakter_daten=daten,
+        )
+    else:
+        return SpiellogikResponse(
+            success=False,
+            message=f"Kein Talent-Slot und keine {talent_kosten} Handicap-Punkte verfügbar — "
+            "Handicaps wählen (max. 4 Punkte) oder ein Volk mit freiem Talent",
             charakter_daten=daten,
         )
 
     selected.append(talent_name)
     daten["selected_talente"] = selected
-    daten["verbleibende_talente"] = verbleibend - 1
+    daten.setdefault("talent_zahlungen", {})[talent_name] = zahlungsquelle
+    # Auto-Handicaps/-Talente/-Mächte und Attribut-Effekte (z. B. Berserker)
+    wende_talent_effekte_an(daten, talent_name, talent_data)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -360,9 +443,26 @@ def talent_entfernen(req: SpiellogikRequest):
             message=f"'{talent_name}' stammt vom gewählten Volk und kann nicht entfernt werden",
         )
 
+    if ist_auto_element(daten, "talente", talent_name):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{talent_name}' wurde automatisch durch ein anderes Talent gewährt "
+            "und kann nur mit diesem entfernt werden",
+        )
+
     selected.remove(talent_name)
     daten["selected_talente"] = selected
-    daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
+    # Erstattung an die ursprüngliche Zahlungsquelle
+    quelle = daten.get("talent_zahlungen", {}).pop(talent_name, "slot")
+    if quelle == "handicap_punkte":
+        daten["verbleibende_handicap_punkte"] = (
+            daten.get("verbleibende_handicap_punkte", 0) + HANDICAP_EINLOESE_KOSTEN["talent"]
+        )
+    elif quelle == "aufstieg":
+        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + AUFSTIEG_KOSTEN_TALENT
+    else:
+        daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
+    entferne_talent_effekte(daten, talent_name)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -386,11 +486,12 @@ def macht_waehlen(req: SpiellogikRequest):
         return SpiellogikResponse(success=False, message=f"Macht '{macht_name}' nicht gefunden")
 
     rang = macht_data.get("rang", "A")
-    if not daten.get("char_gen_completed") and rang != "A":
+    if not rang_erlaubt(rang, daten) and not req.ignoriere_pruefungen:
         return SpiellogikResponse(
             success=False,
             message=f"'{macht_name}' erfordert Rang {RANG_NAMEN.get(rang, rang)} — "
-            "bei der Erschaffung sind nur Anfänger-Mächte wählbar",
+            f"der Charakter ist {charakter_rang(daten)}",
+            bestaetigung_moeglich=True,
         )
 
     slots, _ = macht_kapazitaet(daten, setting.get("talente", {}))
@@ -420,8 +521,71 @@ def macht_entfernen(req: SpiellogikRequest):
     if macht_name not in selected:
         return SpiellogikResponse(success=False, message=f"'{macht_name}' ist nicht ausgewählt")
 
+    if ist_auto_element(daten, "maechte", macht_name):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{macht_name}' wurde automatisch durch ein Talent gewährt "
+            "und kann nur mit diesem entfernt werden",
+        )
+
     selected.remove(macht_name)
     daten["selected_maechte"] = selected
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/erschaffung/abschliessen", response_model=SpiellogikResponse)
+def erschaffung_abschliessen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    if daten.get("char_gen_completed"):
+        return SpiellogikResponse(
+            success=False, message="Erschaffung ist bereits abgeschlossen", charakter_daten=daten
+        )
+    daten["char_gen_completed"] = True
+    return SpiellogikResponse(
+        success=True,
+        message="Erschaffung abgeschlossen — weitere Steigerungen kosten Aufstiege",
+        charakter_daten=daten,
+    )
+
+
+@router.post("/erschaffung/oeffnen", response_model=SpiellogikResponse)
+def erschaffung_oeffnen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    if not daten.get("char_gen_completed"):
+        return SpiellogikResponse(
+            success=False, message="Erschaffung ist noch nicht abgeschlossen", charakter_daten=daten
+        )
+    daten["char_gen_completed"] = False
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/aufstieg/hinzufuegen", response_model=SpiellogikResponse)
+def aufstieg_hinzufuegen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    if not daten.get("char_gen_completed"):
+        return SpiellogikResponse(
+            success=False,
+            message="Aufstiege gibt es erst nach Abschluss der Erschaffung",
+            charakter_daten=daten,
+        )
+    daten["aufstiege_gesamt"] = daten.get("aufstiege_gesamt", 0) + 1
+    daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + 1
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/aufstieg/entfernen", response_model=SpiellogikResponse)
+def aufstieg_entfernen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    if daten.get("aufstiege_gesamt", 0) <= 0:
+        return SpiellogikResponse(success=False, message="Keine Aufstiege vorhanden", charakter_daten=daten)
+    if daten.get("verbleibende_aufstiege", 0) < 1:
+        return SpiellogikResponse(
+            success=False,
+            message="Aufstieg bereits ausgegeben — zuerst Steigerungen zurücknehmen",
+            charakter_daten=daten,
+        )
+    daten["aufstiege_gesamt"] = daten["aufstiege_gesamt"] - 1
+    daten["verbleibende_aufstiege"] = daten["verbleibende_aufstiege"] - 1
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -469,6 +633,18 @@ def volk_waehlen(req: SpiellogikRequest):
         return SpiellogikResponse(success=False, message=f"Volk '{volk_name}' nicht gefunden")
 
     daten = wende_volk_an(daten, volk_name, volk_data)
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/volk/wahl", response_model=SpiellogikResponse)
+def volk_wahl(req: SpiellogikRequest):
+    """Löst die Wahlmöglichkeit des gewählten Volkes ein (z. B. Halbelf:
+    freies Talent ODER Attribut). element_name ist "talent",
+    "fertigkeitspunkte" oder ein Attributname."""
+    daten = req.charakter_daten
+    ok, message = wende_volk_wahl_an(daten, req.element_name or "")
+    if not ok:
+        return SpiellogikResponse(success=False, message=message, charakter_daten=daten)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -568,4 +744,7 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
         "verbleibende_fertigkeitssteigerungen": daten.get("verbleibende_fertigkeitssteigerungen", 12),
         "verbleibende_handicap_punkte": daten.get("verbleibende_handicap_punkte", 0),
         "verbleibende_talente": daten.get("verbleibende_talente", 0),
+        "verbleibende_aufstiege": daten.get("verbleibende_aufstiege", 0),
+        "aufstiege_gesamt": daten.get("aufstiege_gesamt", 0),
+        "rang": charakter_rang(daten),
     }

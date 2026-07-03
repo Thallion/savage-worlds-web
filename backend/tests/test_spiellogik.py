@@ -61,9 +61,14 @@ def test_fertigkeit_erster_kauf_ungelernt_zu_w4(daten):
 
 
 def test_fertigkeit_ueber_attribut_kostet_zwei_punkte(daten):
-    # Kämpfen (Geschicklichkeit W4) auf W4 -> W6 kostet 2 Punkte
+    # Kämpfen (Geschicklichkeit W4) auf W4 -> W6 kostet 2 Punkte;
+    # die Doppelkosten müssen erst bestätigt werden
     d = aktion("fertigkeit/steigern", daten, "Kämpfen")["charakter_daten"]
-    d = aktion("fertigkeit/steigern", d, "Kämpfen")["charakter_daten"]
+    r = aktion("fertigkeit/steigern", d, "Kämpfen")
+    assert not r["success"]
+    assert r["bestaetigung_moeglich"]
+    assert "Doppelte" in r["message"]
+    d = aktion_mit_override("fertigkeit/steigern", d, "Kämpfen")["charakter_daten"]
     assert d["fertigkeiten"]["Kämpfen"]["wuerfel"]["value"] == 6
     assert d["verbleibende_fertigkeitssteigerungen"] == 9  # 12 - 1 - 2
 
@@ -283,6 +288,9 @@ def test_berechne_basiswerte(daten):
         "verbleibende_fertigkeitssteigerungen": 12,
         "verbleibende_handicap_punkte": 0,
         "verbleibende_talente": 0,
+        "verbleibende_aufstiege": 0,
+        "aufstiege_gesamt": 0,
+        "rang": "Anfänger",
     }
 
 
@@ -347,3 +355,313 @@ def test_setting_wechseln_unbekanntes_setting_abgelehnt(daten):
     r = aktion("setting/wechseln", daten, "Gibt Es Nicht")
     assert not r["success"]
     assert "nicht gefunden" in r["message"]
+
+
+# --- Volk-Wahlmöglichkeiten ---
+
+def test_volk_wahl_halbelf_attribut(daten):
+    d = aktion("volk/waehlen", daten, "Halbelf")["charakter_daten"]
+    r = aktion("volk/wahl", d, "Stärke")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert d["volk_effekte"]["wahl"] == {"typ": "attribut", "ziel": "Stärke", "feld": "wert"}
+
+
+def test_volk_wahl_wechsel_nimmt_vorherige_zurueck(daten):
+    d = aktion("volk/waehlen", daten, "Halbelf")["charakter_daten"]
+    d = aktion("volk/wahl", d, "Stärke")["charakter_daten"]
+    d = aktion("volk/wahl", d, "talent")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert d["verbleibende_talente"] == 1
+    d = aktion("volk/wahl", d, "Verstand")["charakter_daten"]
+    assert d["verbleibende_talente"] == 0
+    assert d["attribute"]["Verstand"]["wert"] == 6
+
+
+def test_volk_wahl_fertigkeitspunkte(daten):
+    d = aktion("setting/wechseln", daten, "Hellfrost")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Mensch_Anari")["charakter_daten"]
+    r = aktion("volk/wahl", d, "fertigkeitspunkte")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["verbleibende_fertigkeitssteigerungen"] == 14
+    assert d["maximale_fertigkeitssteigerungen"] == 14
+    # Wechsel auf Talent nimmt die Punkte zurück
+    d = aktion("volk/wahl", d, "talent")["charakter_daten"]
+    assert d["verbleibende_fertigkeitssteigerungen"] == 12
+
+
+def test_volk_wahl_ungueltige_option_abgelehnt(daten):
+    d = aktion("volk/waehlen", daten, "Halbelf")["charakter_daten"]
+    r = aktion("volk/wahl", d, "fertigkeitspunkte")
+    assert not r["success"]
+    assert "keine gültige Wahl" in r["message"]
+
+
+def test_volk_wahl_ohne_volk_abgelehnt(daten):
+    r = aktion("volk/wahl", daten, "talent")
+    assert not r["success"]
+    assert "Kein Volk gewählt" in r["message"]
+
+
+def test_volk_wahl_ohne_wahlmoeglichkeit_abgelehnt(daten):
+    d = aktion("volk/waehlen", daten, "Zwerg")["charakter_daten"]
+    r = aktion("volk/wahl", d, "Stärke")
+    assert not r["success"]
+    assert "bietet keine Wahlmöglichkeit" in r["message"]
+
+
+def test_volk_wechsel_nimmt_wahl_zurueck(daten):
+    d = aktion("volk/waehlen", daten, "Halbelf")["charakter_daten"]
+    d = aktion("volk/wahl", d, "Stärke")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert "wahl" not in d.get("volk_effekte", {})
+
+
+# --- Spezial-Handicap-Effekte (handicap_config.json) ---
+
+def test_handicap_alt_gibt_fertigkeitspunkte(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    assert d["verbleibende_fertigkeitssteigerungen"] == 17
+    assert d["maximale_fertigkeitssteigerungen"] == 17
+    d = aktion("handicap/entfernen", d, "Alt")["charakter_daten"]
+    assert d["verbleibende_fertigkeitssteigerungen"] == 12
+    assert d["maximale_fertigkeitssteigerungen"] == 12
+
+
+def test_handicap_jung_reduziert_steigerungen(daten):
+    d = aktion("handicap/waehlen", daten, "Jung")["charakter_daten"]
+    # Jung (leicht): 4 Attributs- und 10 Fertigkeitssteigerungen
+    assert d["verbleibende_attributsteigerungen"] == 4
+    assert d["maximale_attributsteigerungen"] == 4
+    assert d["verbleibende_fertigkeitssteigerungen"] == 10
+    d = aktion("handicap/entfernen", d, "Jung")["charakter_daten"]
+    assert d["verbleibende_attributsteigerungen"] == 5
+    assert d["verbleibende_fertigkeitssteigerungen"] == 12
+
+
+def test_handicap_alt_erhaelt_ausgegebene_punkte(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    d = aktion("fertigkeit/steigern", d, "Reiten")["charakter_daten"]  # 1 Punkt
+    assert d["verbleibende_fertigkeitssteigerungen"] == 16
+    d = aktion("handicap/entfernen", d, "Alt")["charakter_daten"]
+    # Delta-basiert: der ausgegebene Punkt bleibt ausgegeben
+    assert d["verbleibende_fertigkeitssteigerungen"] == 11
+    assert d["maximale_fertigkeitssteigerungen"] == 12
+
+
+# --- Talent-Auto-Effekte ---
+
+def test_berserker_erhoeht_staerke(daten):
+    d = mit_talent_slot(daten)
+    d = aktion("talent/waehlen", d, "Berserker")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert d["talent_effekte"]["Berserker"]["attribut_stufen"] == [["Stärke", "wert"]]
+    d = aktion("talent/entfernen", d, "Berserker")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert "talent_effekte" not in d
+
+
+def test_rohling_koppelt_athletik_an_staerke(daten):
+    d = aktion("attribut/steigern", daten, "Stärke")["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Konstitution")["charakter_daten"]
+    d = mit_talent_slot(d)
+    d = aktion("talent/waehlen", d, "Rohling")["charakter_daten"]
+    assert d["fertigkeiten"]["Athletik"]["attribut"] == "Stärke"
+    d = aktion("talent/entfernen", d, "Rohling")["charakter_daten"]
+    assert d["fertigkeiten"]["Athletik"]["attribut"] == "Geschicklichkeit"
+
+
+def test_auto_handicap_durch_ah_talent(daten):
+    d = aktion("setting/wechseln", daten, "Horror Kompendium")["charakter_daten"]
+    d = mit_talent_slot(d)
+    d = aktion("talent/waehlen", d, "AH (Verdorbener)")["charakter_daten"]
+    assert "Verderbnis" in d["selected_handicaps"]
+    # Auto-Handicap gibt keine Handicap-Punkte
+    assert d["gesamt_handicap_punkte"] == 0
+    assert d["verbleibende_handicap_punkte"] == 0
+    # ... und ist nicht manuell entfernbar
+    r = aktion("handicap/entfernen", d, "Verderbnis")
+    assert not r["success"]
+    assert "automatisch" in r["message"]
+    # Talent abwählen räumt es mit auf
+    d = aktion("talent/entfernen", d, "AH (Verdorbener)")["charakter_daten"]
+    assert "Verderbnis" not in d["selected_handicaps"]
+
+
+# --- Talent-Kauf direkt mit Handicap-Punkten (Original-Verhalten) ---
+
+def test_talent_kauf_direkt_mit_handicap_punkten(daten):
+    d = aktion("handicap/waehlen", daten, "Arrogant")["charakter_daten"]  # 2 Punkte
+    r = aktion("talent/waehlen", d, "Aristokrat")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert "Aristokrat" in d["selected_talente"]
+    assert d["verbleibende_handicap_punkte"] == 0
+    assert d["talent_zahlungen"]["Aristokrat"] == "handicap_punkte"
+
+
+def test_talent_entfernen_erstattet_handicap_punkte(daten):
+    d = aktion("handicap/waehlen", daten, "Arrogant")["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Aristokrat")["charakter_daten"]
+    d = aktion("talent/entfernen", d, "Aristokrat")["charakter_daten"]
+    assert d["verbleibende_handicap_punkte"] == 2
+    assert d["verbleibende_talente"] == 0
+    assert "Aristokrat" not in d.get("talent_zahlungen", {})
+
+
+def test_talent_kauf_nutzt_slot_vor_handicap_punkten(daten):
+    d = aktion("handicap/waehlen", daten, "Arrogant")["charakter_daten"]
+    d = mit_talent_slot(d)
+    d = aktion("talent/waehlen", d, "Aristokrat")["charakter_daten"]
+    assert d["verbleibende_talente"] == 0
+    assert d["verbleibende_handicap_punkte"] == 2
+    assert d["talent_zahlungen"]["Aristokrat"] == "slot"
+    d = aktion("talent/entfernen", d, "Aristokrat")["charakter_daten"]
+    assert d["verbleibende_talente"] == 1
+    assert d["verbleibende_handicap_punkte"] == 2
+
+
+def test_talent_kauf_mit_punkten_nach_erschaffung_abgelehnt(daten):
+    # Nach der Erschaffung zählen Handicap-Punkte nicht mehr, nur Aufstiege
+    d = aktion("handicap/waehlen", daten, "Arrogant")["charakter_daten"]
+    d["char_gen_completed"] = True
+    r = aktion("talent/waehlen", d, "Aristokrat")
+    assert not r["success"]
+    assert "Aufstieg" in r["message"]
+
+
+def test_ein_handicap_punkt_reicht_nicht_fuer_talent(daten):
+    d = aktion("handicap/waehlen", daten, "Arm")["charakter_daten"]  # 1 Punkt
+    r = aktion("talent/waehlen", d, "Aristokrat")
+    assert not r["success"]
+
+
+# --- "Trotzdem auswählen" (ignoriere_pruefungen) ---
+
+def aktion_mit_override(pfad: str, daten: dict, element: str) -> dict:
+    resp = client.post(
+        f"/api/spiellogik/{pfad}",
+        json={"charakter_daten": daten, "element_name": element, "ignoriere_pruefungen": True},
+    )
+    assert resp.status_code == 200
+    return resp.json()
+
+
+def test_voraussetzung_ablehnung_ist_bestaetigbar(daten):
+    r = aktion("talent/waehlen", mit_talent_slot(daten), "Arkane Resistenz")  # WIL W8 fehlt
+    assert not r["success"]
+    assert r["bestaetigung_moeglich"]
+
+
+def test_talent_trotzdem_waehlen_ueberspringt_voraussetzungen(daten):
+    r = aktion_mit_override("talent/waehlen", mit_talent_slot(daten), "Arkane Resistenz")
+    assert r["success"]
+    assert "Arkane Resistenz" in r["charakter_daten"]["selected_talente"]
+
+
+def test_talent_trotzdem_waehlen_ueberspringt_rang(daten):
+    r = aktion_mit_override("talent/waehlen", mit_talent_slot(daten), "Ausweichen")  # Rang F
+    assert r["success"]
+
+
+def test_trotzdem_waehlen_braucht_trotzdem_bezahlung(daten):
+    # Prüfungen überspringen heißt nicht kostenlos: ohne Slot/Punkte weiter abgelehnt
+    r = aktion_mit_override("talent/waehlen", daten, "Arkane Resistenz")
+    assert not r["success"]
+    assert not r["bestaetigung_moeglich"]
+
+
+def test_slot_ablehnung_ist_nicht_bestaetigbar(daten):
+    r = aktion("talent/waehlen", daten, "Aristokrat")
+    assert not r["success"]
+    assert not r["bestaetigung_moeglich"]
+
+
+def test_macht_trotzdem_waehlen_ueberspringt_rang(daten):
+    d = mit_arkanem_hintergrund(daten)
+    r = aktion("macht/waehlen", d, "Barriere")  # Rang F
+    assert not r["success"] and r["bestaetigung_moeglich"]
+    r = aktion_mit_override("macht/waehlen", d, "Barriere")
+    assert r["success"]
+
+
+# --- Erschaffung abschließen & Aufstiege ---
+
+def mit_abschluss(daten: dict) -> dict:
+    return aktion("erschaffung/abschliessen", daten)["charakter_daten"]
+
+
+def test_erschaffung_abschliessen_und_oeffnen(daten):
+    d = mit_abschluss(daten)
+    assert d["char_gen_completed"] is True
+    r = aktion("erschaffung/abschliessen", d)
+    assert not r["success"]
+    d = aktion("erschaffung/oeffnen", d)["charakter_daten"]
+    assert d["char_gen_completed"] is False
+
+
+def test_aufstieg_nur_nach_abschluss(daten):
+    r = aktion("aufstieg/hinzufuegen", daten)
+    assert not r["success"]
+    d = mit_abschluss(daten)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    assert d["aufstiege_gesamt"] == 1
+    assert d["verbleibende_aufstiege"] == 1
+
+
+def test_attribut_kostet_aufstieg_nach_abschluss(daten):
+    d = mit_abschluss(daten)
+    r = aktion("attribut/steigern", d, "Stärke")
+    assert not r["success"]  # kein Aufstieg vorhanden
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert d["verbleibende_aufstiege"] == 0
+    assert d["verbleibende_attributsteigerungen"] == 5  # unangetastet
+    d = aktion("attribut/senken", d, "Stärke")["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 1
+
+
+def test_ein_aufstieg_ergibt_zwei_fertigkeitssteigerungen(daten):
+    d = mit_abschluss(daten)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    d = aktion("fertigkeit/steigern", d, "Kämpfen")["charakter_daten"]  # 0.5
+    d = aktion("fertigkeit/steigern", d, "Reiten")["charakter_daten"]  # 0.5
+    assert d["verbleibende_aufstiege"] == 0
+    r = aktion("fertigkeit/steigern", d, "Heimlichkeit")
+    assert not r["success"]
+
+
+def test_talent_kostet_aufstieg_nach_abschluss(daten):
+    d = mit_abschluss(daten)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Aristokrat")["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 0
+    assert d["talent_zahlungen"]["Aristokrat"] == "aufstieg"
+    d = aktion("talent/entfernen", d, "Aristokrat")["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 1
+
+
+def test_rang_steigt_mit_ausgegebenen_aufstiegen(daten):
+    d = mit_abschluss(daten)
+    for _ in range(4):
+        d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+        d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]
+    w = berechne(d)
+    assert w["rang"] == "Fortgeschritten"
+    # Rang F schaltet Rang-F-Talente frei (Ausweichen braucht GES W8 -> erfüllt? nein)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    r = aktion("talent/waehlen", d, "Kampfreflexe")  # Rang F, keine Voraussetzungen
+    assert r["success"], r["message"]
+
+
+def test_aufstieg_entfernen_nur_wenn_nicht_ausgegeben(daten):
+    d = mit_abschluss(daten)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]
+    r = aktion("aufstieg/entfernen", d)
+    assert not r["success"]
+    assert "ausgegeben" in r["message"]

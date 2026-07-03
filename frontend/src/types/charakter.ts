@@ -36,6 +36,8 @@ export interface CharakterDaten {
   maximale_fertigkeitssteigerungen?: number
   gesamt_handicap_punkte?: number
   verbleibende_handicap_punkte?: number
+  aufstiege_gesamt?: number
+  verbleibende_aufstiege?: number
   verbleibende_talente?: number
   settingregeln?: Record<string, boolean>
   volk_effekte?: {
@@ -44,7 +46,21 @@ export interface CharakterDaten {
     talente: string[]
     handicaps: string[]
     talent_slots?: number
+    wahl?: { typ: 'talent' | 'fertigkeitspunkte' | 'attribut'; ziel?: string; feld?: string }
   }
+  // Zahlungsquelle je gekauftem Talent für korrekte Rückerstattung beim Entfernen
+  talent_zahlungen?: Record<string, 'slot' | 'handicap_punkte'>
+  // Snapshot der Auto-Effekte gewählter Talente (Berserker, AH-Auto-Handicaps, ...)
+  talent_effekte?: Record<
+    string,
+    {
+      handicaps?: string[]
+      talente?: string[]
+      maechte?: string[]
+      attribut_stufen?: [string, string][]
+      fertigkeit_links?: Record<string, string | null>
+    }
+  >
 }
 
 export interface AbgeleiteteWerte {
@@ -59,6 +75,9 @@ export interface AbgeleiteteWerte {
   verbleibende_fertigkeitssteigerungen: number
   verbleibende_handicap_punkte: number
   verbleibende_talente: number
+  verbleibende_aufstiege: number
+  aufstiege_gesamt: number
+  rang: string
 }
 
 export interface CharakterListItem {

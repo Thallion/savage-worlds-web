@@ -2,11 +2,27 @@
   <v-card flat>
     <v-card-text>
       <v-alert type="info" density="compact" class="mb-4">
-        Verfügbare Talent-Slots: <strong>{{ verbleibendeTalente }}</strong>
-        (2 Handicap-Punkte = 1 Talent; manche Völker geben ein freies Talent)
+        Freie Talent-Slots: <strong>{{ verbleibendeTalente }}</strong> ·
+        Handicap-Punkte: <strong>{{ verbleibendeHandicapPunkte }}</strong>
+        — ein Talent kostet 1 Slot oder 2 Handicap-Punkte
       </v-alert>
 
       <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
+
+      <!-- "Trotzdem auswählen" bei nicht erfüllten Voraussetzungen / zu hohem Rang -->
+      <v-dialog v-model="bestaetigungSichtbar" max-width="480">
+        <v-card>
+          <v-card-title>Prüfung nicht bestanden</v-card-title>
+          <v-card-text>{{ bestaetigungMeldung }}</v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="bestaetigungSichtbar = false">Abbrechen</v-btn>
+            <v-btn color="warning" variant="tonal" @click="trotzdemWaehlen">
+              Trotzdem auswählen
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Ausgewählte Talente -->
       <div v-if="selectedTalente.length" class="mb-4">
@@ -81,9 +97,14 @@ const rangFilter = ref('Alle')
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const selectedTalente = computed(() => daten.value.selected_talente || [])
 const verbleibendeTalente = computed(() => daten.value.verbleibende_talente ?? 0)
+const verbleibendeHandicapPunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)
 
 const meldung = ref('')
 const meldungSichtbar = ref(false)
+
+const bestaetigungSichtbar = ref(false)
+const bestaetigungMeldung = ref('')
+const bestaetigungTalent = ref('')
 
 const talente = computed(() => einstellungenStore.aktuellesSetting?.talente ?? {})
 
@@ -111,6 +132,19 @@ const gefilterteTalente = computed(() => {
 
 async function waehleTalent(name: string) {
   const result = await store.spiellogikAktion('talent/waehlen', name)
+  if (!result.success && result.bestaetigung_moeglich) {
+    bestaetigungTalent.value = name
+    bestaetigungMeldung.value = `${result.message}. Trotzdem auswählen?`
+    bestaetigungSichtbar.value = true
+  } else if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
+
+async function trotzdemWaehlen() {
+  bestaetigungSichtbar.value = false
+  const result = await store.spiellogikAktion('talent/waehlen', bestaetigungTalent.value, true)
   if (!result.success && result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true

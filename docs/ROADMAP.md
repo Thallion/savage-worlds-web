@@ -24,9 +24,11 @@ Web-Port des Kivy-Charakter-Generators. Architektur:
 - [x] **Volk-Wahlmöglichkeiten (Kern)** — `volk/wahl`-Endpoint: freies Attribut (+1 Würfeltyp), Talent-oder-Attribut (Halbelf), Talent-oder-2-Fertigkeitspunkte (Anari), Stärke-oder-Konstitution (Halbork); Wahl wechselbar, Volk-Wechsel nimmt sie zurück; Auswahl-Karte im VoelkerTab
 - [x] **Spezial-Handicap-Effekte** (`app/services/handicap_effekte.py`) — „Alt" (schwer) +5 Fertigkeitspunkte, „Jung" reduzierte Steigerungen (delta-basiert aus `handicap_config.json`, ausgegebene Punkte bleiben erhalten); Bewegungsweiten-Mali laufen weiter über `abgeleitete_effekte.json`
 - [x] **Talent-Auto-Effekte** (`app/services/talent_effekte.py`) — `auto_handicaps`/`auto_talente`/`auto_maechte` ohne Punkte/Slots (z. B. AH (Verdorbener) → „Verderbnis"), Berserker +1 Stärke-Würfeltyp, `effekt.attribut_bonus` (Deadlands), Rohling/Naturgespür-Attributlink; Snapshot in `talent_effekte`, Auto-Elemente nicht manuell entfernbar
-- [x] **Backend-Tests** — pytest, 75 Tests (`backend/tests/`); dabei behobener Regelbug: Fertigkeit über Attribut kostete 1 statt 2 Punkte
+- [x] **Backend-Tests** — pytest, 77 Tests (`backend/tests/`); dabei behobener Regelbug: Fertigkeit über Attribut kostete 1 statt 2 Punkte
 - [x] Regelbug behoben: Handicap-Punkte wurden beim Wählen überschrieben statt addiert
 - [x] **Doppelkosten-Warnung** — Fertigkeit über dem verknüpften Attribut fragt vor dem Steigern nach („Trotzdem steigern", Original: `needs_confirmation`)
+- [x] **Kompatibilitätsprüfung** (`app/services/kompatibilitaet.py`) — verbotene Kombinationen (Reich/Stinkreich ↔ Arm) beim Wählen in beide Richtungen abgelehnt, nicht überspringbar
+- [x] **Export/Import** — Export-Button (JSON-Download) und Import-Button (Datei-Upload) in der Charakterliste; `POST /api/charaktere/import` normalisiert über `ergaenze_fehlende_eigenschaften` (auch Kivy-Alt-Exporte), Namenskollisionen werden nummeriert
 - [x] **Erschaffung abschließen & Aufstiege** (`app/services/aufstiege.py`) — `erschaffung/abschliessen|oeffnen`, `aufstieg/hinzufuegen|entfernen`; danach kosten Attribut 1 / Fertigkeit 0.5 (über Attribut das Doppelte) / Talent 1 Aufstieg; Rang aus ausgegebenen Aufstiegen (4/8/12/16 → F/V/H/L) schaltet höherrangige Talente/Mächte frei; Aufstiegs-Leiste mit Rang im Editor
 
 ## Geplante Schritte (nach Nutzwert sortiert)
@@ -37,23 +39,15 @@ Abgleich mit der Geschäftslogik des Originals (`functions/`-Module):
 
 Kern ist umgesetzt (freies Attribut, Talent-oder-X). Es fehlen: **Magieaffin** (AH-Wahl + arkane Fertigkeit W6, über `spezielle_effekte`), **Attribut-Schwäche** (Malus-Wahl) und settingspezifische Wahlen (`spezialisierung` Androiden, `heimlich` Engro, `tierart_auswahl` Wildling, `freie_verstandsfertigkeit` Gnom u. a.).
 
-### 2. Kompatibilitätsprüfung (Original: `kompatibilitaets_pruefung.py`)
-
-Verbotene Kombinationen (z. B. „Reich" + „Arm") beim Wählen von Talenten/Handicaps ablehnen.
-
-### 3. Export/Import im Frontend
-
-Export-Button (`GET /api/charaktere/{id}/export` existiert); neuer `POST /api/charaktere/import` mit `ergaenze_fehlende_eigenschaften` als Normalisierung — macht auch Kivy-Alt-Exporte importierbar.
-
-### 4. Ausrüstung & Startgeld (Original: `ausruestung_funktionen.py`)
+### 2. Ausrüstung & Startgeld (Original: `ausruestung_funktionen.py`)
 
 Ausrüstungs-Tab (Daten liegen bereits in `setting["ausruestung"]`), Startgeld pro Setting (`setting["startgeld"]`), Einlösung 1 Handicap-Punkt → Startgeld, Traglast (Stärke × 10 kg), Rüstung fließt in Robustheit ein.
 
-### 5. Setting-Spezialsysteme
+### 3. Setting-Spezialsysteme
 
 Cyberware inkl. Stress (SciFi-Kompendium, `cyberware_funktionen.py` + `cyberware_config.json`), Superkräfte (Superkräfte-Kompendium, `superkraft_funktionen.py`).
 
-### 6. Statblock-Export (Original: `statblock_generator.py`)
+### 4. Statblock-Export (Original: `statblock_generator.py`)
 
 Charakter als Text-/PDF-Statblock exportieren.
 
@@ -63,4 +57,4 @@ Runner: `cd backend && .venv/bin/python -m pytest tests/`. Bei jedem Schritt mit
 
 ## Reihenfolge-Begründung
 
-1–2 machen die Erschaffung regelkonform und vervollständigen die Kern-Geschäftslogik des Originals; 3–4 erweitern den Spielzyklus (Export, Ausrüstung); 5–6 sind settingspezifischer Komfort.
+1 vervollständigt die letzten Volk-Spezialfälle; 2 erweitert den Spielzyklus (Ausrüstung, Startgeld, Rüstung); 3–4 sind settingspezifischer Komfort.

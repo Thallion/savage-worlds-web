@@ -60,6 +60,23 @@ export const useCharakterStore = defineStore('charakter', () => {
     await ladeListe()
   }
 
+  async function exportiereCharakter(id: number, name: string) {
+    const daten = await api.get<CharakterDaten>(`/charaktere/${id}/export`)
+    const blob = new Blob([JSON.stringify(daten, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${name || 'charakter'}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  async function importiereCharakter(daten: unknown) {
+    const charakter = await api.post<CharakterDetail>('/charaktere/import', daten)
+    await ladeListe()
+    return charakter
+  }
+
   async function spiellogikAktion(
     aktion: string,
     elementName?: string,
@@ -96,6 +113,8 @@ export const useCharakterStore = defineStore('charakter', () => {
     erstelleCharakter,
     speichereCharakter,
     loescheCharakter,
+    exportiereCharakter,
+    importiereCharakter,
     spiellogikAktion,
   }
 })

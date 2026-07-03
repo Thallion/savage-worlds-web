@@ -665,3 +665,21 @@ def test_aufstieg_entfernen_nur_wenn_nicht_ausgegeben(daten):
     r = aktion("aufstieg/entfernen", d)
     assert not r["success"]
     assert "ausgegeben" in r["message"]
+
+
+# --- Kompatibilitätsprüfung (Reich/Arm) ---
+
+def test_reich_mit_arm_abgelehnt(daten):
+    d = aktion("handicap/waehlen", daten, "Arm")["charakter_daten"]
+    d = mit_talent_slot(d)
+    r = aktion("talent/waehlen", d, "Reich")
+    assert not r["success"]
+    assert "nicht mit dem Handicap 'Arm' kombinierbar" in r["message"]
+    assert not r["bestaetigung_moeglich"]
+
+
+def test_arm_mit_reich_abgelehnt(daten):
+    d = aktion("talent/waehlen", mit_talent_slot(daten), "Reich")["charakter_daten"]
+    r = aktion("handicap/waehlen", d, "Arm")
+    assert not r["success"]
+    assert "nicht mit dem Talent 'Reich' kombinierbar" in r["message"]

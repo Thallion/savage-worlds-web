@@ -4,12 +4,24 @@
       <v-col>
         <h1 class="text-h4">Meine Charaktere</h1>
       </v-col>
-      <v-col cols="auto">
+      <v-col cols="auto" class="d-flex ga-2">
+        <v-btn variant="tonal" prepend-icon="mdi-upload" @click="importDatei?.click()">
+          Importieren
+        </v-btn>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="dialogOffen = true">
           Neuer Charakter
         </v-btn>
+        <input
+          ref="importDatei"
+          type="file"
+          accept="application/json,.json"
+          class="d-none"
+          @change="importiereDatei"
+        />
       </v-col>
     </v-row>
+
+    <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
 
     <v-progress-linear v-if="store.loading" indeterminate color="primary" />
 
@@ -51,6 +63,11 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer />
+            <v-btn
+              icon="mdi-download"
+              size="small"
+              @click.stop="store.exportiereCharakter(char.id, char.char_name)"
+            />
             <v-btn
               icon="mdi-delete"
               color="error"
@@ -98,6 +115,24 @@ const einstellungenStore = useEinstellungenStore()
 const dialogOffen = ref(false)
 const neuerName = ref('')
 const neuesSetting = ref('SWAE')
+const importDatei = ref<HTMLInputElement>()
+const meldung = ref('')
+const meldungSichtbar = ref(false)
+
+async function importiereDatei(event: Event) {
+  const input = event.target as HTMLInputElement
+  const datei = input.files?.[0]
+  input.value = ''
+  if (!datei) return
+  try {
+    const daten = JSON.parse(await datei.text())
+    const charakter = await store.importiereCharakter(daten)
+    router.push(`/charakter/${charakter.id}`)
+  } catch {
+    meldung.value = 'Import fehlgeschlagen — keine gültige Charakter-JSON-Datei'
+    meldungSichtbar.value = true
+  }
+}
 
 onMounted(async () => {
   await Promise.all([store.ladeListe(), einstellungenStore.ladeSettings()])

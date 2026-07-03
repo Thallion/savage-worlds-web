@@ -47,6 +47,23 @@ export interface CharakterDaten {
     handicaps: string[]
     talent_slots?: number
     wahl?: { typ: 'talent' | 'fertigkeitspunkte' | 'attribut'; ziel?: string; feld?: string }
+    // Snapshots angewendeter Spezial-Wahlen (backend/app/services/volk_wahlen.py)
+    wahlen?: Record<
+      string,
+      {
+        typ: string
+        ziel?: string
+        ah_talent?: string
+        fertigkeit?: string
+        handicap?: string
+        malus?: number
+        label?: string
+        entfernt?: boolean
+        war_untrainiert?: boolean
+        delta?: number
+        talent_hinzugefuegt?: boolean
+      }
+    >
   }
   // Zahlungsquelle je gekauftem Talent für korrekte Rückerstattung beim Entfernen
   talent_zahlungen?: Record<string, 'slot' | 'handicap_punkte'>

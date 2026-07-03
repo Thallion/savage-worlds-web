@@ -1,0 +1,22 @@
+{
+  "beschreibung": "Optionen für beschreibende Volk-Wahlen (kein Regel-Effekt, wird am Charakter festgehalten). Leere Optionsliste = Freitext-Eingabe.",
+  "pflanzenerbe_auswahl": {
+    "label": "Pflanzenerbe",
+    "optionen": [
+      "Blutrose",
+      "Dornen",
+      "Efeuranken",
+      "Nesselgriff",
+      "Parfüm",
+      "Rindenhaut",
+      "Sporen",
+      "Weidenschatten"
+    ],
+    "beschreibung": "Elfen (Sundered Skies) haben eines von acht Pflanzenerben."
+  },
+  "tierart_auswahl": {
+    "label": "Tierart",
+    "optionen": [],
+    "beschreibung": "Wildlinge (Sundered Skies) sind aus einer Tierart erschaffen — freie Eingabe."
+  }
+}

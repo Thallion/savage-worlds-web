@@ -683,3 +683,169 @@ def test_arm_mit_reich_abgelehnt(daten):
     r = aktion("handicap/waehlen", d, "Arm")
     assert not r["success"]
     assert "nicht mit dem Talent 'Reich' kombinierbar" in r["message"]
+
+
+# --- Volk-Spezialwahlen (volk_wahlen.py) ---
+
+def test_spezialwahl_engro_heimlich_fertigkeit(daten):
+    d = aktion("setting/wechseln", daten, "Hellfrost")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Engro")["charakter_daten"]
+    r = aktion("volk/wahl", d, "heimlich:Diebeskunst")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Diebeskunst"]["wuerfel"]["value"] == 6
+    assert d["fertigkeiten"]["Diebeskunst"]["wuerfel"]["modifier"] == 0
+    assert d["fertigkeiten"]["Diebeskunst"]["ausgewaehlt"]
+    # Wechsel auf Heimlichkeit nimmt Diebeskunst exakt zurück
+    d = aktion("volk/wahl", d, "heimlich:Heimlichkeit")["charakter_daten"]
+    assert d["fertigkeiten"]["Diebeskunst"]["wuerfel"] == {"value": 4, "modifier": -2, "typ": "fertigkeit"}
+    assert not d["fertigkeiten"]["Diebeskunst"]["ausgewaehlt"]
+    assert d["fertigkeiten"]["Heimlichkeit"]["wuerfel"]["value"] == 6
+
+
+def test_spezialwahl_heimlich_ungueltige_fertigkeit_abgelehnt(daten):
+    d = aktion("setting/wechseln", daten, "Hellfrost")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Engro")["charakter_daten"]
+    r = aktion("volk/wahl", d, "heimlich:Kämpfen")
+    assert not r["success"]
+    assert "keine gültige Fertigkeit" in r["message"]
+
+
+def test_spezialwahl_unbekannte_wahl_abgelehnt(daten):
+    d = aktion("volk/waehlen", daten, "Zwerg")["charakter_daten"]
+    r = aktion("volk/wahl", d, "heimlich:Diebeskunst")
+    assert not r["success"]
+    assert "bietet keine Wahl" in r["message"]
+
+
+def test_spezialwahl_gnom_verstandsfertigkeit(daten):
+    d = aktion("setting/wechseln", daten, "Savage Pathfinder")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Gnom")["charakter_daten"]
+    r = aktion("volk/wahl", d, "freie_verstandsfertigkeit:Okkultismus")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Okkultismus"]["wuerfel"]["value"] == 6
+    assert d["fertigkeiten"]["Okkultismus"]["wuerfel"]["modifier"] == 0
+    # Kämpfen hängt an Geschicklichkeit und ist keine gültige Wahl
+    r = aktion("volk/wahl", d, "freie_verstandsfertigkeit:Kämpfen")
+    assert not r["success"]
+
+
+def test_spezialwahl_zwerg_handwerks_wissen(daten):
+    d = aktion("setting/wechseln", daten, "Sundered Skies")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
+    r = aktion("volk/wahl", d, "handwerks_wissen:Wissen (Geschichte)")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Wissen (Geschichte)"]["wuerfel"]["value"] == 6
+    r = aktion("volk/wahl", d, "handwerks_wissen:Kämpfen")
+    assert not r["success"]
+
+
+def test_spezialwahl_androiden_spezialisierung(daten):
+    d = aktion("volk/waehlen", daten, "Androiden")["charakter_daten"]
+    r = aktion("volk/wahl", d, "spezialisierung:Reparieren")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Reparieren"]["wuerfel"]["value"] == 6
+    assert d["volk_effekte"]["wahlen"]["spezialisierung"]["ziel"] == "Reparieren"
+
+
+def test_spezialwahl_insektoide_outsider_statt_trennungsangst(daten):
+    d = aktion("setting/wechseln", daten, "SciFi Kompendium")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Insektoide")["charakter_daten"]
+    assert "Trennungsangst" in d["selected_handicaps"]
+    d = aktion("volk/wahl", d, "outsider_statt_trennungsangst:Außenseiter")["charakter_daten"]
+    assert "Trennungsangst" not in d["selected_handicaps"]
+    assert "Trennungsangst" not in d["volk_effekte"]["handicaps"]
+    # Rückkehr zu Trennungsangst stellt das Auto-Handicap wieder her
+    d = aktion("volk/wahl", d, "outsider_statt_trennungsangst:Trennungsangst")["charakter_daten"]
+    assert "Trennungsangst" in d["selected_handicaps"]
+    assert "wahlen" not in d["volk_effekte"] or "outsider_statt_trennungsangst" not in d["volk_effekte"]["wahlen"]
+
+
+def test_spezialwahl_pflanzenerbe(daten):
+    d = aktion("setting/wechseln", daten, "Sundered Skies")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Elf")["charakter_daten"]
+    r = aktion("volk/wahl", d, "pflanzenerbe_auswahl:Dornen")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["volk_effekte"]["wahlen"]["pflanzenerbe_auswahl"]["ziel"] == "Dornen"
+    r = aktion("volk/wahl", d, "pflanzenerbe_auswahl:Lavaherz")
+    assert not r["success"]
+    assert "Gültige Optionen" in r["message"]
+
+
+def test_spezialwahl_tierart_freitext(daten):
+    d = aktion("setting/wechseln", daten, "Sundered Skies")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Wildling")["charakter_daten"]
+    r = aktion("volk/wahl", d, "tierart_auswahl:Wolf")
+    assert r["success"]
+    assert r["charakter_daten"]["volk_effekte"]["wahlen"]["tierart_auswahl"]["ziel"] == "Wolf"
+
+
+def _volk_mit_effekten(daten, effekte):
+    """Wählt Mensch und erweitert das gespeicherte Volk um Test-Effekte
+    (z. B. magieaffin/attribut_malus, die kein Standard-Volk mitbringt)."""
+    d = aktion("volk/waehlen", daten, "Mensch")["charakter_daten"]
+    volk = next(iter(d["voelker_selected"].values()))
+    volk.setdefault("effects", {}).update(effekte)
+    return d
+
+
+def test_spezialwahl_magieaffin(daten):
+    d = _volk_mit_effekten(daten, {"spezielle_effekte": {"magieaffin": True}})
+    slots_vorher = d.get("verbleibende_talente", 0)
+    r = aktion("volk/wahl", d, "magieaffin:AH (Magie)")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert "AH (Magie)" in d["selected_talente"]
+    assert "AH (Magie)" in d["volk_effekte"]["talente"]
+    # kein Talent-Slot verbraucht; Arkane Fertigkeit W4-2 -> W4+0
+    assert d.get("verbleibende_talente", 0) == slots_vorher
+    assert d["fertigkeiten"]["Zaubern"]["wuerfel"] == {"value": 4, "modifier": 0, "typ": "fertigkeit"}
+    # als Volks-Talent nicht manuell entfernbar
+    r = aktion("talent/entfernen", d, "AH (Magie)")
+    assert not r["success"]
+    # Wechsel auf AH (Wunder) nimmt Zaubern und das Talent zurück
+    d = aktion("volk/wahl", d, "magieaffin:AH (Wunder)")["charakter_daten"]
+    assert "AH (Magie)" not in d["selected_talente"]
+    assert d["fertigkeiten"]["Zaubern"]["wuerfel"]["modifier"] == -2
+    assert "AH (Wunder)" in d["selected_talente"]
+    assert d["fertigkeiten"]["Glaube"]["wuerfel"]["modifier"] == 0
+
+
+def test_spezialwahl_magieaffin_nur_ah_talente(daten):
+    d = _volk_mit_effekten(daten, {"spezielle_effekte": {"magieaffin": True}})
+    r = aktion("volk/wahl", d, "magieaffin:Aufmerksamkeit")
+    assert not r["success"]
+    assert "kein AH-Talent" in r["message"]
+
+
+def test_spezialwahl_attribut_schwaeche(daten):
+    d = _volk_mit_effekten(daten, {"attribut_malus": 1})
+    r = aktion("volk/wahl", d, "attribut_schwaeche:Stärke")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["attribute"]["Stärke"]["modifier"] == -2
+    # Wechsel des Malus-Ziels stellt Stärke wieder her
+    d = aktion("volk/wahl", d, "attribut_schwaeche:Verstand")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["modifier"] == 0
+    assert d["attribute"]["Verstand"]["modifier"] == -2
+
+
+def test_volk_wechsel_nimmt_spezialwahlen_zurueck(daten):
+    d = aktion("setting/wechseln", daten, "Hellfrost")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Engro")["charakter_daten"]
+    d = aktion("volk/wahl", d, "heimlich:Diebeskunst")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Mensch_Saxa")["charakter_daten"]
+    assert d["fertigkeiten"]["Diebeskunst"]["wuerfel"] == {"value": 4, "modifier": -2, "typ": "fertigkeit"}
+    assert "wahlen" not in d.get("volk_effekte", {})
+
+
+def test_volk_wechsel_nimmt_magieaffin_zurueck(daten):
+    d = _volk_mit_effekten(daten, {"spezielle_effekte": {"magieaffin": True}})
+    d = aktion("volk/wahl", d, "magieaffin:AH (Magie)")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
+    assert "AH (Magie)" not in d["selected_talente"]
+    assert d["fertigkeiten"]["Zaubern"]["wuerfel"]["modifier"] == -2

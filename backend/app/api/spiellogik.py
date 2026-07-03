@@ -22,6 +22,7 @@ from app.services.talent_voraussetzungen import (
     pruefe_voraussetzungen,
 )
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
+from app.services.volk_wahlen import wende_volk_spezialwahl_an
 
 router = APIRouter(prefix="/api/spiellogik", tags=["spiellogik"])
 
@@ -648,11 +649,25 @@ def volk_waehlen(req: SpiellogikRequest):
 
 @router.post("/volk/wahl", response_model=SpiellogikResponse)
 def volk_wahl(req: SpiellogikRequest):
-    """Löst die Wahlmöglichkeit des gewählten Volkes ein (z. B. Halbelf:
-    freies Talent ODER Attribut). element_name ist "talent",
-    "fertigkeitspunkte" oder ein Attributname."""
+    """Löst eine Wahlmöglichkeit des gewählten Volkes ein.
+
+    Kern-Wahl (z. B. Halbelf: freies Talent ODER Attribut): element_name ist
+    "talent", "fertigkeitspunkte" oder ein Attributname. Spezial-Wahlen
+    (heimlich, magieaffin, attribut_schwaeche, ...) nutzen das Format
+    "wahl_id:auswahl", z. B. "heimlich:Diebeskunst" oder
+    "magieaffin:AH (Magie)"."""
     daten = req.charakter_daten
-    ok, message = wende_volk_wahl_an(daten, req.element_name or "")
+    element = req.element_name or ""
+    wahl_id, sep, auswahl = element.partition(":")
+    if sep:
+        setting_name = daten.get("active_setting_name", "SWAE")
+        try:
+            setting = _load_setting(setting_name)
+        except HTTPException:
+            return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+        ok, message = wende_volk_spezialwahl_an(daten, setting, wahl_id.strip(), auswahl.strip())
+    else:
+        ok, message = wende_volk_wahl_an(daten, element)
     if not ok:
         return SpiellogikResponse(success=False, message=message, charakter_daten=daten)
     return SpiellogikResponse(success=True, charakter_daten=daten)

@@ -1,28 +1,22 @@
-import json
-from pathlib import Path
-
 from fastapi import APIRouter, HTTPException
 
-from app.config import settings
 from app.schemas.spiellogik import SpiellogikRequest, SpiellogikResponse
+from app.services.charakter_init import initialisiere_charakter_daten, load_config, load_setting
+from app.services.talent_voraussetzungen import (
+    RANG_NAMEN,
+    macht_kapazitaet,
+    pruefe_voraussetzungen,
+)
+from app.services.volk_effekte import wende_volk_an
 
 router = APIRouter(prefix="/api/spiellogik", tags=["spiellogik"])
 
 
-def _load_config(name: str) -> dict:
-    path = settings.gamelogic_path / "config" / name
-    if not path.exists():
-        return {}
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 def _load_setting(setting_name: str) -> dict:
-    path = settings.gamelogic_path / "settings" / f"{setting_name}.json"
-    if not path.exists():
+    try:
+        return load_setting(setting_name)
+    except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
 
 
 @router.post("/attribut/steigern", response_model=SpiellogikResponse)
@@ -125,8 +119,10 @@ def fertigkeit_steigern(req: SpiellogikRequest):
     attr_name = fert.get("attribut", "")
     attr_wert = daten.get("attribute", {}).get(attr_name, {}).get("wert", 4)
 
+    # Steigerung ÜBER das verknüpfte Attribut kostet 2 Punkte —
+    # maßgeblich ist der neue Wert, also wert >= attr_wert vor der Steigerung
     kosten = 1
-    if wert > attr_wert:
+    if wert >= attr_wert:
         kosten = 2
 
     if modifier == -2:
@@ -224,7 +220,7 @@ def handicap_waehlen(req: SpiellogikRequest):
     selected.append(handicap_name)
     daten["selected_handicaps"] = selected
     daten["gesamt_handicap_punkte"] = gesamt + punkte
-    daten["verbleibende_handicap_punkte"] = punkte
+    daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + punkte
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -237,6 +233,12 @@ def handicap_entfernen(req: SpiellogikRequest):
     if handicap_name not in selected:
         return SpiellogikResponse(success=False, message=f"'{handicap_name}' ist nicht ausgewählt")
 
+    if handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{handicap_name}' stammt vom gewählten Volk und kann nicht entfernt werden",
+        )
+
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
         setting = _load_setting(setting_name)
@@ -247,9 +249,49 @@ def handicap_entfernen(req: SpiellogikRequest):
     stufe = handicap_data.get("stufe", "leicht").lower()
     punkte = 1 if stufe == "leicht" else 2
 
+    if daten.get("verbleibende_handicap_punkte", 0) < punkte:
+        return SpiellogikResponse(
+            success=False,
+            message="Handicap-Punkte bereits ausgegeben — zuerst Einlösungen rückgängig machen",
+            charakter_daten=daten,
+        )
+
     selected.remove(handicap_name)
     daten["selected_handicaps"] = selected
     daten["gesamt_handicap_punkte"] = max(0, daten.get("gesamt_handicap_punkte", 0) - punkte)
+    daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) - punkte
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+HANDICAP_EINLOESE_KOSTEN = {"attribut": 2, "fertigkeit": 1, "talent": 2}
+
+
+@router.post("/handicap-punkte/einloesen", response_model=SpiellogikResponse)
+def handicap_punkte_einloesen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    option = req.element_name or ""
+    kosten = HANDICAP_EINLOESE_KOSTEN.get(option)
+    if kosten is None:
+        return SpiellogikResponse(
+            success=False,
+            message=f"Unbekannte Einlöse-Option '{option}' (gültig: attribut, fertigkeit, talent)",
+        )
+
+    verbleibend = daten.get("verbleibende_handicap_punkte", 0)
+    if verbleibend < kosten:
+        return SpiellogikResponse(
+            success=False,
+            message=f"Nicht genug Handicap-Punkte ({kosten} benötigt, {verbleibend} verfügbar)",
+            charakter_daten=daten,
+        )
+
+    daten["verbleibende_handicap_punkte"] = verbleibend - kosten
+    if option == "talent":
+        daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
+    else:
+        feld = "attributsteigerungen" if option == "attribut" else "fertigkeitssteigerungen"
+        daten[f"verbleibende_{feld}"] = daten.get(f"verbleibende_{feld}", 0) + 1
+        daten[f"maximale_{feld}"] = daten.get(f"maximale_{feld}", 0) + 1
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -262,8 +304,44 @@ def talent_waehlen(req: SpiellogikRequest):
     if talent_name in selected:
         return SpiellogikResponse(success=False, message=f"'{talent_name}' bereits ausgewählt")
 
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting_talente = _load_setting(setting_name).get("talente", {})
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+
+    talent_data = setting_talente.get(talent_name)
+    if not talent_data:
+        return SpiellogikResponse(success=False, message=f"Talent '{talent_name}' nicht gefunden")
+
+    # Während der Erschaffung ist der Charakter Anfänger
+    rang = talent_data.get("rang", "A")
+    if not daten.get("char_gen_completed") and rang != "A":
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{talent_name}' erfordert Rang {RANG_NAMEN.get(rang, rang)} — "
+            "bei der Erschaffung sind nur Anfänger-Talente wählbar",
+        )
+
+    fehlend = pruefe_voraussetzungen(talent_data, daten, setting_talente)
+    if fehlend:
+        return SpiellogikResponse(
+            success=False,
+            message=f"Voraussetzungen nicht erfüllt: {', '.join(fehlend)}",
+        )
+
+    verbleibend = daten.get("verbleibende_talente", 0)
+    if verbleibend <= 0:
+        return SpiellogikResponse(
+            success=False,
+            message="Kein Talent-Slot verfügbar — Handicap-Punkte einlösen (2 Punkte) "
+            "oder ein Volk mit freiem Talent wählen",
+            charakter_daten=daten,
+        )
+
     selected.append(talent_name)
     daten["selected_talente"] = selected
+    daten["verbleibende_talente"] = verbleibend - 1
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -276,9 +354,103 @@ def talent_entfernen(req: SpiellogikRequest):
     if talent_name not in selected:
         return SpiellogikResponse(success=False, message=f"'{talent_name}' ist nicht ausgewählt")
 
+    if talent_name in daten.get("volk_effekte", {}).get("talente", []):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{talent_name}' stammt vom gewählten Volk und kann nicht entfernt werden",
+        )
+
     selected.remove(talent_name)
     daten["selected_talente"] = selected
+    daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
     return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/macht/waehlen", response_model=SpiellogikResponse)
+def macht_waehlen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    macht_name = req.element_name
+    selected = daten.get("selected_maechte", [])
+
+    if macht_name in selected:
+        return SpiellogikResponse(success=False, message=f"'{macht_name}' bereits ausgewählt")
+
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+
+    macht_data = setting.get("maechte", {}).get(macht_name)
+    if not macht_data:
+        return SpiellogikResponse(success=False, message=f"Macht '{macht_name}' nicht gefunden")
+
+    rang = macht_data.get("rang", "A")
+    if not daten.get("char_gen_completed") and rang != "A":
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{macht_name}' erfordert Rang {RANG_NAMEN.get(rang, rang)} — "
+            "bei der Erschaffung sind nur Anfänger-Mächte wählbar",
+        )
+
+    slots, _ = macht_kapazitaet(daten, setting.get("talente", {}))
+    if slots == 0:
+        return SpiellogikResponse(
+            success=False,
+            message="Kein arkaner Hintergrund — zuerst ein AH-Talent wählen",
+        )
+    if len(selected) >= slots:
+        return SpiellogikResponse(
+            success=False,
+            message=f"Alle Mächte-Slots belegt ({slots}) — z. B. Talent 'Neue Mächte' wählen",
+            charakter_daten=daten,
+        )
+
+    selected.append(macht_name)
+    daten["selected_maechte"] = selected
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/macht/entfernen", response_model=SpiellogikResponse)
+def macht_entfernen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    macht_name = req.element_name
+    selected = daten.get("selected_maechte", [])
+
+    if macht_name not in selected:
+        return SpiellogikResponse(success=False, message=f"'{macht_name}' ist nicht ausgewählt")
+
+    selected.remove(macht_name)
+    daten["selected_maechte"] = selected
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/setting/wechseln", response_model=SpiellogikResponse)
+def setting_wechseln(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    neues_setting = req.element_name or ""
+
+    if neues_setting == daten.get("active_setting_name"):
+        return SpiellogikResponse(
+            success=False,
+            message=f"Setting '{neues_setting}' ist bereits aktiv",
+            charakter_daten=daten,
+        )
+
+    char_name = daten.get("profil_daten", {}).get("Name", "")
+    try:
+        neu = initialisiere_charakter_daten(char_name, neues_setting)
+    except FileNotFoundError:
+        return SpiellogikResponse(success=False, message=f"Setting '{neues_setting}' nicht gefunden")
+
+    # Profil bleibt erhalten, alles Settingspezifische (Attribute, Fertigkeiten,
+    # Selektionen, Punkte) wird neu aufgebaut
+    neu["profil_daten"] = daten.get("profil_daten", neu["profil_daten"])
+    return SpiellogikResponse(
+        success=True,
+        message=f"Setting gewechselt zu '{neues_setting}' — Eigenschaften und Auswahl wurden zurückgesetzt",
+        charakter_daten=neu,
+    )
 
 
 @router.post("/volk/waehlen", response_model=SpiellogikResponse)
@@ -296,34 +468,104 @@ def volk_waehlen(req: SpiellogikRequest):
     if not volk_data:
         return SpiellogikResponse(success=False, message=f"Volk '{volk_name}' nicht gefunden")
 
-    daten["voelker_selected"] = {volk_name: volk_data}
+    daten = wende_volk_an(daten, volk_name, volk_data)
     return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+_BERECHNE_STATS = ("parade", "robustheit", "bewegungsweite", "groesse", "bennys")
+
+
+def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
+    """Summiert Boni aus Talenten, Handicaps (abgeleitete_effekte.json) und Volk."""
+    cfg = load_config("abgeleitete_effekte.json")
+    boni = {stat: 0 for stat in _BERECHNE_STATS}
+
+    # Talente: additiv; innerhalb einer nicht_kumulativ_gruppe zählt nur das Maximum
+    gruppen: dict[str, dict[str, int]] = {}
+    for talent in daten.get("selected_talente", []):
+        effekt = cfg.get("talente", {}).get(talent)
+        if not effekt:
+            continue
+        effekt = dict(effekt)
+        gruppe = effekt.pop("nicht_kumulativ_gruppe", None)
+        # bedingung "keine_getragene_ruestung": Rüstung wird noch nicht verwaltet,
+        # die Bedingung gilt daher immer als erfüllt
+        effekt.pop("bedingung", None)
+        ziel = gruppen.setdefault(gruppe, {}) if gruppe else None
+        for stat, wert in effekt.items():
+            if stat not in boni:
+                continue
+            if ziel is not None:
+                ziel[stat] = max(ziel.get(stat, 0), wert)
+            else:
+                boni[stat] += wert
+    for gruppe_boni in gruppen.values():
+        for stat, wert in gruppe_boni.items():
+            boni[stat] += wert
+
+    # Handicaps: Lookup über Stufe aus dem Setting (oder alle_stufen)
+    setting_handicaps = setting.get("handicaps", {})
+    for handicap in daten.get("selected_handicaps", []):
+        # Setting-Namen tragen die Stufe teils als Suffix ("Langsam_leicht"),
+        # die Effekt-Config führt den Basisnamen mit Stufen-Keys
+        basis, stufe = handicap, None
+        if handicap.endswith(("_leicht", "_schwer")):
+            basis, stufe = handicap[:-7], handicap[-6:]
+        stufen_effekte = cfg.get("handicaps", {}).get(basis)
+        if not stufen_effekte:
+            continue
+        if stufe is None:
+            stufe = setting_handicaps.get(handicap, {}).get("stufe", "leicht").lower()
+        effekt = stufen_effekte.get(stufe) or stufen_effekte.get("alle_stufen") or {}
+        for stat, wert in effekt.items():
+            if stat in boni:
+                boni[stat] += wert
+
+    # Volk: Boni stehen strukturiert im effects-Objekt des gewählten Volkes
+    for volk_data in daten.get("voelker_selected", {}).values():
+        effekte = volk_data.get("effects") or {}
+        boni["bewegungsweite"] += effekte.get("bewegungsweite_bonus", 0)
+        boni["robustheit"] += effekte.get("robustheit_bonus", 0)
+        boni["groesse"] += effekte.get("groesse_modifikator", 0)
+
+    return boni
 
 
 @router.post("/berechne")
 def berechne_abgeleitete_werte(req: SpiellogikRequest):
     daten = req.charakter_daten
 
-    konstitution = daten.get("attribute", {}).get("Konstitution", {})
-    kon_wert = konstitution.get("wert", 4)
-    kon_mod = konstitution.get("modifier", 0)
+    try:
+        setting = load_setting(daten.get("active_setting_name", ""))
+    except FileNotFoundError:
+        setting = {}
 
-    geschicklichkeit = daten.get("attribute", {}).get("Geschicklichkeit", {})
-    gesc_wert = geschicklichkeit.get("wert", 4)
-
+    kon_wert = daten.get("attribute", {}).get("Konstitution", {}).get("wert", 4)
     kaempfen = daten.get("fertigkeiten", {}).get("Kämpfen", {})
     kaempfen_wuerfel = kaempfen.get("wuerfel", {"value": 4, "modifier": -2})
-    kaempfen_wert = kaempfen_wuerfel.get("value", 4)
+    kaempfen_ungelernt = kaempfen_wuerfel.get("modifier", 0) == -2
+    kaempfen_wert = 0 if kaempfen_ungelernt else kaempfen_wuerfel.get("value", 4)
 
-    robustheit = 2 + (kon_wert // 2)
-    parade = 2 + (kaempfen_wert // 2)
-    bewegungsweite = 6
+    boni = _sammle_effekt_boni(daten, setting)
+    macht_slots, machtpunkte = macht_kapazitaet(daten, setting.get("talente", {}))
+
+    groesse = boni["groesse"]
+    parade = 2 + (kaempfen_wert // 2) + boni["parade"]
+    # Größe fließt nach SWAE in die Robustheit ein
+    robustheit = 2 + (kon_wert // 2) + boni["robustheit"] + groesse
+    bewegungsweite = 6 + boni["bewegungsweite"]
+    bennys = 3 + boni["bennys"]
 
     return {
         "parade": parade,
         "robustheit": robustheit,
         "bewegungsweite": bewegungsweite,
+        "groesse": groesse,
+        "bennys": bennys,
+        "machtpunkte": machtpunkte,
+        "verbleibende_maechte": max(0, macht_slots - len(daten.get("selected_maechte", []))),
         "verbleibende_attributsteigerungen": daten.get("verbleibende_attributsteigerungen", 5),
         "verbleibende_fertigkeitssteigerungen": daten.get("verbleibende_fertigkeitssteigerungen", 12),
         "verbleibende_handicap_punkte": daten.get("verbleibende_handicap_punkte", 0),
+        "verbleibende_talente": daten.get("verbleibende_talente", 0),
     }

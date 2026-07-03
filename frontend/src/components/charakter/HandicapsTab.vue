@@ -1,10 +1,46 @@
 <template>
   <v-card flat>
     <v-card-text>
-      <v-alert type="info" density="compact" class="mb-4">
+      <v-alert type="info" density="compact" class="mb-2">
         Handicap-Punkte: {{ daten.gesamt_handicap_punkte ?? 0 }} / 4
-        (Leicht = 1 Punkt, Schwer = 2 Punkte)
+        (Leicht = 1 Punkt, Schwer = 2 Punkte) —
+        verfügbar zum Einlösen: <strong>{{ verbleibendePunkte }}</strong>
       </v-alert>
+
+      <div class="mb-4 d-flex ga-2 flex-wrap">
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-arrow-up-bold"
+          :disabled="verbleibendePunkte < 2"
+          @click="einloesen('attribut')"
+        >
+          2 Punkte → 1 Attributssteigerung
+        </v-btn>
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-school"
+          :disabled="verbleibendePunkte < 1"
+          @click="einloesen('fertigkeit')"
+        >
+          1 Punkt → 1 Fertigkeitspunkt
+        </v-btn>
+        <v-btn
+          size="small"
+          color="primary"
+          variant="tonal"
+          prepend-icon="mdi-star"
+          :disabled="verbleibendePunkte < 2"
+          @click="einloesen('talent')"
+        >
+          2 Punkte → 1 Talent
+        </v-btn>
+      </div>
+
+      <v-snackbar v-model="meldungSichtbar" :timeout="3000">{{ meldung }}</v-snackbar>
 
       <!-- Ausgewählte Handicaps -->
       <div v-if="selectedHandicaps.length" class="mb-4">
@@ -68,6 +104,10 @@ const suche = ref('')
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const selectedHandicaps = computed(() => daten.value.selected_handicaps || [])
+const verbleibendePunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)
+
+const meldung = ref('')
+const meldungSichtbar = ref(false)
 
 const handicaps = computed(() => einstellungenStore.aktuellesSetting?.handicaps ?? {})
 
@@ -89,6 +129,18 @@ async function waehleHandicap(name: string) {
 }
 
 async function entferneHandicap(name: string) {
-  await store.spiellogikAktion('handicap/entfernen', name)
+  const result = await store.spiellogikAktion('handicap/entfernen', name)
+  if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
+
+async function einloesen(option: 'attribut' | 'fertigkeit' | 'talent') {
+  const result = await store.spiellogikAktion('handicap-punkte/einloesen', option)
+  if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
 }
 </script>

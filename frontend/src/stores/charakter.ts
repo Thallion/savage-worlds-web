@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '@/api/client'
-import type { CharakterDaten, CharakterDetail, CharakterListItem } from '@/types/charakter'
+import type { AbgeleiteteWerte, CharakterDaten, CharakterDetail, CharakterListItem } from '@/types/charakter'
 
 export const useCharakterStore = defineStore('charakter', () => {
   const liste = ref<CharakterListItem[]>([])
   const aktuellerCharakter = ref<CharakterDetail | null>(null)
+  const abgeleiteteWerte = ref<AbgeleiteteWerte | null>(null)
   const loading = ref(false)
 
   async function ladeListe() {
@@ -21,9 +22,17 @@ export const useCharakterStore = defineStore('charakter', () => {
     loading.value = true
     try {
       aktuellerCharakter.value = await api.get<CharakterDetail>(`/charaktere/${id}`)
+      await berechneWerte()
     } finally {
       loading.value = false
     }
+  }
+
+  async function berechneWerte() {
+    if (!aktuellerCharakter.value) return
+    abgeleiteteWerte.value = await api.post<AbgeleiteteWerte>('/spiellogik/berechne', {
+      charakter_daten: aktuellerCharakter.value.charakter_daten,
+    })
   }
 
   async function erstelleCharakter(charName: string, settingName: string) {
@@ -68,6 +77,7 @@ export const useCharakterStore = defineStore('charakter', () => {
 
     if (result.success && result.charakter_daten) {
       aktuellerCharakter.value.charakter_daten = result.charakter_daten
+      await berechneWerte()
     }
     return result
   }
@@ -75,9 +85,11 @@ export const useCharakterStore = defineStore('charakter', () => {
   return {
     liste,
     aktuellerCharakter,
+    abgeleiteteWerte,
     loading,
     ladeListe,
     ladeCharakter,
+    berechneWerte,
     erstelleCharakter,
     speichereCharakter,
     loescheCharakter,

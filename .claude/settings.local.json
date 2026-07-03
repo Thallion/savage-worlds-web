@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m venv .venv)",
+      "Bash(.venv/bin/pip install *)",
+      "Bash(.venv/bin/pip list *)",
+      "Bash(npm --version)",
+      "Bash(npm install *)",
+      "Bash(.venv/bin/uvicorn main:app *)",
+      "Bash(curl -s http://localhost:8000/api/health)",
+      "Bash(curl -s http://localhost:8000/api/settings)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(curl -s -X POST http://localhost:5173/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"benutzername\":\"testuser\",\"passwort\":\"geheim123\"}')",
+      "Bash(curl -s -X POST http://localhost:5173/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"passwort\":\"geheim123\"}')"
+    ]
+  }
+}

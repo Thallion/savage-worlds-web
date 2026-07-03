@@ -36,7 +36,29 @@ export interface CharakterDaten {
   maximale_fertigkeitssteigerungen?: number
   gesamt_handicap_punkte?: number
   verbleibende_handicap_punkte?: number
+  verbleibende_talente?: number
   settingregeln?: Record<string, boolean>
+  volk_effekte?: {
+    attribute: Record<string, number>
+    fertigkeiten: Record<string, { war_untrainiert: boolean; delta: number }>
+    talente: string[]
+    handicaps: string[]
+    talent_slots?: number
+  }
+}
+
+export interface AbgeleiteteWerte {
+  parade: number
+  robustheit: number
+  bewegungsweite: number
+  groesse: number
+  bennys: number
+  machtpunkte: number
+  verbleibende_maechte: number
+  verbleibende_attributsteigerungen: number
+  verbleibende_fertigkeitssteigerungen: number
+  verbleibende_handicap_punkte: number
+  verbleibende_talente: number
 }
 
 export interface CharakterListItem {

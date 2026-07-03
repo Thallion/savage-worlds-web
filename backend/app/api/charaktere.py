@@ -13,6 +13,10 @@ from app.schemas.charakter import (
     CharakterDetail,
     CharakterListItem,
 )
+from app.services.charakter_init import (
+    ergaenze_fehlende_eigenschaften,
+    initialisiere_charakter_daten,
+)
 
 router = APIRouter(prefix="/api/charaktere", tags=["charaktere"])
 
@@ -36,21 +40,18 @@ def create_charakter(
     db: Session = Depends(get_db),
     current_user: db_models.User = Depends(get_current_user),
 ):
+    try:
+        charakter_daten = initialisiere_charakter_daten(data.char_name, data.active_setting_name)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404, detail=f"Setting '{data.active_setting_name}' nicht gefunden"
+        )
+
     charakter = db_models.Charakter(
         user_id=current_user.id,
         char_name=data.char_name,
         active_setting_name=data.active_setting_name,
-        charakter_daten={
-            "profil_daten": {"Name": data.char_name},
-            "active_setting_name": data.active_setting_name,
-            "char_gen_completed": False,
-            "attribute": {},
-            "fertigkeiten": {},
-            "selected_handicaps": [],
-            "selected_talente": [],
-            "selected_maechte": [],
-            "voelker_selected": {},
-        },
+        charakter_daten=charakter_daten,
     )
     db.add(charakter)
     db.commit()
@@ -65,6 +66,14 @@ def get_charakter(
     current_user: db_models.User = Depends(get_current_user),
 ):
     charakter = _get_own_charakter(db, charakter_id, current_user.id)
+
+    daten, geaendert = ergaenze_fehlende_eigenschaften(charakter.charakter_daten)
+    if geaendert:
+        # JSON-Column ohne MutableDict: nur eine Neuzuweisung wird von SQLAlchemy erkannt
+        charakter.charakter_daten = daten
+        db.commit()
+        db.refresh(charakter)
+
     return charakter
 
 

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from app.schemas.spiellogik import SpiellogikRequest, SpiellogikResponse
 from app.services.charakter_init import initialisiere_charakter_daten, load_config, load_setting
 from app.services.handicap_effekte import wende_handicap_punkte_effekte_an
+from app.services.kompatibilitaet import handicap_konflikt, talent_konflikt
 from app.services.aufstiege import (
     AUFSTIEG_KOSTEN_ATTRIBUT,
     AUFSTIEG_KOSTEN_FERTIGKEIT,
@@ -261,6 +262,10 @@ def handicap_waehlen(req: SpiellogikRequest):
     if handicap_name in selected:
         return SpiellogikResponse(success=False, message=f"'{handicap_name}' bereits ausgewählt")
 
+    konflikt = handicap_konflikt(handicap_name, daten)
+    if konflikt:
+        return SpiellogikResponse(success=False, message=konflikt)
+
     stufe = handicap_data.get("stufe", "leicht").lower()
     punkte = 1 if stufe == "leicht" else 2
     gesamt = daten.get("gesamt_handicap_punkte", 0)
@@ -392,6 +397,11 @@ def talent_waehlen(req: SpiellogikRequest):
             message=f"Voraussetzungen nicht erfüllt: {', '.join(fehlend)}",
             bestaetigung_moeglich=True,
         )
+
+    # Verbotene Kombinationen (z. B. Reich + Arm) sind nicht überspringbar
+    konflikt = talent_konflikt(talent_name, daten)
+    if konflikt:
+        return SpiellogikResponse(success=False, message=konflikt)
 
     # Bezahlung wie im Original: erst freie Slots (Volks-Talent, eingelöste Punkte);
     # während der Erschaffung sonst 2 Handicap-Punkte, danach 1 Aufstieg

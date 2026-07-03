@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
@@ -52,6 +53,47 @@ def create_charakter(
         char_name=data.char_name,
         active_setting_name=data.active_setting_name,
         charakter_daten=charakter_daten,
+    )
+    db.add(charakter)
+    db.commit()
+    db.refresh(charakter)
+    return charakter
+
+
+@router.post("/import", response_model=CharakterDetail, status_code=status.HTTP_201_CREATED)
+def import_charakter(
+    charakter_daten: dict[str, Any] = Body(...),
+    db: Session = Depends(get_db),
+    current_user: db_models.User = Depends(get_current_user),
+):
+    """Importiert einen Charakter aus einem Export-JSON (nackte charakter_daten,
+    wie /{id}/export sie liefert). Fehlende Felder — auch bei Alt-Exporten aus
+    der Kivy-App — werden über die Lazy-Init-Normalisierung nachgefüllt."""
+    if not isinstance(charakter_daten, dict) or not charakter_daten:
+        raise HTTPException(status_code=422, detail="Kein gültiges Charakter-JSON")
+
+    daten, _ = ergaenze_fehlende_eigenschaften(charakter_daten)
+    char_name = daten.get("profil_daten", {}).get("Name") or "Importierter Charakter"
+
+    # char_name ist pro User eindeutig — bei Kollision nummerieren
+    vorhandene = {
+        name
+        for (name,) in db.query(db_models.Charakter.char_name).filter(
+            db_models.Charakter.user_id == current_user.id
+        )
+    }
+    if char_name in vorhandene:
+        n = 2
+        while f"{char_name} ({n})" in vorhandene:
+            n += 1
+        char_name = f"{char_name} ({n})"
+
+    charakter = db_models.Charakter(
+        user_id=current_user.id,
+        char_name=char_name,
+        active_setting_name=daten.get("active_setting_name", "SWAE"),
+        char_gen_completed=bool(daten.get("char_gen_completed", False)),
+        charakter_daten=daten,
     )
     db.add(charakter)
     db.commit()

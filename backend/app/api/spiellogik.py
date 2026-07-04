@@ -1,6 +1,11 @@
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.spiellogik import CharakterbogenRequest, SpiellogikRequest, SpiellogikResponse
+from app.schemas.spiellogik import (
+    CharakterbogenRequest,
+    SettingElementRequest,
+    SpiellogikRequest,
+    SpiellogikResponse,
+)
 from app.services.charakter_init import initialisiere_charakter_daten, load_config, load_setting
 from app.services.handicap_effekte import wende_handicap_punkte_effekte_an
 from app.services.kompatibilitaet import handicap_konflikt, talent_konflikt
@@ -34,6 +39,11 @@ from app.services.ausruestung import (
 )
 from app.services import cyberware, superkraefte
 from app.services.charakterbogen import generiere_charakterbogen
+from app.services.setting_elemente import (
+    loesche_element,
+    speichere_element,
+    wende_setting_overrides_an,
+)
 from app.services.statblock import generiere_statblock
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 from app.services.volk_wahlen import wende_volk_spezialwahl_an
@@ -41,11 +51,15 @@ from app.services.volk_wahlen import wende_volk_spezialwahl_an
 router = APIRouter(prefix="/api/spiellogik", tags=["spiellogik"])
 
 
-def _load_setting(setting_name: str) -> dict:
+def _load_setting(setting_name: str, daten: dict | None = None) -> dict:
+    """Lädt das Setting; mit daten werden die Charakter-Overrides angewendet."""
     try:
-        return load_setting(setting_name)
+        setting = load_setting(setting_name)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
+    if daten is not None:
+        setting = wende_setting_overrides_an(setting, daten)
+    return setting
 
 
 @router.post("/attribut/steigern", response_model=SpiellogikResponse)
@@ -265,7 +279,7 @@ def handicap_waehlen(req: SpiellogikRequest):
     setting_name = daten.get("active_setting_name", "SWAE")
 
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
 
@@ -320,7 +334,7 @@ def handicap_entfernen(req: SpiellogikRequest):
 
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
 
@@ -389,7 +403,7 @@ def talent_waehlen(req: SpiellogikRequest):
 
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting_talente = _load_setting(setting_name).get("talente", {})
+        setting_talente = _load_setting(setting_name, daten).get("talente", {})
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
 
@@ -505,7 +519,7 @@ def macht_waehlen(req: SpiellogikRequest):
 
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
 
@@ -652,7 +666,7 @@ def volk_waehlen(req: SpiellogikRequest):
     setting_name = daten.get("active_setting_name", "SWAE")
 
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
 
@@ -679,7 +693,7 @@ def volk_wahl(req: SpiellogikRequest):
     if sep:
         setting_name = daten.get("active_setting_name", "SWAE")
         try:
-            setting = _load_setting(setting_name)
+            setting = _load_setting(setting_name, daten)
         except HTTPException:
             return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
         ok, message = wende_volk_spezialwahl_an(daten, setting, wahl_id.strip(), auswahl.strip())
@@ -695,7 +709,7 @@ def ausruestung_kaufen(req: SpiellogikRequest):
     daten = req.charakter_daten
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
     ok, message = kaufe_ausruestung(daten, setting, req.element_name or "")
@@ -707,7 +721,7 @@ def ausruestung_verkaufen(req: SpiellogikRequest):
     daten = req.charakter_daten
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
     ok, message = verkaufe_ausruestung(daten, setting, req.element_name or "")
@@ -728,7 +742,7 @@ def _ausruestung_angelegt(req: SpiellogikRequest, angelegt: bool) -> SpiellogikR
     daten = req.charakter_daten
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
     ok, message = setze_angelegt(daten, setting, req.element_name or "", angelegt)
@@ -740,7 +754,7 @@ def _mit_setting(req: SpiellogikRequest, aktion) -> SpiellogikResponse:
     daten = req.charakter_daten
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting = _load_setting(setting_name)
+        setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
     ok, message = aktion(daten, setting, req.element_name or "")
@@ -889,6 +903,7 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
         setting = load_setting(daten.get("active_setting_name", ""))
     except FileNotFoundError:
         setting = {}
+    setting = wende_setting_overrides_an(setting, daten)
 
     kon_wert = daten.get("attribute", {}).get("Konstitution", {}).get("wert", 4)
     kaempfen = daten.get("fertigkeiten", {}).get("Kämpfen", {})
@@ -969,6 +984,7 @@ def statblock(req: SpiellogikRequest):
         setting = load_setting(daten.get("active_setting_name", ""))
     except FileNotFoundError:
         setting = {}
+    setting = wende_setting_overrides_an(setting, daten)
     werte = berechne_abgeleitete_werte(req)
     return {"statblock": generiere_statblock(daten, setting, werte)}
 
@@ -981,5 +997,50 @@ def charakterbogen(req: CharakterbogenRequest):
         setting = load_setting(daten.get("active_setting_name", ""))
     except FileNotFoundError:
         setting = {}
+    setting = wende_setting_overrides_an(setting, daten)
     werte = berechne_abgeleitete_werte(req)
     return {"html": generiere_charakterbogen(daten, setting, werte, req.printer_friendly)}
+
+
+@router.post("/talente/verfuegbar")
+def talente_verfuegbar(req: SpiellogikRequest):
+    """Namen aller Talente, deren Rang und Voraussetzungen der Charakter
+    aktuell erfüllt (Original: Filter "Nur verfügbare Talente")."""
+    daten = req.charakter_daten
+    setting = _load_setting(daten.get("active_setting_name", "SWAE"), daten)
+    setting_talente = setting.get("talente", {})
+    verfuegbar = [
+        name
+        for name, talent in setting_talente.items()
+        if rang_erlaubt(talent.get("rang", "A"), daten)
+        and not pruefe_voraussetzungen(talent, daten, setting_talente)
+    ]
+    return {"verfuegbar": verfuegbar}
+
+
+@router.post("/element/speichern", response_model=SpiellogikResponse)
+def element_speichern(req: SettingElementRequest):
+    """Legt ein Setting-Element an oder bearbeitet es (Original: Element-Popups).
+
+    Die Änderung landet in charakter_daten["setting_overrides"] und gilt nur
+    für diesen Charakter."""
+    daten = req.charakter_daten
+    setting = _load_setting(daten.get("active_setting_name", "SWAE"))
+    ok, meldung = speichere_element(
+        daten, setting, req.element_typ, req.element_name or "", req.element_daten or {}, req.alter_name
+    )
+    if not ok:
+        return SpiellogikResponse(success=False, message=meldung)
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/element/loeschen", response_model=SpiellogikResponse)
+def element_loeschen(req: SettingElementRequest):
+    """Entfernt ein Setting-Element für diesen Charakter (native Elemente
+    werden über die geloescht-Liste ausgeblendet, eigene ganz entfernt)."""
+    daten = req.charakter_daten
+    setting = _load_setting(daten.get("active_setting_name", "SWAE"))
+    ok, meldung = loesche_element(daten, setting, req.element_typ, req.element_name or "")
+    if not ok:
+        return SpiellogikResponse(success=False, message=meldung)
+    return SpiellogikResponse(success=True, charakter_daten=daten)

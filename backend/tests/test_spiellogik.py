@@ -226,7 +226,45 @@ def test_einloesen_talent_slot(daten):
 def test_mensch_freies_talent_gibt_slot(daten):
     d = aktion("volk/waehlen", daten, "Mensch")["charakter_daten"]
     assert d["verbleibende_talente"] == 1
+    # freies Talent ist als Kern-Wahl vorbelegt (Original: "Vielseitig")
+    assert d["volk_effekte"]["wahl"] == {"typ": "talent"}
     d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
+    assert d["verbleibende_talente"] == 0
+
+
+def test_mensch_vielseitig_tausch_gegen_fertigkeitspunkte(daten):
+    d = aktion("volk/waehlen", daten, "Mensch")["charakter_daten"]
+    d = aktion("volk/wahl", d, "fertigkeitspunkte")["charakter_daten"]
+    assert d["verbleibende_talente"] == 0
+    assert d["verbleibende_fertigkeitssteigerungen"] == 14
+    # und wieder zurück auf das freie Talent
+    d = aktion("volk/wahl", d, "talent")["charakter_daten"]
+    assert d["verbleibende_talente"] == 1
+    assert d["verbleibende_fertigkeitssteigerungen"] == 12
+
+
+def test_pathfinder_mensch_talent_und_attribut(daten):
+    """Savage Pathfinder Mensch: freies Talent UND W6-Attribut — die
+    Attributswahl darf den festen Talent-Slot nicht zurücknehmen."""
+    d = aktion("setting/wechseln", daten, "Savage Pathfinder")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Mensch")["charakter_daten"]
+    assert d["verbleibende_talente"] == 1
+    assert d["volk_effekte"]["talent_slots"] == 1
+    assert "wahl" not in d["volk_effekte"]
+
+    d = aktion("volk/wahl", d, "Stärke")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert d["verbleibende_talente"] == 1  # Slot bleibt erhalten
+
+    # Attribut umentscheiden: nur das Attribut wandert, der Slot bleibt
+    d = aktion("volk/wahl", d, "Verstand")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert d["attribute"]["Verstand"]["wert"] == 6
+    assert d["verbleibende_talente"] == 1
+
+    # Volk-Wechsel räumt beides ab
+    d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
+    assert d["attribute"]["Verstand"]["wert"] == 4
     assert d["verbleibende_talente"] == 0
 
 
@@ -1181,6 +1219,139 @@ def test_statblock_superkraefte_und_rang(daten):
     text = statblock(d)
     assert "Superkräfte: Fliegen [2 SKP] (Machtstufe I, 2/15 SKP)" in text
     assert "Aufstiege: 0 (Anfänger)" in text
+
+
+# --- Verfügbare Talente (Filter "Nur verfügbare") ---
+
+def test_talente_verfuegbar(daten):
+    resp = client.post("/api/spiellogik/talente/verfuegbar", json={"charakter_daten": daten})
+    assert resp.status_code == 200
+    verfuegbar = resp.json()["verfuegbar"]
+    # ohne Voraussetzungen und Anfänger-Rang: verfügbar
+    assert "Aristokrat" in verfuegbar
+    # "Flink" braucht GES W6 — Startcharakter hat W4
+    assert "Flink" not in verfuegbar
+
+    daten["attribute"]["Geschicklichkeit"]["wert"] = 6
+    verfuegbar = client.post(
+        "/api/spiellogik/talente/verfuegbar", json={"charakter_daten": daten}
+    ).json()["verfuegbar"]
+    assert "Flink" in verfuegbar
+
+
+# --- Setting-Elemente bearbeiten (setting_elemente.py) ---
+
+def element_aktion(pfad: str, daten: dict, typ: str, name: str, element_daten: dict | None = None,
+                   alter_name: str | None = None) -> dict:
+    resp = client.post(f"/api/spiellogik/element/{pfad}", json={
+        "charakter_daten": daten,
+        "element_typ": typ,
+        "element_name": name,
+        "element_daten": element_daten,
+        "alter_name": alter_name,
+    })
+    assert resp.status_code == 200
+    return resp.json()
+
+
+def test_element_hinzufuegen_und_waehlen(daten):
+    r = element_aktion("speichern", daten, "talente", "Bierkenner",
+                       {"rang": "A", "beschreibung": "Kennt jedes Bier."})
+    assert r["success"]
+    d = r["charakter_daten"]
+    eintrag = d["setting_overrides"]["talente"]["Bierkenner"]
+    assert eintrag["custom"] is True
+    assert eintrag["beschreibung"] == "Kennt jedes Bier."
+
+    # Das eigene Talent ist sofort wählbar (Talent-Slot nötig)
+    d = aktion("handicap/waehlen", d, "Alt")["charakter_daten"]
+    d = aktion("handicap-punkte/einloesen", d, "talent")["charakter_daten"]
+    r = aktion("talent/waehlen", d, "Bierkenner")
+    assert r["success"], r["message"]
+    assert "Bierkenner" in r["charakter_daten"]["selected_talente"]
+
+
+def test_element_bearbeiten_nativ(daten):
+    r = element_aktion("speichern", daten, "handicaps", "Fies",
+                       {"beschreibung": "Angepasst.", "stufe": "schwer"}, alter_name="Fies")
+    assert r["success"]
+    d = r["charakter_daten"]
+    eintrag = d["setting_overrides"]["handicaps"]["Fies"]
+    assert eintrag["custom"] is False  # bearbeitetes natives Element
+    assert eintrag["stufe"] == "schwer"
+    assert eintrag["punkte"] == 2  # Punkte folgen der Stufe
+
+    # Das bearbeitete Handicap überlagert das native beim Wählen
+    r = aktion("handicap/waehlen", d, "Fies")
+    assert r["success"]
+    assert r["charakter_daten"]["verbleibende_handicap_punkte"] == 2
+
+
+def test_element_umbenennen_zieht_auswahl_mit(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    d = aktion("handicap-punkte/einloesen", d, "talent")["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Aristokrat")["charakter_daten"]
+    r = element_aktion("speichern", d, "talente", "Adliger", {}, alter_name="Aristokrat")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert "Adliger" in d["selected_talente"]
+    assert "Aristokrat" not in d["selected_talente"]
+    # das native Original ist ausgeblendet
+    assert "Aristokrat" in d["setting_overrides"]["geloescht"]["talente"]
+
+
+def test_element_loeschen_nativ_und_gewaehlt(daten):
+    # gewähltes Element kann nicht gelöscht werden
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    r = element_aktion("loeschen", d, "handicaps", "Alt")
+    assert not r["success"]
+    assert "gewählt" in r["message"]
+
+    # ungewähltes natives Element: wird ausgeblendet und ist nicht mehr wählbar
+    r = element_aktion("loeschen", d, "handicaps", "Fies")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert "Fies" in d["setting_overrides"]["geloescht"]["handicaps"]
+    r = aktion("handicap/waehlen", d, "Fies")
+    assert not r["success"]
+
+
+def test_element_eigene_ausruestung_kaufbar(daten):
+    r = element_aktion("speichern", daten, "ausruestung", "Plasmalanze",
+                       {"kategorie": "Waffe", "kosten": 100, "gewicht": 1,
+                        "eigenschaften": {"Schaden": "Stä+W10"}})
+    assert r["success"]
+    d = r["charakter_daten"]
+    r = aktion("ausruestung/kaufen", d, "Plasmalanze")
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["ausruestung_selected"]["Plasmalanze"]["anzahl"] == 1
+
+    # gekaufte Ausrüstung kann nicht gelöscht werden
+    r = element_aktion("loeschen", d, "ausruestung", "Plasmalanze")
+    assert not r["success"]
+
+    # nach Verkauf schon — als Custom-Element verschwindet es komplett
+    d = aktion("ausruestung/verkaufen", d, "Plasmalanze")["charakter_daten"]
+    r = element_aktion("loeschen", d, "ausruestung", "Plasmalanze")
+    assert r["success"]
+    assert "Plasmalanze" not in r["charakter_daten"]["setting_overrides"]["ausruestung"]
+
+
+def test_element_duplikat_abgelehnt(daten):
+    r = element_aktion("speichern", daten, "talente", "Flink", {})
+    assert not r["success"]
+    assert "existiert bereits" in r["message"]
+
+
+def test_element_statblock_und_berechne_nutzen_overrides(daten):
+    r = element_aktion("speichern", daten, "ausruestung", "Turmschild",
+                       {"kategorie": "Schild", "kosten": 10, "parade": 3})
+    d = r["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Turmschild")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Turmschild")["charakter_daten"]
+    resp = client.post("/api/spiellogik/berechne", json={"charakter_daten": d})
+    assert resp.json()["parade"] == 5  # 2 Basis + 3 Schild
 
 
 # --- Charakterbogen (charakterbogen.py) ---

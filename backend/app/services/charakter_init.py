@@ -88,9 +88,212 @@ def initialisiere_charakter_daten(char_name: str, setting_name: str) -> dict:
     }
 
 
+def _als_liste(wert) -> list:
+    """Kivy-Auswahlen sind je nach Save-Version Skalar oder Liste."""
+    if wert is None:
+        return []
+    if isinstance(wert, list):
+        return [w for w in wert if w]
+    return [wert]
+
+
+def _rekonstruiere_volk_effekte(daten: dict, volk_name: str, volk_data: dict, setting: dict) -> dict:
+    """Baut das volk_effekte-Tracking für einen Kivy-Alt-Charakter nach.
+
+    Die Effekte selbst (Attribut-Boni, Startfertigkeiten, Auto-Talente, die
+    Kern-Wahl wie freies Talent/Attribut und Spezial-Wahlen) sind in den
+    exportierten Werten bereits enthalten — hier werden nur die Snapshots
+    rekonstruiert, damit Volk-Wechsel und erneutes Wählen sie exakt
+    zurücknehmen können und die Wahl im Völker-Tab angezeigt wird.
+    Die getroffenen Wahlen stehen im Kivy-Export in voelker_auswahlen.
+    """
+    effekte = volk_data.get("effects") or {}
+    wm = effekte.get("wahlmoeglichkeiten") or {}
+    auswahlen = (daten.get("voelker_auswahlen") or {}).get(volk_name) or {}
+    attribute = daten.get("attribute", {})
+    tracking: dict = {"attribute": {}, "fertigkeiten": {}, "talente": [], "handicaps": []}
+
+    for attr_name, bonus in (effekte.get("attribute_bonuses") or {}).items():
+        if attr_name in attribute:
+            tracking["attribute"][attr_name] = bonus
+    for fert_name, bonus in (effekte.get("fertigkeits_startboni") or {}).items():
+        if fert_name in daten.get("fertigkeiten", {}):
+            tracking["fertigkeiten"][fert_name] = {"war_untrainiert": True, "delta": bonus}
+    for talent in effekte.get("auto_talente") or []:
+        if talent in daten.get("selected_talente", []):
+            tracking["talente"].append(talent)
+    for handicap in effekte.get("auto_handicaps") or []:
+        if handicap in daten.get("selected_handicaps", []):
+            tracking["handicaps"].append(handicap)
+
+    # freies_talent (Mensch "Vielseitig") wird nicht pauschal registriert:
+    # In der Kivy-App gab es den Vorteil nur über die explizite Wahl in
+    # voelker_auswahlen. Steht neben freies_talent eine eigene Kern-Wahl
+    # (Savage Pathfinder Mensch: zusätzlich freies Attribut), ist das gewählte
+    # Talent ein fester Slot und keine tauschbare Wahl.
+    from app.services.volk_effekte import KERN_WAHL_KEYS
+
+    hat_freies_talent = wm.get("freies_talent") or wm.get("freies_anfaenger_talent")
+    hat_eigene_kern_wahl = any(wm.get(k) for k in KERN_WAHL_KEYS)
+    talent_ist_fester_bonus = hat_freies_talent and hat_eigene_kern_wahl
+    if talent_ist_fester_bonus and _als_liste(auswahlen.get("talent")):
+        tracking["talent_slots"] = 1
+
+    # Kern-Wahl: Mensch "Vielseitig", Halbelf, freies Attribut/Talent
+    wahl = None
+    kern = auswahlen.get("vielseitig_wahl") or auswahlen.get("halbelf_wahl")
+    if isinstance(kern, str) and kern:
+        if kern.startswith("Talent:"):
+            wahl = {"typ": "talent"}
+        elif "Fertigkeitspunkte" in kern:
+            wahl = {"typ": "fertigkeitspunkte"}
+        else:
+            # z. B. "Geschicklichkeit W6"
+            attr_name = kern.split(" W")[0].strip()
+            if attr_name in attribute:
+                wahl = {"typ": "attribut", "ziel": attr_name, "feld": "wert"}
+    if wahl is None:
+        attr_ziele = [a for a in _als_liste(auswahlen.get("attribut")) if a in attribute]
+        if attr_ziele:
+            wahl = {"typ": "attribut", "ziel": attr_ziele[0], "feld": "wert"}
+        elif not talent_ist_fester_bonus and _als_liste(auswahlen.get("talent")):
+            wahl = {"typ": "talent"}
+    if wahl:
+        tracking["wahl"] = wahl
+
+    # Spezial-Wahlen (attribut_schwaeche, Fertigkeits-Wahlen, magieaffin)
+    wahlen: dict = {}
+    malus_ziele = [a for a in _als_liste(auswahlen.get("attribut_malus")) if a in attribute]
+    if malus_ziele:
+        wahlen["attribut_schwaeche"] = {
+            "typ": "attribut_malus",
+            "ziel": malus_ziele[0],
+            "malus": int(effekte.get("attribut_malus_wert", -2)),
+        }
+    fert_ziele = [
+        f for f in _als_liste(auswahlen.get("fertigkeit")) if f in daten.get("fertigkeiten", {})
+    ]
+    if fert_ziele:
+        # Kivy speichert nur den generischen Typ "fertigkeit" — die Wahl-ID
+        # ergibt sich aus den Wahlmöglichkeiten des Volkes
+        wahl_id = next(
+            (
+                wid
+                for wid in (
+                    "heimlich",
+                    "freie_verstandsfertigkeit",
+                    "handwerks_wissen",
+                    "spezialisierung",
+                )
+                if wm.get(wid)
+            ),
+            "spezialisierung",
+        )
+        wahlen[wahl_id] = {
+            "typ": "fertigkeit",
+            "ziel": fert_ziele[0],
+            "war_untrainiert": True,
+            "delta": 2,
+        }
+    magieaffin = auswahlen.get("magieaffin")
+    if isinstance(magieaffin, str) and magieaffin:
+        from app.services.volk_wahlen import arkane_fertigkeit_aus_ah
+
+        snapshot: dict = {"typ": "magieaffin", "ah_talent": magieaffin}
+        if magieaffin in daten.get("selected_talente", []):
+            snapshot["talent_hinzugefuegt"] = True
+            # wie im Web-Flow: AH-Talent als Volks-Talent registrieren
+            tracking["talente"].append(magieaffin)
+        fert_name = arkane_fertigkeit_aus_ah(setting.get("talente", {}).get(magieaffin) or {})
+        if fert_name and fert_name in daten.get("fertigkeiten", {}):
+            snapshot["fertigkeit"] = fert_name
+        wahlen["magieaffin"] = snapshot
+    if wahlen:
+        tracking["wahlen"] = wahlen
+
+    return tracking
+
+
+def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
+    """Migriert Alt-Exporte der Kivy-App aufs Web-Format (in-place).
+
+    - voelker_selected: {volk_name: bool} über alle Völker -> {gewähltes Volk: volk_daten}
+    - voelker_auswahlen (freies Talent, Attributswahl, ...) -> volk_effekte-Tracking
+    - Ausrüstung: selected_elements.ausruestung / ausruestung_mengen plus
+      selected_waffen/-ruestungen/-schilde -> ausruestung_selected
+    - vermoegen (Rest-Geld) -> ausruestung_ausgegeben (Web rechnet Budget − Ausgaben)
+    """
+    geaendert = False
+
+    voelker = daten.get("voelker_selected") or {}
+    if any(not isinstance(v, dict) for v in voelker.values()):
+        gewaehlt = next((name for name, aktiv in voelker.items() if aktiv), None)
+        if gewaehlt:
+            daten["voelker_selected"] = {gewaehlt: setting.get("voelker", {}).get(gewaehlt) or {}}
+        else:
+            daten["voelker_selected"] = {}
+        geaendert = True
+
+    # Web-Charaktere bekommen volk_effekte beim Volk-Wählen — fehlt es trotz
+    # gewähltem Volk bei einem Kivy-Alt-Charakter (erkennbar an dessen
+    # Spezial-Feldern), wird das Tracking aus voelker_auswahlen rekonstruiert
+    ist_kivy_export = geaendert or any(
+        feld in daten for feld in ("voelker_auswahlen", "selected_elements", "ausruestung_mengen")
+    )
+    voelker = daten.get("voelker_selected") or {}
+    if ist_kivy_export and voelker and "volk_effekte" not in daten:
+        volk_name, volk_data = next(iter(voelker.items()))
+        if isinstance(volk_data, dict):
+            daten["volk_effekte"] = _rekonstruiere_volk_effekte(daten, volk_name, volk_data, setting)
+            geaendert = True
+
+    alt = (daten.get("selected_elements") or {}).get("ausruestung") or {}
+    if not alt:
+        mengen = daten.get("ausruestung_mengen") or {}
+        namen = (
+            set(mengen)
+            | set(daten.get("selected_allgemeine_ausruestung") or [])
+            | set(daten.get("selected_waffen") or [])
+            | set(daten.get("selected_ruestungen") or [])
+            | set(daten.get("selected_schilde") or [])
+        )
+        alt = {name: {"anzahl": mengen.get(name, 1)} for name in namen}
+
+    if alt and not daten.get("ausruestung_selected"):
+        angelegt_namen = set(daten.get("selected_ruestungen") or []) | set(
+            daten.get("selected_schilde") or []
+        )
+        migriert = {}
+        for name, eintrag in alt.items():
+            anzahl = eintrag.get("anzahl", 1) or 1
+            if eintrag.get("ausgewaehlt", True):
+                migriert[name] = {"anzahl": anzahl, "angelegt": name in angelegt_namen}
+        if migriert:
+            daten["ausruestung_selected"] = migriert
+            # Kivy speichert das Rest-Vermögen; Web speichert die Ausgaben
+            from app.services.ausruestung import startkapital_basis, vermoegen_multiplikator
+
+            basis = startkapital_basis(setting)
+            gesamt = basis * vermoegen_multiplikator(daten) + basis * daten.get(
+                "startgeld_bonus_punkte", 0
+            )
+            if isinstance(daten.get("vermoegen"), (int, float)):
+                daten["ausruestung_ausgegeben"] = gesamt - daten["vermoegen"]
+            else:
+                katalog = setting.get("ausruestung", {})
+                daten["ausruestung_ausgegeben"] = sum(
+                    (katalog.get(name, {}).get("kosten", 0) or 0) * e["anzahl"]
+                    for name, e in migriert.items()
+                )
+            geaendert = True
+
+    return geaendert
+
+
 def ergaenze_fehlende_eigenschaften(daten: dict) -> tuple[dict, bool]:
     """Füllt bei Bestandscharakteren leere attribute/fertigkeiten und fehlende
-    Punkte-Felder nach. Gibt (neues Dict, wurde_geaendert) zurück."""
+    Punkte-Felder nach und migriert Kivy-Alt-Exporte. Gibt (neues Dict,
+    wurde_geaendert) zurück."""
     config = load_config("eigenschaften_config.json")
     try:
         setting = load_setting(daten.get("active_setting_name", ""))
@@ -106,6 +309,10 @@ def ergaenze_fehlende_eigenschaften(daten: dict) -> tuple[dict, bool]:
     if not neu.get("fertigkeiten"):
         neu["fertigkeiten"] = baue_fertigkeiten(setting, config)
         geaendert = True
+
+    # nach dem Auffüllen, damit die Wahl-Rekonstruktion Attribute/Fertigkeiten
+    # validieren kann
+    geaendert = _migriere_kivy_altformat(neu, setting) or geaendert
 
     start_attr = config.get("start_attributsteigerungen", START_ATTRIBUTSTEIGERUNGEN)
     start_fert = config.get("start_fertigkeitssteigerungen", START_FERTIGKEITSSTEIGERUNGEN)

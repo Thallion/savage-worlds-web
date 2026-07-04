@@ -14,14 +14,25 @@ from app.services.volk_wahlen import entferne_alle_spezialwahlen
 MAX_WUERFEL = 12
 MIN_WUERFEL = 4
 
+# Kern-Wahlen mit eigener Semantik. Hat ein Volk eine davon UND freies_talent
+# (z. B. Savage Pathfinder Mensch: freies Talent UND W6-Attribut), ist das
+# freie Talent ein fester Bonus und keine tauschbare "Vielseitig"-Wahl.
+KERN_WAHL_KEYS = (
+    "freies_talent_oder_attribut",
+    "freies_talent_oder_fertigkeitspunkte",
+    "freies_attribut",
+    "attribut_staerke_oder_konstitution",
+)
+
 
 def verfuegbare_volk_wahl(volk_data: dict) -> dict | None:
     """Offene Wahlmöglichkeit eines Volkes: {"optionen": [...], "attribute": [...]|None}.
 
     "talent" = +1 Talent-Slot, "fertigkeitspunkte" = +2 Fertigkeitssteigerungen,
     "attribut" = ein Attribut um einen Würfeltyp erhöhen ("attribute" schränkt
-    die wählbaren Attribute ein, None = alle). freies_talent wird weiterhin
-    automatisch beim Volk-Anwenden vergeben, nicht hier.
+    die wählbaren Attribute ein, None = alle). freies_talent wird beim
+    Volk-Anwenden als Talent-Slot vergeben (Vorauswahl "talent") und kann hier
+    wie im Original ("Vielseitig") gegen +2 Fertigkeitspunkte getauscht werden.
     """
     wm = (volk_data.get("effects") or {}).get("wahlmoeglichkeiten") or {}
     if wm.get("freies_talent_oder_attribut"):
@@ -32,6 +43,8 @@ def verfuegbare_volk_wahl(volk_data: dict) -> dict | None:
         return {"optionen": ["attribut"], "attribute": None}
     if wm.get("attribut_staerke_oder_konstitution"):
         return {"optionen": ["attribut"], "attribute": ["Stärke", "Konstitution"]}
+    if wm.get("freies_talent") or wm.get("freies_anfaenger_talent"):
+        return {"optionen": ["talent", "fertigkeitspunkte"], "attribute": None}
     return None
 
 
@@ -198,11 +211,18 @@ def wende_volk_an(daten: dict, volk_name: str, volk_data: dict) -> dict:
             daten["selected_handicaps"].append(handicap)
             angewendet["handicaps"].append(handicap)
 
-    # Freies Anfängertalent (z. B. Mensch "Anpassungsfähig") als Talent-Slot
+    # Freies Anfängertalent (z. B. Mensch "Anpassungsfähig") als Talent-Slot.
+    # Steht daneben eine eigene Kern-Wahl (Savage Pathfinder Mensch: zusätzlich
+    # freies Attribut), ist der Slot ein fester Bonus — sonst ist er die
+    # "Vielseitig"-Vorauswahl und kann über volk/wahl gegen
+    # +2 Fertigkeitspunkte getauscht werden
     wm = effekte.get("wahlmoeglichkeiten") or {}
     if wm.get("freies_talent") or wm.get("freies_anfaenger_talent"):
         daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
-        angewendet["talent_slots"] = 1
+        if any(wm.get(k) for k in KERN_WAHL_KEYS):
+            angewendet["talent_slots"] = 1
+        else:
+            angewendet["wahl"] = {"typ": "talent"}
 
     daten["volk_effekte"] = angewendet
     daten["voelker_selected"] = {volk_name: volk_data}

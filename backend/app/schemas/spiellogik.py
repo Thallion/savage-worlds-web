@@ -16,6 +16,14 @@ class CharakterbogenRequest(SpiellogikRequest):
     printer_friendly: bool = False
 
 
+class SettingElementRequest(SpiellogikRequest):
+    # Bearbeitung von Setting-Elementen (talente, handicaps, maechte, ausruestung)
+    element_typ: str
+    element_daten: dict[str, Any] | None = None
+    # gesetzt beim Bearbeiten; weicht er von element_name ab, ist es eine Umbenennung
+    alter_name: str | None = None
+
+
 class SpiellogikResponse(BaseModel):
     success: bool
     message: str = ""

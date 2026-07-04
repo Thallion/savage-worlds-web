@@ -186,6 +186,9 @@ const volkWahl = computed<{ optionen: string[]; attribute: string[] | null } | n
   if (wm.freies_attribut) return { optionen: ['attribut'], attribute: null }
   if (wm.attribut_staerke_oder_konstitution)
     return { optionen: ['attribut'], attribute: ['Stärke', 'Konstitution'] }
+  // Original "Vielseitig" (Mensch): freies Talent ODER +2 Fertigkeitspunkte
+  if (wm.freies_talent || wm.freies_anfaenger_talent)
+    return { optionen: ['talent', 'fertigkeitspunkte'], attribute: null }
   return null
 })
 

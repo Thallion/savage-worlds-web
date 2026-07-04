@@ -52,7 +52,7 @@
               </tr>
               <tr>
                 <td class="font-weight-medium">Volk</td>
-                <td>{{ Object.keys(daten.voelker_selected || {}).join(', ') || '-' }}</td>
+                <td>{{ gewaehlteVoelker || '-' }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -112,6 +112,44 @@
               </tr>
             </tbody>
           </v-table>
+        </v-col>
+      </v-row>
+
+      <v-row class="mt-4">
+        <!-- Mächte -->
+        <v-col cols="12" md="4">
+          <h3 class="text-h6 mb-3">Mächte</h3>
+          <v-chip
+            v-for="m in daten.selected_maechte"
+            :key="m"
+            class="mr-1 mb-1"
+            color="primary"
+          >
+            {{ m }}
+          </v-chip>
+          <p v-if="!daten.selected_maechte?.length" class="text-grey">Keine</p>
+          <p v-else-if="abgeleiteteWerte.machtpunkte" class="text-caption mt-1">
+            {{ abgeleiteteWerte.machtpunkte }} Machtpunkte
+          </p>
+        </v-col>
+
+        <!-- Ausrüstung -->
+        <v-col cols="12" md="8">
+          <h3 class="text-h6 mb-3">Ausrüstung</h3>
+          <v-table v-if="besitz.length" density="compact">
+            <tbody>
+              <tr v-for="eintrag in besitz" :key="eintrag.name">
+                <td>{{ eintrag.name }}</td>
+                <td class="text-right">
+                  <span v-if="eintrag.anzahl > 1">{{ eintrag.anzahl }}x</span>
+                  <v-chip v-if="eintrag.angelegt" size="x-small" class="ml-2" color="success">
+                    angelegt
+                  </v-chip>
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+          <p v-else class="text-grey">Keine</p>
         </v-col>
       </v-row>
 
@@ -291,7 +329,27 @@ const abgeleiteteWerte = computed(
       bewegungsweite: 6,
       groesse: 0,
       bennys: 3,
+      machtpunkte: 0,
     },
+)
+
+// Alt-Format aus der Kivy-App: {volk_name: bool} — nur truthy Einträge sind gewählt
+const gewaehlteVoelker = computed(() =>
+  Object.entries(daten.value.voelker_selected || {})
+    .filter(([, v]) => v)
+    .map(([name]) => name)
+    .join(', '),
+)
+
+const besitz = computed(() =>
+  Object.entries(daten.value.ausruestung_selected ?? {})
+    .filter(([, e]: [string, any]) => (e.anzahl ?? 0) > 0)
+    .map(([name, e]: [string, any]) => ({
+      name,
+      anzahl: e.anzahl ?? 1,
+      angelegt: e.angelegt ?? false,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
 )
 
 onMounted(() => {

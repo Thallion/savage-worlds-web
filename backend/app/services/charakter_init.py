@@ -10,11 +10,16 @@ START_FERTIGKEITSSTEIGERUNGEN = 12
 
 
 def load_setting(setting_name: str) -> dict:
-    path = settings.gamelogic_path / "settings" / f"{setting_name}.json"
-    if not path.exists():
+    """Lädt ein Setting — erst die mitgelieferten, dann die eigenen unter
+    data/settings (Setting-Verwaltung)."""
+    if not setting_name or any(z in setting_name for z in ("/", "\\", "..")):
         raise FileNotFoundError(setting_name)
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
+    for verzeichnis in (settings.gamelogic_path / "settings", settings.custom_settings_path):
+        path = verzeichnis / f"{setting_name}.json"
+        if path.exists():
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+    raise FileNotFoundError(setting_name)
 
 
 def load_config(name: str) -> dict:

@@ -97,6 +97,20 @@ def test_migration_volk_ohne_auswahl():
     assert neu["voelker_selected"] == {}
 
 
+def test_migration_talent_kopien_aus_kivy_keys():
+    # Die Kivy-App legt Mehrfachauswahl als eigene Keys "Name_2" an; das Web
+    # führt den Basisnamen mehrfach in selected_talente
+    alt = {
+        "active_setting_name": "SWAE",
+        "voelker_selected": {"Menschen": True},
+        "selected_talente": ["AH (Magie)", "Neue Mächte", "Neue Mächte_2", "HeXXe_3"],
+    }
+    neu, geaendert = ergaenze_fehlende_eigenschaften(alt)
+    assert geaendert
+    # "HeXXe_3" bleibt: kein passendes Basis-Talent im Setting
+    assert neu["selected_talente"] == ["AH (Magie)", "Neue Mächte", "Neue Mächte", "HeXXe_3"]
+
+
 def test_migration_ausruestung_aus_selected_elements():
     alt = {
         "active_setting_name": "SWAE",

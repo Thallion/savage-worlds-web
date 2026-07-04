@@ -2,11 +2,15 @@
 
 import copy
 import json
+import re
 
 from app.config import settings
 
 START_ATTRIBUTSTEIGERUNGEN = 5
 START_FERTIGKEITSSTEIGERUNGEN = 12
+
+# Mehrfach gewählte Talente legt die Kivy-App als eigene Keys "Name_2" an
+_KIVY_KOPIE_RE = re.compile(r"^(.+)_(\d+)$")
 
 
 def load_setting(setting_name: str) -> dict:
@@ -88,6 +92,7 @@ def initialisiere_charakter_daten(char_name: str, setting_name: str) -> dict:
         "gesamt_handicap_punkte": 0,
         "verbleibende_handicap_punkte": 0,
         "verbleibende_talente": 0,
+        "pathfinder_kostenlose_talente_gewaehlt": 0,
         "aufstiege_gesamt": 0,
         "verbleibende_aufstiege": 0,
     }
@@ -252,6 +257,20 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
             daten["volk_effekte"] = _rekonstruiere_volk_effekte(daten, volk_name, volk_data, setting)
             geaendert = True
 
+    # Talent-Kopien "Name_2" (Kivy-Mehrfachauswahl) auf den Basisnamen
+    # zurückführen — das Web führt den Namen mehrfach in selected_talente
+    setting_talente = setting.get("talente", {})
+    migrierte_talente = []
+    for name in daten.get("selected_talente") or []:
+        m = _KIVY_KOPIE_RE.match(name)
+        if m and name not in setting_talente and m.group(1) in setting_talente:
+            migrierte_talente.append(m.group(1))
+            geaendert = True
+        else:
+            migrierte_talente.append(name)
+    if migrierte_talente != (daten.get("selected_talente") or []):
+        daten["selected_talente"] = migrierte_talente
+
     alt = (daten.get("selected_elements") or {}).get("ausruestung") or {}
     if not alt:
         mengen = daten.get("ausruestung_mengen") or {}
@@ -329,6 +348,7 @@ def ergaenze_fehlende_eigenschaften(daten: dict) -> tuple[dict, bool]:
         "gesamt_handicap_punkte": 0,
         "verbleibende_handicap_punkte": 0,
         "verbleibende_talente": 0,
+        "pathfinder_kostenlose_talente_gewaehlt": 0,
         "aufstiege_gesamt": 0,
         "verbleibende_aufstiege": 0,
         "ausruestung_selected": {},

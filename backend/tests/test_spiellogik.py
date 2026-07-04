@@ -216,6 +216,63 @@ def test_talent_entfernen_gibt_slot_zurueck(daten):
     assert d["verbleibende_talente"] == 1
 
 
+def test_talent_mehrfach_waehlbar(daten):
+    # "Neue Mächte" ist duplizierbar und zählt je Kopie auf die Mächte-Slots
+    d = aktion("talent/waehlen", mit_talent_slot(daten, 3), "AH (Magie)")["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Neue Mächte")["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Neue Mächte")["charakter_daten"]
+    assert d["selected_talente"].count("Neue Mächte") == 2
+    assert d["verbleibende_talente"] == 0
+    # AH (Magie) 3 Slots + 2 × "Neue Mächte" à 2
+    assert berechne(d)["verbleibende_maechte"] == 7
+
+
+def test_talent_nicht_duplizierbar(daten):
+    # "Glück" steht in nicht_duplizierbare_talente (talent_config.json)
+    d = aktion("talent/waehlen", mit_talent_slot(daten, 2), "Glück")["charakter_daten"]
+    r = aktion("talent/waehlen", d, "Glück")
+    assert not r["success"]
+    assert "mehrfach" in r["message"]
+
+
+def test_talent_kopie_entfernen_erstattet_letzte_zahlung(daten):
+    d = aktion("talent/waehlen", mit_talent_slot(daten, 2), "AH (Magie)")["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Neue Mächte")["charakter_daten"]  # Slot
+    d = aktion("handicap/waehlen", d, "Alt")["charakter_daten"]  # 2 Handicap-Punkte
+    d = aktion("talent/waehlen", d, "Neue Mächte")["charakter_daten"]  # Handicap-Punkte
+    assert d["talent_zahlungen"]["Neue Mächte"] == ["slot", "handicap_punkte"]
+
+    d = aktion("talent/entfernen", d, "Neue Mächte")["charakter_daten"]
+    assert d["verbleibende_handicap_punkte"] == 2
+    assert d["selected_talente"].count("Neue Mächte") == 1
+    d = aktion("talent/entfernen", d, "Neue Mächte")["charakter_daten"]
+    assert "Neue Mächte" not in d["selected_talente"]
+    assert d["verbleibende_talente"] == 1
+
+
+def test_talent_mehrfach_effekte_pro_kopie(daten):
+    # Berserker erhöht Stärke je Kopie um einen Würfeltyp; das Entfernen einer
+    # Kopie nimmt genau deren Effekt zurück
+    d = aktion("talent/waehlen", mit_talent_slot(daten, 2), "Berserker")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    d = aktion("talent/waehlen", d, "Berserker")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 8
+    d = aktion("talent/entfernen", d, "Berserker")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    d = aktion("talent/entfernen", d, "Berserker")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert "talent_effekte" not in d
+
+
+def test_talent_zahlung_altformat_string(daten):
+    # Bestandscharaktere speichern die Zahlungsquelle als String statt Liste
+    d = aktion("talent/waehlen", mit_talent_slot(daten), "Aristokrat")["charakter_daten"]
+    d["talent_zahlungen"]["Aristokrat"] = "slot"
+    d = aktion("talent/entfernen", d, "Aristokrat")["charakter_daten"]
+    assert d["verbleibende_talente"] == 1
+    assert d["talent_zahlungen"] == {}
+
+
 def test_einloesen_talent_slot(daten):
     d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # 2 Punkte
     d = aktion("handicap-punkte/einloesen", d, "talent")["charakter_daten"]
@@ -266,6 +323,83 @@ def test_pathfinder_mensch_talent_und_attribut(daten):
     d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
     assert d["attribute"]["Verstand"]["wert"] == 4
     assert d["verbleibende_talente"] == 0
+
+
+# --- Savage Pathfinder: kostenloses Klassen-Talent ---
+
+@pytest.fixture
+def pathfinder(daten):
+    d = aktion("setting/wechseln", daten, "Savage Pathfinder")["charakter_daten"]
+    # Voraussetzungen für das Klassen-Talent "Barbar" (STÄ W6, KON W6)
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Konstitution")["charakter_daten"]
+    return d
+
+
+def test_pathfinder_klassen_talent_kostenlos(pathfinder):
+    # kostet weder Slot noch Handicap-Punkte
+    r = aktion("talent/waehlen", pathfinder, "Barbar")
+    assert r["success"]
+    assert "kostenlos" in r["message"]
+    d = r["charakter_daten"]
+    assert d["pathfinder_kostenlose_talente_gewaehlt"] == 1
+    assert d["talent_zahlungen"]["Barbar"] == ["pathfinder_kostenlos"]
+    assert d["verbleibende_talente"] == 0
+    assert d["verbleibende_handicap_punkte"] == 0
+
+
+def test_pathfinder_nur_ein_kostenloses_klassen_talent(pathfinder):
+    d = aktion("talent/waehlen", pathfinder, "Barbar")["charakter_daten"]
+    # das zweite Klassen-Talent kostet regulär (hier: weder Slot noch Punkte da)
+    r = aktion("talent/waehlen", d, "Barbar")
+    assert not r["success"]
+    assert "Slot" in r["message"]
+
+
+def test_pathfinder_hintergrund_talent_nicht_kostenlos(pathfinder):
+    # nur Kategorie "Klasse" ist frei (Original: ist_pathfinder_kostenloses_talent)
+    r = aktion("talent/waehlen", pathfinder, "Aristokrat")  # Kategorie Hintergrund
+    assert not r["success"]
+    assert "Slot" in r["message"]
+
+
+def test_pathfinder_kostenlos_nur_bei_erschaffung(pathfinder):
+    pathfinder["char_gen_completed"] = True
+    r = aktion("talent/waehlen", pathfinder, "Barbar")
+    assert not r["success"]
+    assert "Aufstieg" in r["message"]
+
+
+def test_pathfinder_klassen_talent_entfernen_gibt_kostenlos_frei(pathfinder):
+    d = aktion("talent/waehlen", pathfinder, "Barbar")["charakter_daten"]
+    d = aktion("talent/entfernen", d, "Barbar")["charakter_daten"]
+    assert d["pathfinder_kostenlose_talente_gewaehlt"] == 0
+    assert d["verbleibende_talente"] == 0  # keine Slot-Erstattung
+    # danach ist es wieder kostenlos wählbar
+    r = aktion("talent/waehlen", d, "Barbar")
+    assert r["success"] and "kostenlos" in r["message"]
+
+
+def test_pathfinder_entfernen_ohne_zahlungsjournal(pathfinder):
+    # Kivy-Importe kennen kein Zahlungsjournal — ein Klassen-Talent gibt wie
+    # im Original zuerst das kostenlose Talent frei statt eines Slots
+    d = aktion("talent/waehlen", pathfinder, "Barbar")["charakter_daten"]
+    del d["talent_zahlungen"]
+    d = aktion("talent/entfernen", d, "Barbar")["charakter_daten"]
+    assert d["pathfinder_kostenlose_talente_gewaehlt"] == 0
+    assert d["verbleibende_talente"] == 0
+
+
+def test_pathfinder_abschluss_hinweis_ohne_klassen_talent(pathfinder):
+    r = aktion("erschaffung/abschliessen", pathfinder)
+    assert r["success"]
+    assert "Klassen-Talent" in r["message"]
+    # mit gewähltem Klassen-Talent kein Hinweis
+    d = aktion("erschaffung/oeffnen", r["charakter_daten"])["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Barbar")["charakter_daten"]
+    r = aktion("erschaffung/abschliessen", d)
+    assert r["success"]
+    assert "Klassen-Talent" not in r["message"]
 
 
 # --- Mächte ---
@@ -501,7 +635,7 @@ def test_berserker_erhoeht_staerke(daten):
     d = mit_talent_slot(daten)
     d = aktion("talent/waehlen", d, "Berserker")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 6
-    assert d["talent_effekte"]["Berserker"]["attribut_stufen"] == [["Stärke", "wert"]]
+    assert d["talent_effekte"]["Berserker"] == [{"attribut_stufen": [["Stärke", "wert"]]}]
     d = aktion("talent/entfernen", d, "Berserker")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 4
     assert "talent_effekte" not in d
@@ -543,7 +677,7 @@ def test_talent_kauf_direkt_mit_handicap_punkten(daten):
     d = r["charakter_daten"]
     assert "Aristokrat" in d["selected_talente"]
     assert d["verbleibende_handicap_punkte"] == 0
-    assert d["talent_zahlungen"]["Aristokrat"] == "handicap_punkte"
+    assert d["talent_zahlungen"]["Aristokrat"] == ["handicap_punkte"]
 
 
 def test_talent_entfernen_erstattet_handicap_punkte(daten):
@@ -561,7 +695,7 @@ def test_talent_kauf_nutzt_slot_vor_handicap_punkten(daten):
     d = aktion("talent/waehlen", d, "Aristokrat")["charakter_daten"]
     assert d["verbleibende_talente"] == 0
     assert d["verbleibende_handicap_punkte"] == 2
-    assert d["talent_zahlungen"]["Aristokrat"] == "slot"
+    assert d["talent_zahlungen"]["Aristokrat"] == ["slot"]
     d = aktion("talent/entfernen", d, "Aristokrat")["charakter_daten"]
     assert d["verbleibende_talente"] == 1
     assert d["verbleibende_handicap_punkte"] == 2
@@ -683,7 +817,7 @@ def test_talent_kostet_aufstieg_nach_abschluss(daten):
     d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
     d = aktion("talent/waehlen", d, "Aristokrat")["charakter_daten"]
     assert d["verbleibende_aufstiege"] == 0
-    assert d["talent_zahlungen"]["Aristokrat"] == "aufstieg"
+    assert d["talent_zahlungen"]["Aristokrat"] == ["aufstieg"]
     d = aktion("talent/entfernen", d, "Aristokrat")["charakter_daten"]
     assert d["verbleibende_aufstiege"] == 1
 
@@ -1162,6 +1296,19 @@ def test_superkraft_machtstufe_wechsel(superheld):
     r = aktion("superkraft/stufe", d, "I")
     assert not r["success"]
     assert berechne(r["charakter_daten"])["superkraefte"]["stufe"] == "III"
+
+
+def test_der_beste_hebt_kraftobergrenze(superheld):
+    # Original: Standard 1/3 des SKP-Budgets, mit "Der Beste" 1/2
+    assert berechne(superheld)["superkraefte"]["kraftobergrenze"] == 5  # 15 // 3
+    superheld["selected_talente"].append("Der Beste")
+    assert berechne(superheld)["superkraefte"]["kraftobergrenze"] == 7  # 15 // 2
+
+    # Original-Testfall (test_der_beste.py): Stufe III, 45 SKP → 15 bzw. 22
+    d = aktion("superkraft/stufe", superheld, "III")["charakter_daten"]
+    assert berechne(d)["superkraefte"]["kraftobergrenze"] == 22
+    d["selected_talente"].remove("Der Beste")
+    assert berechne(d)["superkraefte"]["kraftobergrenze"] == 15
 
 
 def test_superkraft_modifikator_toggle(superheld):

@@ -325,6 +325,83 @@ def test_pathfinder_mensch_talent_und_attribut(daten):
     assert d["verbleibende_talente"] == 0
 
 
+# --- Savage Pathfinder: kostenloses Klassen-Talent ---
+
+@pytest.fixture
+def pathfinder(daten):
+    d = aktion("setting/wechseln", daten, "Savage Pathfinder")["charakter_daten"]
+    # Voraussetzungen für das Klassen-Talent "Barbar" (STÄ W6, KON W6)
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Konstitution")["charakter_daten"]
+    return d
+
+
+def test_pathfinder_klassen_talent_kostenlos(pathfinder):
+    # kostet weder Slot noch Handicap-Punkte
+    r = aktion("talent/waehlen", pathfinder, "Barbar")
+    assert r["success"]
+    assert "kostenlos" in r["message"]
+    d = r["charakter_daten"]
+    assert d["pathfinder_kostenlose_talente_gewaehlt"] == 1
+    assert d["talent_zahlungen"]["Barbar"] == ["pathfinder_kostenlos"]
+    assert d["verbleibende_talente"] == 0
+    assert d["verbleibende_handicap_punkte"] == 0
+
+
+def test_pathfinder_nur_ein_kostenloses_klassen_talent(pathfinder):
+    d = aktion("talent/waehlen", pathfinder, "Barbar")["charakter_daten"]
+    # das zweite Klassen-Talent kostet regulär (hier: weder Slot noch Punkte da)
+    r = aktion("talent/waehlen", d, "Barbar")
+    assert not r["success"]
+    assert "Slot" in r["message"]
+
+
+def test_pathfinder_hintergrund_talent_nicht_kostenlos(pathfinder):
+    # nur Kategorie "Klasse" ist frei (Original: ist_pathfinder_kostenloses_talent)
+    r = aktion("talent/waehlen", pathfinder, "Aristokrat")  # Kategorie Hintergrund
+    assert not r["success"]
+    assert "Slot" in r["message"]
+
+
+def test_pathfinder_kostenlos_nur_bei_erschaffung(pathfinder):
+    pathfinder["char_gen_completed"] = True
+    r = aktion("talent/waehlen", pathfinder, "Barbar")
+    assert not r["success"]
+    assert "Aufstieg" in r["message"]
+
+
+def test_pathfinder_klassen_talent_entfernen_gibt_kostenlos_frei(pathfinder):
+    d = aktion("talent/waehlen", pathfinder, "Barbar")["charakter_daten"]
+    d = aktion("talent/entfernen", d, "Barbar")["charakter_daten"]
+    assert d["pathfinder_kostenlose_talente_gewaehlt"] == 0
+    assert d["verbleibende_talente"] == 0  # keine Slot-Erstattung
+    # danach ist es wieder kostenlos wählbar
+    r = aktion("talent/waehlen", d, "Barbar")
+    assert r["success"] and "kostenlos" in r["message"]
+
+
+def test_pathfinder_entfernen_ohne_zahlungsjournal(pathfinder):
+    # Kivy-Importe kennen kein Zahlungsjournal — ein Klassen-Talent gibt wie
+    # im Original zuerst das kostenlose Talent frei statt eines Slots
+    d = aktion("talent/waehlen", pathfinder, "Barbar")["charakter_daten"]
+    del d["talent_zahlungen"]
+    d = aktion("talent/entfernen", d, "Barbar")["charakter_daten"]
+    assert d["pathfinder_kostenlose_talente_gewaehlt"] == 0
+    assert d["verbleibende_talente"] == 0
+
+
+def test_pathfinder_abschluss_hinweis_ohne_klassen_talent(pathfinder):
+    r = aktion("erschaffung/abschliessen", pathfinder)
+    assert r["success"]
+    assert "Klassen-Talent" in r["message"]
+    # mit gewähltem Klassen-Talent kein Hinweis
+    d = aktion("erschaffung/oeffnen", r["charakter_daten"])["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Barbar")["charakter_daten"]
+    r = aktion("erschaffung/abschliessen", d)
+    assert r["success"]
+    assert "Klassen-Talent" not in r["message"]
+
+
 # --- Mächte ---
 
 def mit_arkanem_hintergrund(daten: dict) -> dict:

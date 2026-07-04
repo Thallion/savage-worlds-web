@@ -392,6 +392,22 @@ def handicap_punkte_einloesen(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
+def _ist_pathfinder_setting(daten: dict) -> bool:
+    return "pathfinder" in daten.get("active_setting_name", "").lower()
+
+
+def _pathfinder_kostenlos_moeglich(daten: dict, talent_data: dict) -> bool:
+    """Savage Pathfinder: bei der Erschaffung ist ein Talent der Kategorie
+    "Klasse" kostenlos (Original: ist_pathfinder_kostenloses_talent /
+    hat_bereits_kostenloses_pathfinder_talent)."""
+    if daten.get("char_gen_completed") or not _ist_pathfinder_setting(daten):
+        return False
+    if talent_data.get("kategorie") != "Klasse":
+        return False
+    maximum = load_config("talent_config.json").get("kosten", {}).get("pathfinder_max_kostenlose", 1)
+    return daten.get("pathfinder_kostenlose_talente_gewaehlt", 0) < maximum
+
+
 def _ist_talent_duplizierbar(talent_name: str, talent_data: dict) -> bool:
     """Mehrfachauswahl wie im Original: erlaubt (z. B. "Neue Mächte",
     "Machtpunkte", "Anhänger"), außer das Talent steht in der Sperrliste
@@ -445,11 +461,19 @@ def talent_waehlen(req: SpiellogikRequest):
     if konflikt:
         return SpiellogikResponse(success=False, message=konflikt)
 
-    # Bezahlung wie im Original: erst freie Slots (Volks-Talent, eingelöste Punkte);
-    # während der Erschaffung sonst 2 Handicap-Punkte, danach 1 Aufstieg
+    # Bezahlung wie im Original: erst das kostenlose Pathfinder-Klassen-Talent,
+    # dann freie Slots (Volks-Talent, eingelöste Punkte); während der
+    # Erschaffung sonst 2 Handicap-Punkte, danach 1 Aufstieg
     talent_kosten = HANDICAP_EINLOESE_KOSTEN["talent"]
     abgeschlossen = daten.get("char_gen_completed", False)
-    if daten.get("verbleibende_talente", 0) > 0:
+    erfolgsmeldung = ""
+    if _pathfinder_kostenlos_moeglich(daten, talent_data):
+        zahlungsquelle = "pathfinder_kostenlos"
+        daten["pathfinder_kostenlose_talente_gewaehlt"] = (
+            daten.get("pathfinder_kostenlose_talente_gewaehlt", 0) + 1
+        )
+        erfolgsmeldung = f"'{talent_name}' als kostenloses Klassen-Talent gewählt (Savage Pathfinder)"
+    elif daten.get("verbleibende_talente", 0) > 0:
         zahlungsquelle = "slot"
         daten["verbleibende_talente"] = daten["verbleibende_talente"] - 1
     elif not abgeschlossen and daten.get("verbleibende_handicap_punkte", 0) >= talent_kosten:
@@ -481,7 +505,23 @@ def talent_waehlen(req: SpiellogikRequest):
     zahlungen[talent_name] = bisherige + [zahlungsquelle]
     # Auto-Handicaps/-Talente/-Mächte und Attribut-Effekte (z. B. Berserker)
     wende_talent_effekte_an(daten, talent_name, talent_data)
-    return SpiellogikResponse(success=True, charakter_daten=daten)
+    return SpiellogikResponse(success=True, message=erfolgsmeldung, charakter_daten=daten)
+
+
+def _kivy_import_zahlungsquelle(daten: dict, talent_name: str) -> str:
+    """Zahlungsquelle für Talente ohne Zahlungsjournal (Kivy-Importe).
+
+    Wie das Original beim Abwählen: ein Klassen-Talent gibt zuerst das
+    kostenlose Pathfinder-Talent frei, sonst wird ein Slot erstattet."""
+    if _ist_pathfinder_setting(daten) and daten.get("pathfinder_kostenlose_talente_gewaehlt", 0) > 0:
+        try:
+            setting = _load_setting(daten.get("active_setting_name", "SWAE"), daten)
+        except HTTPException:
+            return "slot"
+        talent_data = setting.get("talente", {}).get(talent_name) or {}
+        if talent_data.get("kategorie") == "Klasse":
+            return "pathfinder_kostenlos"
+    return "slot"
 
 
 @router.post("/talent/entfernen", response_model=SpiellogikResponse)
@@ -516,12 +556,17 @@ def talent_entfernen(req: SpiellogikRequest):
     zahlungen = daten.setdefault("talent_zahlungen", {})
     quellen = zahlungen.get(talent_name)
     quellen = [quellen] if isinstance(quellen, str) else list(quellen or [])
-    quelle = quellen.pop() if quellen else "slot"
+    quelle = quellen.pop() if quellen else _kivy_import_zahlungsquelle(daten, talent_name)
     if quellen:
         zahlungen[talent_name] = quellen
     else:
         zahlungen.pop(talent_name, None)
-    if quelle == "handicap_punkte":
+    if quelle == "pathfinder_kostenlos":
+        # Original: Zähler freigeben, keine Slot-/Punkte-Erstattung
+        daten["pathfinder_kostenlose_talente_gewaehlt"] = max(
+            0, daten.get("pathfinder_kostenlose_talente_gewaehlt", 0) - 1
+        )
+    elif quelle == "handicap_punkte":
         daten["verbleibende_handicap_punkte"] = (
             daten.get("verbleibende_handicap_punkte", 0) + HANDICAP_EINLOESE_KOSTEN["talent"]
         )
@@ -607,10 +652,14 @@ def erschaffung_abschliessen(req: SpiellogikRequest):
         return SpiellogikResponse(
             success=False, message="Erschaffung ist bereits abgeschlossen", charakter_daten=daten
         )
+    # Original: nur ein Hinweis, das Abschließen bleibt möglich
+    hinweis = ""
+    if _ist_pathfinder_setting(daten) and not daten.get("pathfinder_kostenlose_talente_gewaehlt", 0):
+        hinweis = " — Hinweis: das kostenlose Klassen-Talent (Savage Pathfinder) wurde nicht gewählt"
     daten["char_gen_completed"] = True
     return SpiellogikResponse(
         success=True,
-        message="Erschaffung abgeschlossen — weitere Steigerungen kosten Aufstiege",
+        message="Erschaffung abgeschlossen — weitere Steigerungen kosten Aufstiege" + hinweis,
         charakter_daten=daten,
     )
 

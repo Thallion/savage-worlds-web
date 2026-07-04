@@ -20,7 +20,7 @@ export interface AttributState {
   modifier: number
 }
 
-export type TalentZahlung = 'slot' | 'handicap_punkte' | 'aufstieg'
+export type TalentZahlung = 'slot' | 'handicap_punkte' | 'aufstieg' | 'pathfinder_kostenlos'
 
 export interface TalentEffektSnapshot {
   handicaps?: string[]
@@ -89,6 +89,8 @@ export interface CharakterDaten {
   // Zahlungsquelle je gekaufter Talent-Kopie für korrekte Rückerstattung
   // beim Entfernen (Altbestand: einzelner String statt Liste)
   talent_zahlungen?: Record<string, TalentZahlung | TalentZahlung[]>
+  // Savage Pathfinder: gewählte kostenlose Klassen-Talente (max. 1)
+  pathfinder_kostenlose_talente_gewaehlt?: number
   // Snapshot der Auto-Effekte gewählter Talente (Berserker, AH-Auto-Handicaps, ...)
   // — eine Liste je Kopie bei Mehrfachauswahl (Altbestand: einzelnes Objekt)
   talent_effekte?: Record<string, TalentEffektSnapshot | TalentEffektSnapshot[]>

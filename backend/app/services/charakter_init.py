@@ -92,6 +92,7 @@ def initialisiere_charakter_daten(char_name: str, setting_name: str) -> dict:
         "gesamt_handicap_punkte": 0,
         "verbleibende_handicap_punkte": 0,
         "verbleibende_talente": 0,
+        "pathfinder_kostenlose_talente_gewaehlt": 0,
         "aufstiege_gesamt": 0,
         "verbleibende_aufstiege": 0,
     }
@@ -347,6 +348,7 @@ def ergaenze_fehlende_eigenschaften(daten: dict) -> tuple[dict, bool]:
         "gesamt_handicap_punkte": 0,
         "verbleibende_handicap_punkte": 0,
         "verbleibende_talente": 0,
+        "pathfinder_kostenlose_talente_gewaehlt": 0,
         "aufstiege_gesamt": 0,
         "verbleibende_aufstiege": 0,
         "ausruestung_selected": {},

@@ -33,6 +33,7 @@ from app.services.ausruestung import (
     verkaufe_ausruestung,
 )
 from app.services import cyberware, superkraefte
+from app.services.statblock import generiere_statblock
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 from app.services.volk_wahlen import wende_volk_spezialwahl_an
 
@@ -954,3 +955,15 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
         "aufstiege_gesamt": daten.get("aufstiege_gesamt", 0),
         "rang": charakter_rang(daten),
     }
+
+
+@router.post("/statblock")
+def statblock(req: SpiellogikRequest):
+    """Kompakter Text-Statblock des Charakters (SWADE-Stil, wie im Original)."""
+    daten = req.charakter_daten
+    try:
+        setting = load_setting(daten.get("active_setting_name", ""))
+    except FileNotFoundError:
+        setting = {}
+    werte = berechne_abgeleitete_werte(req)
+    return {"statblock": generiere_statblock(daten, setting, werte)}

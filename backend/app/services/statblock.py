@@ -120,7 +120,8 @@ def generiere_statblock(daten: dict, setting: dict, werte: dict) -> str:
     name = daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter"
     zeilen = [name]
 
-    volk = ", ".join(daten.get("voelker_selected", {}).keys())
+    # Alt-Format aus der Kivy-App: {volk_name: bool} — nur truthy Einträge sind gewählt
+    volk = ", ".join(k for k, v in daten.get("voelker_selected", {}).items() if v)
     setting_name = daten.get("active_setting_name", "")
     if volk:
         zeilen.append(f"Volk: {volk} ({setting_name})" if setting_name else f"Volk: {volk}")

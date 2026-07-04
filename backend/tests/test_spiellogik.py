@@ -1181,3 +1181,59 @@ def test_statblock_superkraefte_und_rang(daten):
     text = statblock(d)
     assert "Superkräfte: Fliegen [2 SKP] (Machtstufe I, 2/15 SKP)" in text
     assert "Aufstiege: 0 (Anfänger)" in text
+
+
+# --- Charakterbogen (charakterbogen.py) ---
+
+def charakterbogen(daten: dict, printer_friendly: bool = False) -> str:
+    resp = client.post(
+        "/api/spiellogik/charakterbogen",
+        json={"charakter_daten": daten, "printer_friendly": printer_friendly},
+    )
+    assert resp.status_code == 200
+    return resp.json()["html"]
+
+
+def test_charakterbogen_basis(daten):
+    daten["profil_daten"]["Name"] = "Grimnir <Test>"
+    d = aktion("volk/waehlen", daten, "Zwerg")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Alt")["charakter_daten"]
+    html = charakterbogen(d)
+    assert html.startswith("<!DOCTYPE html>")
+    # Name wird escaped
+    assert "Grimnir &lt;Test&gt;" in html
+    assert "<h2>Abstammung: Zwerg</h2>" in html
+    assert "<h2>Handicaps</h2>" in html
+    assert "<td>Alt</td><td>schwer</td>" in html
+    # ungelernte Fertigkeiten tauchen nicht auf
+    assert "<td>Kämpfen</td>" not in html
+    # Farbige Version enthält die Original-Hintergrundfarbe
+    assert "#FFF8DC" in html
+
+
+def test_charakterbogen_druckerfreundlich(daten):
+    html = charakterbogen(daten, printer_friendly=True)
+    assert "#FFF8DC" not in html
+    assert "#ffb961" not in html
+
+
+def test_charakterbogen_ausruestung(daten):
+    d = aktion("ausruestung/kaufen", daten, "Jacke (dünn)")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Jacke (dünn)")["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Axt, Handbeil")["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Kleiner Schild")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Kleiner Schild")["charakter_daten"]
+    html = charakterbogen(d)
+    assert "<h2>Waffen</h2>" in html
+    assert "<td>Stä+W6</td>" in html
+    assert "<h2>Rüstungen</h2>" in html
+    assert '<td class="gesamt">Gesamt</td>' in html
+    assert "<h2>Schilde</h2>" in html
+
+
+def test_charakterbogen_altformat_voelker(daten):
+    # Alt-Format aus der Kivy-App: {volk_name: bool}
+    daten["voelker_selected"] = {"Mensch": True, "Zwerg": False}
+    html = charakterbogen(daten)
+    assert "<h2>Abstammung: Mensch</h2>" in html
+    assert "Zwerg" not in html

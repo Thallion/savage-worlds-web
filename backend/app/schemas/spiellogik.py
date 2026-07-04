@@ -11,6 +11,11 @@ class SpiellogikRequest(BaseModel):
     ignoriere_pruefungen: bool = False
 
 
+class CharakterbogenRequest(SpiellogikRequest):
+    # Druckerfreundliche Version ohne Hintergrundfarben (wie im Original)
+    printer_friendly: bool = False
+
+
 class SpiellogikResponse(BaseModel):
     success: bool
     message: str = ""

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.spiellogik import SpiellogikRequest, SpiellogikResponse
+from app.schemas.spiellogik import CharakterbogenRequest, SpiellogikRequest, SpiellogikResponse
 from app.services.charakter_init import initialisiere_charakter_daten, load_config, load_setting
 from app.services.handicap_effekte import wende_handicap_punkte_effekte_an
 from app.services.kompatibilitaet import handicap_konflikt, talent_konflikt
@@ -33,6 +33,7 @@ from app.services.ausruestung import (
     verkaufe_ausruestung,
 )
 from app.services import cyberware, superkraefte
+from app.services.charakterbogen import generiere_charakterbogen
 from app.services.statblock import generiere_statblock
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 from app.services.volk_wahlen import wende_volk_spezialwahl_an
@@ -867,8 +868,11 @@ def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
             if stat in boni:
                 boni[stat] += wert
 
-    # Volk: Boni stehen strukturiert im effects-Objekt des gewählten Volkes
+    # Volk: Boni stehen strukturiert im effects-Objekt des gewählten Volkes.
+    # Alt-Format aus der Kivy-App speichert {volk_name: bool} statt Volk-Daten.
     for volk_data in daten.get("voelker_selected", {}).values():
+        if not isinstance(volk_data, dict):
+            continue
         effekte = volk_data.get("effects") or {}
         boni["bewegungsweite"] += effekte.get("bewegungsweite_bonus", 0)
         boni["robustheit"] += effekte.get("robustheit_bonus", 0)
@@ -967,3 +971,15 @@ def statblock(req: SpiellogikRequest):
         setting = {}
     werte = berechne_abgeleitete_werte(req)
     return {"statblock": generiere_statblock(daten, setting, werte)}
+
+
+@router.post("/charakterbogen")
+def charakterbogen(req: CharakterbogenRequest):
+    """Kompletter Charakterbogen als HTML-Dokument (wie im Original)."""
+    daten = req.charakter_daten
+    try:
+        setting = load_setting(daten.get("active_setting_name", ""))
+    except FileNotFoundError:
+        setting = {}
+    werte = berechne_abgeleitete_werte(req)
+    return {"html": generiere_charakterbogen(daten, setting, werte, req.printer_friendly)}

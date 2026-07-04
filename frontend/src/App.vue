@@ -3,7 +3,9 @@
     <v-app-bar color="primary" density="compact">
       <v-app-bar-title>Savage Worlds Charakter-Generator</v-app-bar-title>
       <template v-if="authStore.isLoggedIn">
-        <v-chip class="mr-2" variant="outlined">{{ authStore.user?.benutzername }}</v-chip>
+        <v-btn to="/" variant="text" prepend-icon="mdi-account-group">Charaktere</v-btn>
+        <v-btn to="/settings" variant="text" prepend-icon="mdi-book-cog">Settings</v-btn>
+        <v-chip class="mr-2 ml-2" variant="outlined">{{ authStore.user?.benutzername }}</v-chip>
         <v-btn icon="mdi-logout" @click="logout" />
       </template>
     </v-app-bar>

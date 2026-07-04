@@ -49,6 +49,7 @@ Game content (rules data) is plain JSON, not code:
 
 - `backend/gamelogic/settings/*.json` — one file per campaign setting (SWAE, Deadlands, Hellfrost, …). The filename stem **is** the setting name used in `active_setting_name` and the `/api/settings` endpoints. Each file contains that setting's voelker, talente, handicaps, maechte, etc.
 - `backend/gamelogic/config/*.json` — setting-independent base config.
+- User-created settings (Setting-Verwaltung: leer/Kopie, Zusammenführung, aus Charakter, Elementauswahl — `app/services/setting_verwaltung.py`, write endpoints on `/api/settings`) are stored as JSON in `backend/data/settings/`; `load_setting` resolves names against the native directory first, then this one.
 - `backend/gamelogic/models/*.py` are Python classes ported from the Kivy app but are currently **not imported by the API** — the spiellogik endpoints operate directly on dicts. Check before assuming they are wired in.
 
 Auth: hand-rolled and minimal on purpose. JWT encode/decode is implemented locally in `backend/app/jwt_utils.py` (HS256 via hmac; PyJWT is in requirements but unused), passwords are PBKDF2-hashed in `app/api/auth.py`, and `get_current_user` in `app/api/deps.py` guards all `/api/charaktere` routes (users only see their own characters). The frontend keeps the token in `localStorage` and attaches it in `frontend/src/api/client.ts`, a thin fetch wrapper — no axios.

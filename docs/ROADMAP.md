@@ -1,6 +1,6 @@
 # Savage Worlds Web — Roadmap
 
-Stand: 2026-07-03 · Abgleich mit dem Original (Kivy): https://github.com/Thallion/Savage-Worlds-Charakter-Generator-deutsch
+Stand: 2026-07-04 · Abgleich mit dem Original (Kivy): https://github.com/Thallion/Savage-Worlds-Charakter-Generator-deutsch
 
 ## Status quo
 
@@ -31,20 +31,20 @@ Web-Port des Kivy-Charakter-Generators. Architektur:
 - [x] **Export/Import** — Export-Button (JSON-Download) und Import-Button (Datei-Upload) in der Charakterliste; `POST /api/charaktere/import` normalisiert über `ergaenze_fehlende_eigenschaften` (auch Kivy-Alt-Exporte), Namenskollisionen werden nummeriert
 - [x] **Erschaffung abschließen & Aufstiege** (`app/services/aufstiege.py`) — `erschaffung/abschliessen|oeffnen`, `aufstieg/hinzufuegen|entfernen`; danach kosten Attribut 1 / Fertigkeit 0.5 (über Attribut das Doppelte) / Talent 1 Aufstieg; Rang aus ausgegebenen Aufstiegen (4/8/12/16 → F/V/H/L) schaltet höherrangige Talente/Mächte frei; Aufstiegs-Leiste mit Rang im Editor
 - [x] **Ausrüstung & Startgeld** (`app/services/ausruestung.py`) — Ausrüstungs-Tab mit Katalog aus `setting["ausruestung"]`; Geld hergeleitet statt gespeichert: `startgeld` pro Setting (Standard 500) × Multiplikator (Arm 0,5 / Reich 3 / Stinkreich 5) + eingelöste Punkte − `ausruestung_ausgegeben`; Einlösung 1 Handicap-Punkt → +1× Startkapital; `ausruestung/kaufen|verkaufen|anlegen|ablegen` (Verkauf: voll während Erschaffung, 50 % danach); angelegte Rüstung (Torso) → Robustheit, Schilde → Parade, Effekt-Bedingung `keine_getragene_ruestung` greift jetzt; Traglast Stärke×10 kg + `traglast_kg`-Boni, Gesamtgewicht mit Überladen-Warnung
+- [x] **Statblock-Export** (`app/services/statblock.py`) — `POST /spiellogik/statblock` erzeugt einen kompakten Text-Statblock im SWADE-Stil (Name, Volk, Attribute in SWADE-Reihenfolge, gelernte Fertigkeiten, abgeleitete Werte mit Panzerung in Klammern, Handicaps mit Stufe, Talente, Mächte, Superkräfte, Cyberware, Ausrüstung mit Geld, Aufstiege/Rang); Übersicht-Tab mit Erzeugen/Kopieren/.txt-Download (PDF über den Browser-Druck)
 - [x] **Setting-Spezialsysteme** — **Cyberware** (`app/services/cyberware.py`, SciFi-Kompendium): Stresslimit min(WIL, KON)/2 und hartes Maximum min(WIL, KON) inkl. Talent-Boni (`cyberware_effekte`, z. B. Kybernetische Toleranz) und Implantat-Boni (`bonus_stress_kapazitaet`); Installation prüft Geld, `max_installationen` und Maximum, über dem Limit W20-Nebenwirkung aus `cyberware_nebenwirkungen`; Cyborg-Budget zweckgebunden; Deinstallation voll erstattet bei Erschaffung, danach +25 % Eingriffskosten; Stat-Effekte (Panzerung, Robustheit, …) in `/berechne`. **Superkräfte** (`app/services/superkraefte.py`, Superkräfte-Kompendium): Machtstufe I–V (SKP-Budget + Kraftobergrenze), Kräfte mit frei investierbaren Punkten (heterogene Kosten-Angaben), Modifikatoren kraftspezifisch/generisch (auch negativ), Talent-Gate „Superkräfte"; settingabhängige Editor-Tabs Cyberware/Superkräfte — `volk/wahl` mit `wahl_id:auswahl`-Format; Fertigkeits-Wahlen auf W6 (`heimlich` Engro, `freie_verstandsfertigkeit` Gnom, `handwerks_wissen` Zwerg/Sundered Skies, `spezialisierung` Androiden), **Magieaffin** (AH-Wahl, Talent frei als Volks-Talent, Arkane Fertigkeit W4-2 → W4 wie im Original), **Attribut-Schwäche** (Malus-Wahl über `effects.attribut_malus`/`attribut_malus_wert`, greift bei Custom-Völkern), `outsider_statt_trennungsangst` (Insektoide, Handicap-Verzicht), beschreibende Wahlen `pflanzenerbe_auswahl`/`tierart_auswahl` (Optionen in `config/volk_wahl_config.json`, Tierart Freitext — Regel-Effekte je Tierart fehlen auch im Original als Daten); Snapshots in `volk_effekte.wahlen`, Volk-Wechsel nimmt alles zurück; Spezialwahl-Karten im VoelkerTab
 
-## Geplante Schritte (nach Nutzwert sortiert)
+## Geplante Schritte
 
-Abgleich mit der Geschäftslogik des Originals (`functions/`-Module):
+Der Abgleich mit der Geschäftslogik des Originals (`functions/`-Module) ist abgeschlossen. Offen bleiben Vertiefungen und Qualität:
 
-### 1. Statblock-Export (Original: `statblock_generator.py`)
+### Ideen für weitere Ausbaustufen
 
-Charakter als Text-/PDF-Statblock exportieren.
+- **Cyberware-Konfiguration**: Implantate mit Auswahl-Effekten (`attribut_erhoehung`, `fertigkeitschip`) brauchen eine Konfigurations-UI; aktuell wirken nur die pauschalen Stat-Effekte.
+- **Tierart-/Pflanzenerbe-Effekte**: Regel-Effekte je Wahl fehlen auch im Original als Daten — bei Bedarf in `volk_wahl_config.json` ergänzen.
+- **SciFi-Startgeld**: `SciFi Kompendium.json` definiert kein `startgeld` (Standard 500) — Implantate ab 1.000 sind ohne Einlösung/Cyborg nicht bezahlbar.
+- **PDF-Statblock**: aktuell Text + Zwischenablage + .txt-Download; echtes PDF z. B. über reportlab.
 
 ### Begleitend: Tests ausbauen
 
-Runner: `cd backend && .venv/bin/python -m pytest tests/`. Bei jedem Schritt mitwachsen lassen; offen: Auth-/Charaktere-Endpoints (Test-DB), Frontend-Tests.
-
-## Reihenfolge-Begründung
-
-Der Statblock-Export macht fertige Charaktere am Spieltisch nutzbar und ist der letzte offene Abgleich mit dem Original.
+Runner: `cd backend && .venv/bin/python -m pytest tests/`. Offen: Auth-/Charaktere-Endpoints (Test-DB), Frontend-Tests.

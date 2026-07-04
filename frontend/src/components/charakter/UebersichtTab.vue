@@ -114,15 +114,89 @@
           </v-table>
         </v-col>
       </v-row>
+
+      <!-- Statblock-Export -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <div class="d-flex align-center ga-2 mb-3">
+            <h3 class="text-h6">Statblock</h3>
+            <v-btn
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-refresh"
+              @click="ladeStatblock"
+            >
+              Erzeugen
+            </v-btn>
+            <v-btn
+              v-if="statblockText"
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-content-copy"
+              @click="kopiereStatblock"
+            >
+              Kopieren
+            </v-btn>
+            <v-btn
+              v-if="statblockText"
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-download"
+              @click="downloadStatblock"
+            >
+              Als .txt speichern
+            </v-btn>
+            <span v-if="statblockMeldung" class="text-caption">{{ statblockMeldung }}</span>
+          </div>
+          <v-card v-if="statblockText" variant="outlined" class="pa-4">
+            <pre class="statblock-text">{{ statblockText }}</pre>
+          </v-card>
+        </v-col>
+      </v-row>
     </v-card-text>
   </v-card>
 </template>
 
+<style scoped>
+.statblock-text {
+  white-space: pre-wrap;
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+</style>
+
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
+import { api } from '@/api/client'
 
 const store = useCharakterStore()
+
+const statblockText = ref('')
+const statblockMeldung = ref('')
+
+async function ladeStatblock() {
+  statblockMeldung.value = ''
+  const result = await api.post<{ statblock: string }>('/spiellogik/statblock', {
+    charakter_daten: daten.value,
+  })
+  statblockText.value = result.statblock
+}
+
+async function kopiereStatblock() {
+  await navigator.clipboard.writeText(statblockText.value)
+  statblockMeldung.value = 'In die Zwischenablage kopiert.'
+}
+
+function downloadStatblock() {
+  const blob = new Blob([statblockText.value], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${daten.value.profil_daten?.Name || 'charakter'}-statblock.txt`
+  a.click()
+  URL.revokeObjectURL(url)
+}
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 

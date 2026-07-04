@@ -21,6 +21,18 @@ from app.services.talent_voraussetzungen import (
     macht_kapazitaet,
     pruefe_voraussetzungen,
 )
+from app.services.ausruestung import (
+    gesamtgewicht,
+    kaufe_ausruestung,
+    panzerung_torso,
+    schild_parade,
+    setze_angelegt,
+    traegt_ruestung,
+    traglast_kg,
+    verfuegbares_geld,
+    verkaufe_ausruestung,
+)
+from app.services import cyberware, superkraefte
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 from app.services.volk_wahlen import wende_volk_spezialwahl_an
 
@@ -329,7 +341,7 @@ def handicap_entfernen(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
-HANDICAP_EINLOESE_KOSTEN = {"attribut": 2, "fertigkeit": 1, "talent": 2}
+HANDICAP_EINLOESE_KOSTEN = {"attribut": 2, "fertigkeit": 1, "talent": 2, "startgeld": 1}
 
 
 @router.post("/handicap-punkte/einloesen", response_model=SpiellogikResponse)
@@ -340,7 +352,7 @@ def handicap_punkte_einloesen(req: SpiellogikRequest):
     if kosten is None:
         return SpiellogikResponse(
             success=False,
-            message=f"Unbekannte Einlöse-Option '{option}' (gültig: attribut, fertigkeit, talent)",
+            message=f"Unbekannte Einlöse-Option '{option}' (gültig: attribut, fertigkeit, talent, startgeld)",
         )
 
     verbleibend = daten.get("verbleibende_handicap_punkte", 0)
@@ -354,6 +366,9 @@ def handicap_punkte_einloesen(req: SpiellogikRequest):
     daten["verbleibende_handicap_punkte"] = verbleibend - kosten
     if option == "talent":
         daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
+    elif option == "startgeld":
+        # 1 Punkt → zusätzliches Geld in Höhe des Startkapitals (SWAE)
+        daten["startgeld_bonus_punkte"] = daten.get("startgeld_bonus_punkte", 0) + 1
     else:
         feld = "attributsteigerungen" if option == "attribut" else "fertigkeitssteigerungen"
         daten[f"verbleibende_{feld}"] = daten.get(f"verbleibende_{feld}", 0) + 1
@@ -673,7 +688,136 @@ def volk_wahl(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
-_BERECHNE_STATS = ("parade", "robustheit", "bewegungsweite", "groesse", "bennys")
+@router.post("/ausruestung/kaufen", response_model=SpiellogikResponse)
+def ausruestung_kaufen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+    ok, message = kaufe_ausruestung(daten, setting, req.element_name or "")
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+@router.post("/ausruestung/verkaufen", response_model=SpiellogikResponse)
+def ausruestung_verkaufen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+    ok, message = verkaufe_ausruestung(daten, setting, req.element_name or "")
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+@router.post("/ausruestung/anlegen", response_model=SpiellogikResponse)
+def ausruestung_anlegen(req: SpiellogikRequest):
+    return _ausruestung_angelegt(req, True)
+
+
+@router.post("/ausruestung/ablegen", response_model=SpiellogikResponse)
+def ausruestung_ablegen(req: SpiellogikRequest):
+    return _ausruestung_angelegt(req, False)
+
+
+def _ausruestung_angelegt(req: SpiellogikRequest, angelegt: bool) -> SpiellogikResponse:
+    daten = req.charakter_daten
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+    ok, message = setze_angelegt(daten, setting, req.element_name or "", angelegt)
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+def _mit_setting(req: SpiellogikRequest, aktion) -> SpiellogikResponse:
+    """Führt aktion(daten, setting, element) aus; lädt vorher das Setting."""
+    daten = req.charakter_daten
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+    ok, message = aktion(daten, setting, req.element_name or "")
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+@router.post("/cyberware/installieren", response_model=SpiellogikResponse)
+def cyberware_installieren(req: SpiellogikRequest):
+    def aktion(daten, setting, element):
+        geld, _ = verfuegbares_geld(daten, setting)
+        return cyberware.installiere(daten, setting, element, geld)
+
+    return _mit_setting(req, aktion)
+
+
+@router.post("/cyberware/deinstallieren", response_model=SpiellogikResponse)
+def cyberware_deinstallieren(req: SpiellogikRequest):
+    return _mit_setting(req, lambda d, s, e: cyberware.deinstalliere(d, s, e))
+
+
+@router.post("/cyberware/nebenwirkung", response_model=SpiellogikResponse)
+def cyberware_nebenwirkung(req: SpiellogikRequest):
+    return _mit_setting(req, lambda d, s, e: cyberware.wuerfle_nebenwirkung(d, s))
+
+
+@router.post("/cyberware/nebenwirkung-entfernen", response_model=SpiellogikResponse)
+def cyberware_nebenwirkung_entfernen(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    liste = daten.get("cyberware_nebenwirkungen", [])
+    try:
+        index = int(req.element_name or "")
+        liste.pop(index)
+    except (ValueError, IndexError):
+        return SpiellogikResponse(success=False, message="Ungültiger Nebenwirkungs-Index", charakter_daten=daten)
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/superkraft/stufe", response_model=SpiellogikResponse)
+def superkraft_stufe(req: SpiellogikRequest):
+    return _mit_setting(req, lambda d, s, e: superkraefte.setze_machtstufe(d, s, e))
+
+
+@router.post("/superkraft/waehlen", response_model=SpiellogikResponse)
+def superkraft_waehlen(req: SpiellogikRequest):
+    return _mit_setting(req, lambda d, s, e: superkraefte.waehle_kraft(d, s, e))
+
+
+@router.post("/superkraft/entfernen", response_model=SpiellogikResponse)
+def superkraft_entfernen(req: SpiellogikRequest):
+    return _mit_setting(req, lambda d, s, e: superkraefte.entferne_kraft(d, e))
+
+
+@router.post("/superkraft/punkte", response_model=SpiellogikResponse)
+def superkraft_punkte(req: SpiellogikRequest):
+    """element_name: "Kraftname:Punkte", z. B. "Fliegen:8"."""
+
+    def aktion(daten, setting, element):
+        name, sep, punkte = element.rpartition(":")
+        if not sep or not punkte.lstrip("-").isdigit():
+            return False, 'Format: "Kraftname:Punkte"'
+        return superkraefte.setze_punkte(daten, setting, name.strip(), int(punkte))
+
+    return _mit_setting(req, aktion)
+
+
+@router.post("/superkraft/modifikator", response_model=SpiellogikResponse)
+def superkraft_modifikator(req: SpiellogikRequest):
+    """element_name: "Kraftname:Modifikator" — wählt ab oder an (Toggle)."""
+
+    def aktion(daten, setting, element):
+        name, sep, mod = element.partition(":")
+        if not sep or not mod.strip():
+            return False, 'Format: "Kraftname:Modifikator"'
+        return superkraefte.toggle_modifikator(daten, setting, name.strip(), mod.strip())
+
+    return _mit_setting(req, aktion)
+
+
+_BERECHNE_STATS = ("parade", "robustheit", "bewegungsweite", "groesse", "bennys", "traglast_kg")
 
 
 def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
@@ -689,9 +833,9 @@ def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
             continue
         effekt = dict(effekt)
         gruppe = effekt.pop("nicht_kumulativ_gruppe", None)
-        # bedingung "keine_getragene_ruestung": Rüstung wird noch nicht verwaltet,
-        # die Bedingung gilt daher immer als erfüllt
-        effekt.pop("bedingung", None)
+        bedingung = effekt.pop("bedingung", None)
+        if bedingung == "keine_getragene_ruestung" and traegt_ruestung(daten, setting):
+            continue
         ziel = gruppen.setdefault(gruppe, {}) if gruppe else None
         for stat, wert in effekt.items():
             if stat not in boni:
@@ -750,19 +894,56 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
     boni = _sammle_effekt_boni(daten, setting)
     macht_slots, machtpunkte = macht_kapazitaet(daten, setting.get("talente", {}))
 
-    groesse = boni["groesse"]
-    parade = 2 + (kaempfen_wert // 2) + boni["parade"]
-    # Größe fließt nach SWAE in die Robustheit ein
-    robustheit = 2 + (kon_wert // 2) + boni["robustheit"] + groesse
-    bewegungsweite = 6 + boni["bewegungsweite"]
+    cyber_aktiv = cyberware.ist_cyberware_setting(daten.get("active_setting_name", ""))
+    cyber_boni = (
+        cyberware.stat_boni(daten, setting)
+        if cyber_aktiv
+        else {"robustheit": 0, "bewegungsweite": 0, "groesse": 0, "panzerung": 0}
+    )
+
+    groesse = boni["groesse"] + cyber_boni["groesse"]
+    panzerung = panzerung_torso(daten, setting) + cyber_boni["panzerung"]
+    parade = 2 + (kaempfen_wert // 2) + boni["parade"] + schild_parade(daten, setting)
+    # Größe und Torso-Panzerung fließen nach SWAE in die Robustheit ein
+    robustheit = 2 + (kon_wert // 2) + boni["robustheit"] + cyber_boni["robustheit"] + groesse + panzerung
+    bewegungsweite = 6 + boni["bewegungsweite"] + cyber_boni["bewegungsweite"]
     bennys = 3 + boni["bennys"]
+    geld_verfuegbar, geld_gesamt = verfuegbares_geld(daten, setting)
+
+    extra: dict = {}
+    if cyber_aktiv:
+        aktuell = cyberware.stress_aktuell(daten, setting)
+        limit = cyberware.stresslimit(daten, setting)
+        extra["cyberware"] = {
+            "stress": aktuell,
+            "stresslimit": limit,
+            "stress_maximum": cyberware.stress_maximum(daten, setting),
+            "ueber_limit": max(0, aktuell - limit),
+        }
+    if superkraefte.ist_superkraefte_setting(setting):
+        budget = superkraefte.skp_budget(daten, setting)
+        ausgegeben = superkraefte.skp_ausgegeben(daten)
+        extra["superkraefte"] = {
+            "stufe": daten.get("superkraft_stufe", superkraefte.STANDARD_STUFE),
+            "budget": budget,
+            "ausgegeben": ausgegeben,
+            "verbleibend": budget - ausgegeben,
+            "kraftobergrenze": superkraefte.kraftobergrenze(daten, setting),
+            "talent_gewaehlt": superkraefte.hat_superkraefte_talent(daten),
+        }
 
     return {
+        **extra,
         "parade": parade,
         "robustheit": robustheit,
         "bewegungsweite": bewegungsweite,
         "groesse": groesse,
         "bennys": bennys,
+        "panzerung": panzerung,
+        "vermoegen": geld_verfuegbar,
+        "startkapital_gesamt": geld_gesamt,
+        "traglast": traglast_kg(daten, boni["traglast_kg"]),
+        "gesamtgewicht": gesamtgewicht(daten, setting),
         "machtpunkte": machtpunkte,
         "verbleibende_maechte": max(0, macht_slots - len(daten.get("selected_maechte", []))),
         "verbleibende_attributsteigerungen": daten.get("verbleibende_attributsteigerungen", 5),

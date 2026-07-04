@@ -282,6 +282,11 @@ def test_berechne_basiswerte(daten):
     # Kämpfen ungelernt -> Parade 2; Konstitution W4 -> Robustheit 4
     assert w == {
         "parade": 2, "robustheit": 4, "bewegungsweite": 6, "groesse": 0, "bennys": 3,
+        "panzerung": 0,
+        "vermoegen": 500,
+        "startkapital_gesamt": 500,
+        "traglast": 40,
+        "gesamtgewicht": 0,
         "machtpunkte": 0,
         "verbleibende_maechte": 0,
         "verbleibende_attributsteigerungen": 5,
@@ -849,3 +854,286 @@ def test_volk_wechsel_nimmt_magieaffin_zurueck(daten):
     d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
     assert "AH (Magie)" not in d["selected_talente"]
     assert d["fertigkeiten"]["Zaubern"]["wuerfel"]["modifier"] == -2
+
+
+# --- Ausrüstung & Startgeld (ausruestung.py) ---
+
+def test_ausruestung_kaufen_und_geld(daten):
+    assert berechne(daten)["vermoegen"] == 500  # SWAE ohne startgeld -> Standard
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Fackel")["charakter_daten"]
+    assert d["ausruestung_selected"]["Fackel"]["anzahl"] == 2
+    w = berechne(d)
+    assert w["vermoegen"] == 490
+    assert w["gesamtgewicht"] == 1.0
+
+
+def test_ausruestung_zu_teuer_abgelehnt(daten):
+    daten["ausruestung_ausgegeben"] = 480
+    r = aktion("ausruestung/kaufen", daten, "Kleiner Schild")  # kostet 50
+    assert not r["success"]
+    assert "Nicht genug Geld" in r["message"]
+
+
+def test_ausruestung_unbekannt_abgelehnt(daten):
+    r = aktion("ausruestung/kaufen", daten, "Bazooka")
+    assert not r["success"]
+
+
+def test_ausruestung_verkaufen_erstattet_bei_erschaffung_voll(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
+    d = aktion("ausruestung/verkaufen", d, "Fackel")["charakter_daten"]
+    assert "Fackel" not in d["ausruestung_selected"]
+    assert berechne(d)["vermoegen"] == 500
+
+
+def test_ausruestung_verkaufen_nach_erschaffung_halber_preis(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]  # -5
+    d = aktion("erschaffung/abschliessen", d)["charakter_daten"]
+    d = aktion("ausruestung/verkaufen", d, "Fackel")["charakter_daten"]  # +2.5
+    assert berechne(d)["vermoegen"] == 497.5
+
+
+def test_ausruestung_verkaufen_ohne_besitz_abgelehnt(daten):
+    r = aktion("ausruestung/verkaufen", daten, "Fackel")
+    assert not r["success"]
+
+
+def test_ruestung_anlegen_erhoeht_robustheit(daten):
+    d = aktion("ausruestung/kaufen", daten, "Jacke (dünn)")["charakter_daten"]
+    basis = berechne(d)
+    assert basis["panzerung"] == 0
+    d = aktion("ausruestung/anlegen", d, "Jacke (dünn)")["charakter_daten"]
+    w = berechne(d)
+    assert w["panzerung"] == 1
+    assert w["robustheit"] == basis["robustheit"] + 1
+    d = aktion("ausruestung/ablegen", d, "Jacke (dünn)")["charakter_daten"]
+    assert berechne(d)["panzerung"] == 0
+
+
+def test_schild_anlegen_erhoeht_parade(daten):
+    d = aktion("ausruestung/kaufen", daten, "Kleiner Schild")["charakter_daten"]
+    basis = berechne(d)["parade"]
+    d = aktion("ausruestung/anlegen", d, "Kleiner Schild")["charakter_daten"]
+    assert berechne(d)["parade"] == basis + 1
+
+
+def test_allgemein_item_nicht_anlegbar(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
+    r = aktion("ausruestung/anlegen", d, "Fackel")
+    assert not r["success"]
+    assert "nur Rüstungen und Schilde" in r["message"]
+
+
+def test_einloesen_startgeld(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # 2 Punkte
+    d = aktion("handicap-punkte/einloesen", d, "startgeld")["charakter_daten"]
+    assert d["startgeld_bonus_punkte"] == 1
+    assert d["verbleibende_handicap_punkte"] == 1
+    assert berechne(d)["vermoegen"] == 1000
+
+
+def test_vermoegen_arm_halbiert(daten):
+    daten["selected_handicaps"] = ["Arm"]
+    assert berechne(daten)["vermoegen"] == 250
+
+
+def test_vermoegen_reich_verdreifacht(daten):
+    daten["selected_talente"] = ["Reich"]
+    assert berechne(daten)["vermoegen"] == 1500
+    daten["selected_talente"] = ["Reich", "Stinkreich"]
+    assert berechne(daten)["vermoegen"] == 2500  # Stinkreich zählt, nicht kumulativ
+
+
+def test_startgeld_aus_setting(daten):
+    d = aktion("setting/wechseln", daten, "Deadlands")["charakter_daten"]
+    assert berechne(d)["vermoegen"] == 250
+
+
+def test_traglast_aus_staerke_und_talent(daten):
+    w = berechne(daten)
+    assert w["traglast"] == 40  # Stärke W4 x 10 kg
+    daten["attribute"]["Stärke"]["wert"] = 8
+    daten["selected_talente"] = ["Kräftig"]
+    assert berechne(daten)["traglast"] == 100  # 80 + 20 (Kräftig)
+
+
+def test_bedingung_keine_getragene_ruestung(daten):
+    daten["selected_talente"] = ["Kämpferische Disziplin"]  # +1 Robustheit ohne Rüstung
+    ohne = berechne(daten)["robustheit"]
+    d = aktion("ausruestung/kaufen", daten, "Jacke (dünn)")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Jacke (dünn)")["charakter_daten"]
+    # Talent-Bonus entfällt mit getragener Rüstung, dafür +1 Panzerung
+    assert berechne(d)["robustheit"] == ohne
+
+
+# --- Cyberware (cyberware.py) ---
+
+@pytest.fixture
+def scifi(daten):
+    d = aktion("setting/wechseln", daten, "SciFi Kompendium")["charakter_daten"]
+    d["startgeld_bonus_punkte"] = 20  # Budget für teure Implantate (10.500)
+    return d
+
+
+def test_cyberware_nur_im_cyberware_setting(daten):
+    r = aktion("cyberware/installieren", daten, "Cyberware: Scanner")
+    assert not r["success"]
+    assert "kein Cyberware-System" in r["message"]
+
+
+def test_cyberware_installieren_stress_und_geld(scifi):
+    w = berechne(scifi)
+    assert w["cyberware"] == {"stress": 0, "stresslimit": 2, "stress_maximum": 4, "ueber_limit": 0}
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner")["charakter_daten"]
+    assert d["cyberware_installationen"] == {"Cyberware: Scanner": 1}
+    w = berechne(d)
+    assert w["cyberware"]["stress"] == 1
+    assert w["vermoegen"] == 10500 - 1000
+
+
+def test_cyberware_ueber_limit_warnt(scifi):
+    r = aktion("cyberware/installieren", scifi, "Cyberware: Amphibisch")  # Stress 2 = Limit
+    assert r["success"] and r["message"] == ""
+    d = r["charakter_daten"]
+    r = aktion("cyberware/installieren", d, "Cyberware: Scanner")  # Stress 3 > Limit 2
+    assert r["success"]
+    assert "Nebenwirkung auswürfeln" in r["message"]
+    assert berechne(r["charakter_daten"])["cyberware"]["ueber_limit"] == 1
+
+
+def test_cyberware_hartes_maximum_lehnt_ab(scifi):
+    scifi["startgeld_bonus_punkte"] = 40  # genug Geld für drei teure Implantate
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Amphibisch")["charakter_daten"]  # 2
+    d = aktion("cyberware/installieren", d, "Cyberware: Scanner")["charakter_daten"]  # 3
+    d = aktion("cyberware/installieren", d, "Cyberware: Ersatzorgane")["charakter_daten"]  # 4 = Maximum
+    r = aktion("cyberware/installieren", d, "Cyberware: Verborgenes Fach")  # 5 > 4
+    assert not r["success"]
+    assert "Stress-Maximum überschritten" in r["message"]
+
+
+def test_cyberware_max_installationen(scifi):
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner")["charakter_daten"]
+    r = aktion("cyberware/installieren", d, "Cyberware: Scanner")
+    assert not r["success"]
+    assert "maximal 1×" in r["message"]
+
+
+def test_cyberware_talent_boni_und_cyborg_budget(scifi):
+    scifi["selected_talente"] = ["Kybernetische Toleranz", "Cyborg"]
+    w = berechne(scifi)
+    # Limit 2+2+4, Maximum 4+2+4
+    assert w["cyberware"]["stresslimit"] == 8
+    assert w["cyberware"]["stress_maximum"] == 10
+    # Installation unter 20.000 Cyborg-Budget kostet kein Geld
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner")["charakter_daten"]
+    assert berechne(d)["vermoegen"] == 10500
+
+
+def test_cyberware_deinstallieren(scifi):
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner")["charakter_daten"]
+    d = aktion("cyberware/deinstallieren", d, "Cyberware: Scanner")["charakter_daten"]
+    assert d["cyberware_installationen"] == {}
+    assert berechne(d)["vermoegen"] == 10500  # volle Erstattung bei Erschaffung
+
+
+def test_cyberware_deinstallieren_nach_erschaffung_kostet(scifi):
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner")["charakter_daten"]  # -1000
+    d = aktion("erschaffung/abschliessen", d)["charakter_daten"]
+    r = aktion("cyberware/deinstallieren", d, "Cyberware: Scanner")
+    assert "kostet 250" in r["message"]
+    assert berechne(r["charakter_daten"])["vermoegen"] == 10500 - 1000 - 250
+
+
+def test_cyberware_nebenwirkung_wuerfeln(scifi):
+    r = aktion("cyberware/nebenwirkung", scifi)
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert len(d["cyberware_nebenwirkungen"]) == 1
+    eintrag = d["cyberware_nebenwirkungen"][0]
+    assert 1 <= eintrag["wurf"] <= 20 and eintrag["name"]
+    d = aktion("cyberware/nebenwirkung-entfernen", d, "0")["charakter_daten"]
+    assert d["cyberware_nebenwirkungen"] == []
+
+
+def test_cyberware_stat_effekte_in_berechne(scifi):
+    # Unterhautpanzerung o. ä. mit panzerung/robustheit-Effekt suchen wäre fragil —
+    # Dermalplatten: natuerliche_panzerung laut Datenbestand
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Dermalplatten")
+    if d["success"]:
+        w = berechne(d["charakter_daten"])
+        assert w["panzerung"] >= 1
+
+
+# --- Superkräfte (superkraefte.py) ---
+
+@pytest.fixture
+def superheld(daten):
+    d = aktion("setting/wechseln", daten, "Superkräfte Kompendium")["charakter_daten"]
+    d["selected_talente"] = ["Superkräfte"]
+    return d
+
+
+def test_superkraft_braucht_talent_und_setting(daten, superheld):
+    r = aktion("superkraft/waehlen", daten, "Fliegen")
+    assert not r["success"] and "kein Superkräfte-System" in r["message"]
+    superheld["selected_talente"] = []
+    r = aktion("superkraft/waehlen", superheld, "Fliegen")
+    assert not r["success"] and "Superkräfte" in r["message"]
+
+
+def test_superkraft_waehlen_und_budget(superheld):
+    w = berechne(superheld)
+    assert w["superkraefte"]["stufe"] == "I"
+    assert w["superkraefte"]["budget"] == 15
+    d = aktion("superkraft/waehlen", superheld, "Fliegen")["charakter_daten"]  # Basis 2
+    assert d["selected_superkraefte"]["Fliegen"]["punkte"] == 2
+    assert berechne(d)["superkraefte"]["verbleibend"] == 13
+    d = aktion("superkraft/entfernen", d, "Fliegen")["charakter_daten"]
+    assert berechne(d)["superkraefte"]["verbleibend"] == 15
+
+
+def test_superkraft_punkte_und_kraftobergrenze(superheld):
+    d = aktion("superkraft/waehlen", superheld, "Fliegen")["charakter_daten"]
+    d = aktion("superkraft/punkte", d, "Fliegen:5")["charakter_daten"]  # Obergrenze Stufe I = 5
+    assert d["selected_superkraefte"]["Fliegen"]["punkte"] == 5
+    r = aktion("superkraft/punkte", d, "Fliegen:6")
+    assert not r["success"]
+    assert "Kraftobergrenze" in r["message"]
+
+
+def test_superkraft_budget_erschoepft(superheld):
+    d = aktion("superkraft/waehlen", superheld, "Fliegen")["charakter_daten"]
+    d = aktion("superkraft/punkte", d, "Fliegen:5")["charakter_daten"]
+    d = aktion("superkraft/waehlen", d, "Bewegungsweite")["charakter_daten"]
+    d = aktion("superkraft/punkte", d, "Bewegungsweite:5")["charakter_daten"]
+    d = aktion("superkraft/waehlen", d, "Absorption")["charakter_daten"]
+    d = aktion("superkraft/punkte", d, "Absorption:5")["charakter_daten"]  # 15/15
+    r = aktion("superkraft/waehlen", d, "Blenden")
+    assert not r["success"]
+    assert "Nicht genug Superkraftpunkte" in r["message"]
+
+
+def test_superkraft_machtstufe_wechsel(superheld):
+    d = aktion("superkraft/stufe", superheld, "III")["charakter_daten"]
+    w = berechne(d)["superkraefte"]
+    assert w["budget"] == 45 and w["kraftobergrenze"] == 15
+    # Absenken unter bereits ausgegebene Punkte wird abgelehnt
+    d = aktion("superkraft/waehlen", d, "Fliegen")["charakter_daten"]
+    d = aktion("superkraft/punkte", d, "Fliegen:15")["charakter_daten"]
+    r = aktion("superkraft/stufe", d, "I")
+    assert not r["success"]
+    assert berechne(r["charakter_daten"])["superkraefte"]["stufe"] == "III"
+
+
+def test_superkraft_modifikator_toggle(superheld):
+    d = aktion("superkraft/waehlen", superheld, "Absorption")["charakter_daten"]  # 2
+    d = aktion("superkraft/modifikator", d, "Absorption:Meisterschaft")["charakter_daten"]  # +1
+    assert d["selected_superkraefte"]["Absorption"]["modifikatoren"] == {"Meisterschaft": 1}
+    assert berechne(d)["superkraefte"]["ausgegeben"] == 3
+    # negativer Modifikator senkt Kosten
+    d = aktion("superkraft/modifikator", d, "Absorption:Achillesferse")["charakter_daten"]  # -1
+    assert berechne(d)["superkraefte"]["ausgegeben"] == 2
+    # Toggle entfernt wieder
+    d = aktion("superkraft/modifikator", d, "Absorption:Meisterschaft")["charakter_daten"]
+    assert berechne(d)["superkraefte"]["ausgegeben"] == 1

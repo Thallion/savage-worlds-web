@@ -32,6 +32,10 @@ curl -s localhost:8000/api/health                  # {"status":"ok"}
   kann dadurch die Navigation verlieren. Einfach erneut laufen lassen oder
   vorher jede View einmal aufrufen.
 - Vuetify-Selects nie über das Label klicken, immer `.v-field__input`.
+- Vuetify-Switches: `.v-switch input[type="checkbox"]` mit `check({ force: true })`
+  schalten — Klick auf den Container toggelt nicht zuverlässig.
+- Einmal besuchte Editor-Tabs bleiben im DOM gemountet: Locators wie
+  `getByLabel('… suchen...')` brauchen `.first()`, sobald mehrere Tabs offen waren.
 - SQLite-DB liegt unter `backend/data/chargen.db`; Testnutzer bleiben bestehen.
 
 ## Fehlerpfade per curl

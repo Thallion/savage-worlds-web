@@ -1137,3 +1137,47 @@ def test_superkraft_modifikator_toggle(superheld):
     # Toggle entfernt wieder
     d = aktion("superkraft/modifikator", d, "Absorption:Meisterschaft")["charakter_daten"]
     assert berechne(d)["superkraefte"]["ausgegeben"] == 1
+
+
+# --- Statblock (statblock.py) ---
+
+def statblock(daten: dict) -> str:
+    resp = client.post("/api/spiellogik/statblock", json={"charakter_daten": daten})
+    assert resp.status_code == 200
+    return resp.json()["statblock"]
+
+
+def test_statblock_basis(daten):
+    daten["profil_daten"]["Name"] = "Grimnir"
+    d = aktion("volk/waehlen", daten, "Zwerg")["charakter_daten"]
+    text = statblock(d)
+    zeilen = text.splitlines()
+    assert zeilen[0] == "Grimnir"
+    assert zeilen[1] == "Volk: Zwerg (SWAE)"
+    assert "Attribute: Geschicklichkeit W4, Verstand W4, Willenskraft W4, Stärke W4, Konstitution W6" in text
+    assert "Bewegungsweite: 5; Parade: 2; Robustheit: 5; Größe: +0" in text
+    assert "Talente: Nachtsicht" in text
+    # ungelernte Fertigkeiten tauchen nicht auf
+    assert "Kämpfen" not in text
+    assert "Athletik W4" in text
+
+
+def test_statblock_handicap_stufe_und_ruestung(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Jacke (dünn)")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Jacke (dünn)")["charakter_daten"]
+    text = statblock(d)
+    assert "Handicaps: Alt (schwer)" in text
+    assert "Robustheit: 5 (1)" in text
+    assert "Jacke (dünn) [angelegt]" in text
+    assert "Geld: 480" in text
+
+
+def test_statblock_superkraefte_und_rang(daten):
+    d = aktion("setting/wechseln", daten, "Superkräfte Kompendium")["charakter_daten"]
+    d["selected_talente"] = ["Superkräfte"]
+    d = aktion("superkraft/waehlen", d, "Fliegen")["charakter_daten"]
+    d = aktion("erschaffung/abschliessen", d)["charakter_daten"]
+    text = statblock(d)
+    assert "Superkräfte: Fliegen [2 SKP] (Machtstufe I, 2/15 SKP)" in text
+    assert "Aufstiege: 0 (Anfänger)" in text

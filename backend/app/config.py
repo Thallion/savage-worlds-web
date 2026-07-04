@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 1440  # 24 Stunden
 
     gamelogic_path: Path = Path(__file__).resolve().parent.parent / "gamelogic"
+    # Eigene Settings der Nutzer — liegt unter data/ (Docker-Volume), damit sie
+    # App-Updates überleben (Original: user_settings_dir mit custom_*.json)
+    custom_settings_path: Path = Path("data") / "settings"
 
     model_config = {"env_prefix": "CHARGEN_"}
 

@@ -102,6 +102,44 @@ export const useCharakterStore = defineStore('charakter', () => {
     return result
   }
 
+  async function elementAktion(
+    pfad: 'speichern' | 'loeschen',
+    body: Record<string, unknown>,
+  ): Promise<{ success: boolean; message: string }> {
+    if (!aktuellerCharakter.value) return { success: false, message: 'Kein Charakter geladen' }
+    const result = await api.post<{
+      success: boolean
+      message: string
+      charakter_daten?: CharakterDaten
+    }>(`/spiellogik/element/${pfad}`, {
+      charakter_daten: aktuellerCharakter.value.charakter_daten,
+      ...body,
+    })
+    if (result.success && result.charakter_daten) {
+      aktuellerCharakter.value.charakter_daten = result.charakter_daten
+      await berechneWerte()
+    }
+    return result
+  }
+
+  function elementSpeichern(
+    typ: string,
+    name: string,
+    elementDaten: Record<string, unknown>,
+    alterName?: string,
+  ) {
+    return elementAktion('speichern', {
+      element_typ: typ,
+      element_name: name,
+      element_daten: elementDaten,
+      alter_name: alterName ?? null,
+    })
+  }
+
+  function elementLoeschen(typ: string, name: string) {
+    return elementAktion('loeschen', { element_typ: typ, element_name: name })
+  }
+
   return {
     liste,
     aktuellerCharakter,
@@ -116,5 +154,7 @@ export const useCharakterStore = defineStore('charakter', () => {
     exportiereCharakter,
     importiereCharakter,
     spiellogikAktion,
+    elementSpeichern,
+    elementLoeschen,
   }
 })

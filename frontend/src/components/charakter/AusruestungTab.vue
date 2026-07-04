@@ -69,6 +69,7 @@
       </div>
 
       <!-- Katalog -->
+      <ElementEditor typ="ausruestung" />
       <div class="d-flex ga-2 flex-wrap mb-2">
         <v-text-field
           v-model="suche"
@@ -87,6 +88,21 @@
           density="compact"
           hide-details
           style="max-width: 220px"
+        />
+        <v-select
+          v-model="sortOption"
+          :items="['Name', 'Gewicht', 'Kosten', 'Kategorie']"
+          label="Sortierung"
+          density="compact"
+          hide-details
+          style="max-width: 150px"
+        />
+        <v-btn
+          :icon="sortAbsteigend ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
+          size="small"
+          variant="text"
+          :title="sortAbsteigend ? 'Absteigend' : 'Aufsteigend'"
+          @click="sortAbsteigend = !sortAbsteigend"
         />
       </div>
 
@@ -138,6 +154,8 @@
 import { computed, ref } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
+import ElementEditor from '@/components/charakter/ElementEditor.vue'
+import { mergeKatalog } from '@/utils/settingElemente'
 
 const ANLEGBARE_KATEGORIEN = ['Rüstung', 'Schild']
 
@@ -146,6 +164,8 @@ const einstellungenStore = useEinstellungenStore()
 
 const suche = ref('')
 const kategorieFilter = ref<string | null>(null)
+const sortOption = ref('Name')
+const sortAbsteigend = ref(false)
 const meldung = ref('')
 const meldungSichtbar = ref(false)
 
@@ -156,8 +176,8 @@ const ueberladen = computed(
   () => (werte.value?.gesamtgewicht ?? 0) > (werte.value?.traglast ?? Infinity),
 )
 
-const katalog = computed<Record<string, any>>(
-  () => einstellungenStore.aktuellesSetting?.ausruestung ?? {},
+const katalog = computed<Record<string, any>>(() =>
+  mergeKatalog(einstellungenStore.aktuellesSetting?.ausruestung, daten.value, 'ausruestung'),
 )
 
 const kategorien = computed(() =>
@@ -184,14 +204,23 @@ const besitz = computed(() =>
 
 const gefilterterKatalog = computed(() => {
   const s = (suche.value ?? '').toLowerCase()
+  const richtung = sortAbsteigend.value ? -1 : 1
+  const vergleich: Record<string, (a: any, b: any) => number> = {
+    Name: (a, b) => a.name.localeCompare(b.name),
+    Gewicht: (a, b) => (a.gewicht ?? 0) - (b.gewicht ?? 0),
+    Kosten: (a, b) => (a.kosten ?? 0) - (b.kosten ?? 0),
+    Kategorie: (a, b) => (a.kategorie ?? '').localeCompare(b.kategorie ?? ''),
+  }
   return Object.values(katalog.value)
     .filter(
       (i: any) =>
         i.aktiv !== false &&
         (!kategorieFilter.value || i.kategorie === kategorieFilter.value) &&
-        (!s || i.name.toLowerCase().includes(s)),
+        (!s ||
+          i.name.toLowerCase().includes(s) ||
+          (i.beschreibung ?? '').toLowerCase().includes(s)),
     )
-    .sort((a: any, b: any) => a.name.localeCompare(b.name))
+    .sort((a: any, b: any) => (vergleich[sortOption.value] ?? vergleich.Name)(a, b) * richtung)
 })
 
 function geldAnzeige(wert?: number | null): string {

@@ -41,14 +41,41 @@
         </v-chip>
       </div>
 
-      <v-text-field
-        v-model="suche"
-        label="Macht suchen..."
-        prepend-inner-icon="mdi-magnify"
-        clearable
-        density="compact"
-        class="mb-2"
-      />
+      <ElementEditor typ="maechte" />
+
+      <div class="d-flex ga-2 flex-wrap align-center mb-2">
+        <v-text-field
+          v-model="suche"
+          label="Macht suchen..."
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          density="compact"
+          hide-details
+          style="min-width: 220px; max-width: 300px"
+        />
+        <v-select
+          v-model="sortOption"
+          :items="['Name', 'Rang']"
+          label="Sortierung"
+          density="compact"
+          hide-details
+          style="max-width: 150px"
+        />
+        <v-btn
+          :icon="sortAbsteigend ? 'mdi-sort-descending' : 'mdi-sort-ascending'"
+          size="small"
+          variant="text"
+          :title="sortAbsteigend ? 'Absteigend' : 'Aufsteigend'"
+          @click="sortAbsteigend = !sortAbsteigend"
+        />
+        <v-switch
+          v-model="nurGewaehlte"
+          label="Nur gewählte"
+          density="compact"
+          hide-details
+          color="primary"
+        />
+      </div>
 
       <v-list density="compact">
         <v-list-item
@@ -82,10 +109,16 @@
 import { ref, computed } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
+import ElementEditor from '@/components/charakter/ElementEditor.vue'
+import { mergeKatalog } from '@/utils/settingElemente'
+import { RANG_ORDNUNG, sortiertesObjekt } from '@/utils/sortierung'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
 const suche = ref('')
+const sortOption = ref('Name')
+const sortAbsteigend = ref(false)
+const nurGewaehlte = ref(false)
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const selectedMaechte = computed(() => daten.value.selected_maechte || [])
@@ -103,19 +136,30 @@ const bestaetigungSichtbar = ref(false)
 const bestaetigungMeldung = ref('')
 const bestaetigungMacht = ref('')
 
-const maechte = computed(() => einstellungenStore.aktuellesSetting?.maechte ?? {})
+const maechte = computed(() =>
+  mergeKatalog(einstellungenStore.aktuellesSetting?.maechte, daten.value, 'maechte'),
+)
 
 const gefilterteMaechte = computed(() => {
-  if (!suche.value) return maechte.value
-  const s = suche.value.toLowerCase()
+  const s = suche.value?.toLowerCase() ?? ''
   const result: Record<string, any> = {}
   for (const [key, val] of Object.entries(maechte.value)) {
     const m = val as any
-    if (key.toLowerCase().includes(s) || m.name?.toLowerCase().includes(s)) {
-      result[key] = val
-    }
+    if (
+      s &&
+      !key.toLowerCase().includes(s) &&
+      !m.name?.toLowerCase().includes(s) &&
+      !m.beschreibung?.toLowerCase().includes(s)
+    )
+      continue
+    if (nurGewaehlte.value && !selectedMaechte.value.includes(key)) continue
+    result[key] = val
   }
-  return result
+  const schluessel =
+    sortOption.value === 'Rang'
+      ? (_n: string, m: any) => RANG_ORDNUNG[m.rang] ?? 99
+      : (n: string) => n.toLowerCase()
+  return sortiertesObjekt(result, schluessel, sortAbsteigend.value)
 })
 
 async function waehleMacht(name: string) {

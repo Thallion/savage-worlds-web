@@ -60,14 +60,41 @@
         </v-chip>
       </div>
 
-      <v-text-field
-        v-model="suche"
-        label="Handicap suchen..."
-        prepend-inner-icon="mdi-magnify"
-        clearable
-        density="compact"
-        class="mb-2"
-      />
+      <ElementEditor typ="handicaps" />
+
+      <div class="d-flex ga-2 flex-wrap align-center mb-2">
+        <v-text-field
+          v-model="suche"
+          label="Handicap suchen..."
+          prepend-inner-icon="mdi-magnify"
+          clearable
+          density="compact"
+          hide-details
+          style="min-width: 220px; max-width: 300px"
+        />
+        <v-select
+          v-model="stufenFilter"
+          :items="['Alle Stufen', 'leicht', 'schwer']"
+          label="Stufe"
+          density="compact"
+          hide-details
+          style="max-width: 160px"
+        />
+        <v-btn
+          :icon="sortAbsteigend ? 'mdi-sort-alphabetical-descending' : 'mdi-sort-alphabetical-ascending'"
+          size="small"
+          variant="text"
+          :title="sortAbsteigend ? 'Name Z–A' : 'Name A–Z'"
+          @click="sortAbsteigend = !sortAbsteigend"
+        />
+        <v-switch
+          v-model="nurGewaehlte"
+          label="Nur gewählte"
+          density="compact"
+          hide-details
+          color="primary"
+        />
+      </div>
 
       <v-list density="compact">
         <v-list-item
@@ -100,10 +127,16 @@
 import { ref, computed } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
+import ElementEditor from '@/components/charakter/ElementEditor.vue'
+import { mergeKatalog } from '@/utils/settingElemente'
+import { sortiertesObjekt } from '@/utils/sortierung'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
 const suche = ref('')
+const stufenFilter = ref('Alle Stufen')
+const sortAbsteigend = ref(false)
+const nurGewaehlte = ref(false)
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const selectedHandicaps = computed(() => daten.value.selected_handicaps || [])
@@ -112,20 +145,38 @@ const verbleibendePunkte = computed(() => daten.value.verbleibende_handicap_punk
 const meldung = ref('')
 const meldungSichtbar = ref(false)
 
-const handicaps = computed(() => einstellungenStore.aktuellesSetting?.handicaps ?? {})
+const handicaps = computed(() =>
+  mergeKatalog(einstellungenStore.aktuellesSetting?.handicaps, daten.value, 'handicaps'),
+)
 
 const gefilterteHandicaps = computed(() => {
-  if (!suche.value) return handicaps.value
-  const s = suche.value.toLowerCase()
+  const s = suche.value?.toLowerCase() ?? ''
   const result: Record<string, any> = {}
   for (const [key, val] of Object.entries(handicaps.value)) {
     const h = val as any
-    if (key.toLowerCase().includes(s) || h.name?.toLowerCase().includes(s)) {
-      result[key] = val
-    }
+    if (
+      s &&
+      !key.toLowerCase().includes(s) &&
+      !h.name?.toLowerCase().includes(s) &&
+      !h.beschreibung?.toLowerCase().includes(s)
+    )
+      continue
+    if (stufenFilter.value !== 'Alle Stufen' && h.stufe !== stufenFilter.value) continue
+    if (nurGewaehlte.value && !istGewaehlt(key)) continue
+    result[key] = val
   }
-  return result
+  return sortiertesObjekt(result, (n) => n.toLowerCase(), sortAbsteigend.value)
 })
+
+// Auswahl kann mit Stufen-Suffix gespeichert sein (z. B. "Arm_leicht")
+function istGewaehlt(name: string): boolean {
+  const gewaehlt = selectedHandicaps.value
+  return (
+    gewaehlt.includes(name) ||
+    gewaehlt.includes(`${name}_leicht`) ||
+    gewaehlt.includes(`${name}_schwer`)
+  )
+}
 
 async function waehleHandicap(name: string) {
   await store.spiellogikAktion('handicap/waehlen', name)

@@ -153,6 +153,38 @@
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- Charakterbogen (HTML, wie im Original) -->
+      <v-row class="mt-4">
+        <v-col cols="12">
+          <div class="d-flex align-center flex-wrap ga-2 mb-3">
+            <h3 class="text-h6">Charakterbogen</h3>
+            <v-btn
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-open-in-new"
+              @click="oeffneCharakterbogen"
+            >
+              Im Browser öffnen
+            </v-btn>
+            <v-btn
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-download"
+              @click="downloadCharakterbogen"
+            >
+              Als .html speichern
+            </v-btn>
+            <v-checkbox
+              v-model="druckerfreundlich"
+              label="Druckerfreundliche Version (ohne Farben)"
+              density="compact"
+              hide-details
+            />
+            <span v-if="bogenMeldung" class="text-caption">{{ bogenMeldung }}</span>
+          </div>
+        </v-col>
+      </v-row>
     </v-card-text>
   </v-card>
 </template>
@@ -177,15 +209,66 @@ const statblockMeldung = ref('')
 
 async function ladeStatblock() {
   statblockMeldung.value = ''
-  const result = await api.post<{ statblock: string }>('/spiellogik/statblock', {
-    charakter_daten: daten.value,
-  })
-  statblockText.value = result.statblock
+  try {
+    const result = await api.post<{ statblock: string }>('/spiellogik/statblock', {
+      charakter_daten: daten.value,
+    })
+    statblockText.value = result.statblock
+  } catch (e) {
+    statblockMeldung.value =
+      e instanceof Error ? `Fehler: ${e.message}` : 'Statblock konnte nicht erzeugt werden.'
+  }
 }
 
 async function kopiereStatblock() {
   await navigator.clipboard.writeText(statblockText.value)
   statblockMeldung.value = 'In die Zwischenablage kopiert.'
+}
+
+const druckerfreundlich = ref(false)
+const bogenMeldung = ref('')
+
+async function ladeBogenHtml(): Promise<string> {
+  const result = await api.post<{ html: string }>('/spiellogik/charakterbogen', {
+    charakter_daten: daten.value,
+    printer_friendly: druckerfreundlich.value,
+  })
+  return result.html
+}
+
+async function oeffneCharakterbogen() {
+  bogenMeldung.value = ''
+  // Fenster synchron öffnen, damit der Popup-Blocker den Klick noch zuordnet
+  const fenster = window.open('', '_blank')
+  try {
+    const html = await ladeBogenHtml()
+    if (fenster) {
+      fenster.document.open()
+      fenster.document.write(html)
+      fenster.document.close()
+    }
+  } catch (e) {
+    fenster?.close()
+    bogenMeldung.value =
+      e instanceof Error ? `Fehler: ${e.message}` : 'Charakterbogen konnte nicht erzeugt werden.'
+  }
+}
+
+async function downloadCharakterbogen() {
+  bogenMeldung.value = ''
+  try {
+    const html = await ladeBogenHtml()
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${daten.value.profil_daten?.Name || 'charakter'}.html`
+    a.click()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    bogenMeldung.value =
+      e instanceof Error ? `Fehler: ${e.message}` : 'Charakterbogen konnte nicht erzeugt werden.'
+  }
 }
 
 function downloadStatblock() {

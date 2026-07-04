@@ -11,7 +11,14 @@
       "Bash(curl -s http://localhost:8000/api/settings)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/)",
       "Bash(curl -s -X POST http://localhost:5173/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"benutzername\":\"testuser\",\"passwort\":\"geheim123\"}')",
-      "Bash(curl -s -X POST http://localhost:5173/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"passwort\":\"geheim123\"}')"
+      "Bash(curl -s -X POST http://localhost:5173/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"test@example.com\",\"passwort\":\"geheim123\"}')",
+      "Skill(run)",
+      "Bash(npm run *)",
+      "Bash(curl -sf http://localhost:8000/api/health)",
+      "Bash(curl -sf http://localhost:5173/)",
+      "Bash(break)",
+      "Bash(echo \"health: $\\(curl -s http://localhost:8000/api/health\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' http://localhost:5173/)"
     ]
   }
 }

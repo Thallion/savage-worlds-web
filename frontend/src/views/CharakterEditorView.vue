@@ -110,6 +110,8 @@
       <v-tab value="talente">Talente</v-tab>
       <v-tab v-if="zeigeMaechte" value="maechte">Mächte</v-tab>
       <v-tab value="ausruestung">Ausrüstung</v-tab>
+      <v-tab v-if="zeigeCyberware" value="cyberware">Cyberware</v-tab>
+      <v-tab v-if="zeigeSuperkraefte" value="superkraefte">Superkräfte</v-tab>
       <v-tab value="uebersicht">Übersicht</v-tab>
     </v-tabs>
 
@@ -135,6 +137,12 @@
       <v-tabs-window-item value="ausruestung">
         <AusruestungTab />
       </v-tabs-window-item>
+      <v-tabs-window-item v-if="zeigeCyberware" value="cyberware">
+        <CyberwareTab />
+      </v-tabs-window-item>
+      <v-tabs-window-item v-if="zeigeSuperkraefte" value="superkraefte">
+        <SuperkraefteTab />
+      </v-tabs-window-item>
       <v-tabs-window-item value="uebersicht">
         <UebersichtTab />
       </v-tabs-window-item>
@@ -159,6 +167,8 @@ import HandicapsTab from '@/components/charakter/HandicapsTab.vue'
 import TalenteTab from '@/components/charakter/TalenteTab.vue'
 import MaechteTab from '@/components/charakter/MaechteTab.vue'
 import AusruestungTab from '@/components/charakter/AusruestungTab.vue'
+import CyberwareTab from '@/components/charakter/CyberwareTab.vue'
+import SuperkraefteTab from '@/components/charakter/SuperkraefteTab.vue'
 import UebersichtTab from '@/components/charakter/UebersichtTab.vue'
 
 const route = useRoute()
@@ -184,6 +194,10 @@ const zeigeMaechte = computed(() => {
     (daten.value.selected_maechte?.length ?? 0) > 0
   )
 })
+
+// Setting-Spezialsysteme: /berechne liefert die Blöcke nur, wenn das Setting sie kennt
+const zeigeCyberware = computed(() => store.abgeleiteteWerte?.cyberware != null)
+const zeigeSuperkraefte = computed(() => store.abgeleiteteWerte?.superkraefte != null)
 
 onMounted(async () => {
   const id = Number(route.params.id)

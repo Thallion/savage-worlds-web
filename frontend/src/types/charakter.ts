@@ -34,6 +34,13 @@ export interface CharakterDaten {
   ausruestung_selected?: Record<string, { anzahl: number; angelegt?: boolean }>
   ausruestung_ausgegeben?: number
   startgeld_bonus_punkte?: number
+  // Cyberware (SciFi-Kompendium)
+  cyberware_installationen?: Record<string, number>
+  cyberware_ausgegeben?: number
+  cyberware_nebenwirkungen?: { wurf: number; name: string; effekt: string }[]
+  // Superkräfte (Superkräfte-Kompendium)
+  superkraft_stufe?: string
+  selected_superkraefte?: Record<string, { punkte: number; modifikatoren: Record<string, number> }>
   verbleibende_attributsteigerungen?: number
   verbleibende_fertigkeitssteigerungen?: number
   maximale_attributsteigerungen?: number
@@ -95,6 +102,17 @@ export interface AbgeleiteteWerte {
   startkapital_gesamt: number
   traglast: number
   gesamtgewicht: number
+  // nur in Cyberware-Settings (SciFi-Kompendium)
+  cyberware?: { stress: number; stresslimit: number; stress_maximum: number; ueber_limit: number }
+  // nur in Superkräfte-Settings
+  superkraefte?: {
+    stufe: string
+    budget: number
+    ausgegeben: number
+    verbleibend: number
+    kraftobergrenze: number
+    talent_gewaehlt: boolean
+  }
   machtpunkte: number
   verbleibende_maechte: number
   verbleibende_attributsteigerungen: number

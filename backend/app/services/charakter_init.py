@@ -72,6 +72,10 @@ def initialisiere_charakter_daten(char_name: str, setting_name: str) -> dict:
         "ausruestung_selected": {},
         "ausruestung_ausgegeben": 0,
         "startgeld_bonus_punkte": 0,
+        "cyberware_installationen": {},
+        "cyberware_ausgegeben": 0,
+        "cyberware_nebenwirkungen": [],
+        "selected_superkraefte": {},
         "verbleibende_attributsteigerungen": start_attr,
         "maximale_attributsteigerungen": start_attr,
         "verbleibende_fertigkeitssteigerungen": start_fert,
@@ -118,6 +122,10 @@ def ergaenze_fehlende_eigenschaften(daten: dict) -> tuple[dict, bool]:
         "ausruestung_selected": {},
         "ausruestung_ausgegeben": 0,
         "startgeld_bonus_punkte": 0,
+        "cyberware_installationen": {},
+        "cyberware_ausgegeben": 0,
+        "cyberware_nebenwirkungen": [],
+        "selected_superkraefte": {},
     }
     for feld, wert in defaults.items():
         if feld not in neu:

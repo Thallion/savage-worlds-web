@@ -45,9 +45,12 @@ def vermoegen_multiplikator(daten: dict) -> float:
 
 def verfuegbares_geld(daten: dict, setting: dict) -> tuple[float, float]:
     """(aktuell verfügbar, Gesamtbudget ohne Ausgaben)."""
+    from app.services.cyberware import geld_belastung
+
     basis = startkapital_basis(setting)
     gesamt = basis * vermoegen_multiplikator(daten) + basis * daten.get("startgeld_bonus_punkte", 0)
-    return gesamt - daten.get("ausruestung_ausgegeben", 0), gesamt
+    # Cyberware-Installationen über dem Cyborg-Budget belasten das Geld mit
+    return gesamt - daten.get("ausruestung_ausgegeben", 0) - geld_belastung(daten, setting), gesamt
 
 
 def kaufe_ausruestung(daten: dict, setting: dict, item_name: str) -> tuple[bool, str]:

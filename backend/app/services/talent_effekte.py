@@ -6,9 +6,10 @@ Handicap "Verderbnis") oder Eigenschaften verändern (Berserker → Stärke
 +1 Würfeltyp, effekt.attribut_bonus in Deadlands, Rohling → Athletik an
 Stärke gekoppelt). Auto-Elemente kosten keine Handicap-Punkte/Slots.
 
-Wie bei den Volk-Effekten wird ein Snapshot pro Talent in
-daten["talent_effekte"][talent_name] abgelegt, damit das Abwählen alles
-exakt zurücknimmt.
+Wie bei den Volk-Effekten wird ein Snapshot pro gewählter Kopie in
+daten["talent_effekte"][talent_name] abgelegt (Liste, bei Mehrfachauswahl
+ein Eintrag je Kopie; Altbestand: einzelnes dict), damit das Abwählen einer
+Kopie genau deren Effekte zurücknimmt.
 """
 
 MAX_WUERFEL = 12
@@ -20,6 +21,13 @@ TALENT_FERTIGKEITS_LINKS = {
     "Rohling": [("Athletik", "Stärke")],
     "Naturgespür": [("Überleben", "Willenskraft")],
 }
+
+
+def _snapshots(eintrag) -> list[dict]:
+    """Gespeicherte Effekt-Snapshots eines Talents (Altbestand: einzelnes dict)."""
+    if isinstance(eintrag, list):
+        return eintrag
+    return [eintrag] if eintrag else []
 
 
 def _attribut_stufe_erhoehen(attr: dict) -> str:
@@ -83,14 +91,23 @@ def wende_talent_effekte_an(daten: dict, talent_name: str, talent_data: dict) ->
     if links:
         angewendet["fertigkeit_links"] = links
 
-    if angewendet:
-        daten.setdefault("talent_effekte", {})[talent_name] = angewendet
+    # Leere Snapshots nur ablegen, wenn eine frühere Kopie Effekte hinterlegt
+    # hat — dann nimmt das Entfernen der letzten Kopie genau diese zurück
+    vorhanden = _snapshots(daten.get("talent_effekte", {}).get(talent_name))
+    if angewendet or vorhanden:
+        daten.setdefault("talent_effekte", {})[talent_name] = vorhanden + [angewendet]
 
 
 def entferne_talent_effekte(daten: dict, talent_name: str) -> None:
-    angewendet = daten.get("talent_effekte", {}).pop(talent_name, None)
-    if not angewendet:
+    effekte = daten.get("talent_effekte", {})
+    snapshots = _snapshots(effekte.get(talent_name))
+    if not snapshots:
         return
+    angewendet = snapshots.pop()
+    if snapshots:
+        effekte[talent_name] = snapshots
+    else:
+        effekte.pop(talent_name, None)
 
     for h in angewendet.get("handicaps", []):
         if h in daten.get("selected_handicaps", []):
@@ -124,6 +141,7 @@ def ist_auto_element(daten: dict, art: str, name: str) -> bool:
     """True, wenn name als Auto-Element (art: "handicaps"/"talente"/"maechte")
     von einem gewählten Talent stammt und nicht manuell entfernbar ist."""
     return any(
-        name in effekte.get(art, [])
-        for effekte in daten.get("talent_effekte", {}).values()
+        name in snapshot.get(art, [])
+        for eintrag in daten.get("talent_effekte", {}).values()
+        for snapshot in _snapshots(eintrag)
     )

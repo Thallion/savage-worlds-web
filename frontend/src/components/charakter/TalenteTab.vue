@@ -24,18 +24,18 @@
         </v-card>
       </v-dialog>
 
-      <!-- Ausgewählte Talente -->
+      <!-- Ausgewählte Talente (Mehrfachauswahl als "Name ×n") -->
       <div v-if="selectedTalente.length" class="mb-4">
         <h3 class="text-subtitle-1 mb-2">Ausgewählt</h3>
         <v-chip
-          v-for="name in selectedTalente"
+          v-for="[name, anzahl] in Object.entries(talentAnzahl)"
           :key="name"
           closable
           color="secondary"
           class="mr-2 mb-2"
           @click:close="entferneTalent(name)"
         >
-          {{ name }}
+          {{ name }}{{ anzahl > 1 ? ` ×${anzahl}` : '' }}
         </v-chip>
       </div>
 
@@ -102,16 +102,18 @@
         <v-list-item
           v-for="(talent, name) in gefilterteTalente"
           :key="name"
-          :disabled="selectedTalente.includes(String(name))"
           @click="waehleTalent(String(name))"
         >
           <template #prepend>
-            <v-icon :color="selectedTalente.includes(String(name)) ? 'success' : ''">
-              {{ selectedTalente.includes(String(name)) ? 'mdi-check-circle' : 'mdi-circle-outline' }}
+            <v-icon :color="talentAnzahl[String(name)] ? 'success' : ''">
+              {{ talentAnzahl[String(name)] ? 'mdi-check-circle' : 'mdi-circle-outline' }}
             </v-icon>
           </template>
           <v-list-item-title>
             {{ talent.name || name }}
+            <v-chip v-if="(talentAnzahl[String(name)] ?? 0) > 1" size="x-small" color="success" class="ml-1">
+              ×{{ talentAnzahl[String(name)] }}
+            </v-chip>
             <v-chip size="x-small" class="ml-1">{{ RANG_NAMEN[talent.rang] ?? talent.rang }}</v-chip>
             <v-chip v-if="talent.kategorie" size="x-small" class="ml-1" variant="outlined">
               {{ talent.kategorie }}
@@ -147,6 +149,12 @@ const nurVerfuegbare = ref(false)
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const selectedTalente = computed(() => daten.value.selected_talente || [])
+// Kopien pro Talent (Mehrfachauswahl, z. B. "Neue Mächte" ×2)
+const talentAnzahl = computed(() => {
+  const anzahl: Record<string, number> = {}
+  for (const name of selectedTalente.value) anzahl[name] = (anzahl[name] ?? 0) + 1
+  return anzahl
+})
 const verbleibendeTalente = computed(() => daten.value.verbleibende_talente ?? 0)
 const verbleibendeHandicapPunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)
 

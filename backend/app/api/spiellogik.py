@@ -392,14 +392,19 @@ def handicap_punkte_einloesen(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
+def _ist_talent_duplizierbar(talent_name: str, talent_data: dict) -> bool:
+    """Mehrfachauswahl wie im Original: erlaubt (z. B. "Neue Mächte",
+    "Machtpunkte", "Anhänger"), außer das Talent steht in der Sperrliste
+    nicht_duplizierbare_talente der talent_config.json."""
+    gesperrt = load_config("talent_config.json").get("nicht_duplizierbare_talente", [])
+    return talent_name not in gesperrt and talent_data.get("name", talent_name) not in gesperrt
+
+
 @router.post("/talent/waehlen", response_model=SpiellogikResponse)
 def talent_waehlen(req: SpiellogikRequest):
     daten = req.charakter_daten
     talent_name = req.element_name
     selected = daten.get("selected_talente", [])
-
-    if talent_name in selected:
-        return SpiellogikResponse(success=False, message=f"'{talent_name}' bereits ausgewählt")
 
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
@@ -410,6 +415,11 @@ def talent_waehlen(req: SpiellogikRequest):
     talent_data = setting_talente.get(talent_name)
     if not talent_data:
         return SpiellogikResponse(success=False, message=f"Talent '{talent_name}' nicht gefunden")
+
+    if talent_name in selected and not _ist_talent_duplizierbar(talent_name, talent_data):
+        return SpiellogikResponse(
+            success=False, message=f"'{talent_name}' kann nicht mehrfach ausgewählt werden"
+        )
 
     # Rang-Gate gegen den Charakterrang (aus ausgegebenen Aufstiegen; bei der
     # Erschaffung Anfänger); wie im Original per Bestätigung überspringbar
@@ -464,7 +474,11 @@ def talent_waehlen(req: SpiellogikRequest):
 
     selected.append(talent_name)
     daten["selected_talente"] = selected
-    daten.setdefault("talent_zahlungen", {})[talent_name] = zahlungsquelle
+    # Zahlungsquelle je Kopie (Altbestand: einzelner String statt Liste)
+    zahlungen = daten.setdefault("talent_zahlungen", {})
+    bisherige = zahlungen.get(talent_name)
+    bisherige = [bisherige] if isinstance(bisherige, str) else list(bisherige or [])
+    zahlungen[talent_name] = bisherige + [zahlungsquelle]
     # Auto-Handicaps/-Talente/-Mächte und Attribut-Effekte (z. B. Berserker)
     wende_talent_effekte_an(daten, talent_name, talent_data)
     return SpiellogikResponse(success=True, charakter_daten=daten)
@@ -479,13 +493,17 @@ def talent_entfernen(req: SpiellogikRequest):
     if talent_name not in selected:
         return SpiellogikResponse(success=False, message=f"'{talent_name}' ist nicht ausgewählt")
 
-    if talent_name in daten.get("volk_effekte", {}).get("talente", []):
+    # Volk-/Auto-Kopien sind einzeln — bei Mehrfachauswahl wird zuerst die
+    # dazugekaufte Kopie entfernt, nur die letzte ist geschützt
+    letzte_kopie = selected.count(talent_name) == 1
+
+    if letzte_kopie and talent_name in daten.get("volk_effekte", {}).get("talente", []):
         return SpiellogikResponse(
             success=False,
             message=f"'{talent_name}' stammt vom gewählten Volk und kann nicht entfernt werden",
         )
 
-    if ist_auto_element(daten, "talente", talent_name):
+    if letzte_kopie and ist_auto_element(daten, "talente", talent_name):
         return SpiellogikResponse(
             success=False,
             message=f"'{talent_name}' wurde automatisch durch ein anderes Talent gewährt "
@@ -494,8 +512,15 @@ def talent_entfernen(req: SpiellogikRequest):
 
     selected.remove(talent_name)
     daten["selected_talente"] = selected
-    # Erstattung an die ursprüngliche Zahlungsquelle
-    quelle = daten.get("talent_zahlungen", {}).pop(talent_name, "slot")
+    # Erstattung an die zuletzt genutzte Zahlungsquelle (Altbestand: String)
+    zahlungen = daten.setdefault("talent_zahlungen", {})
+    quellen = zahlungen.get(talent_name)
+    quellen = [quellen] if isinstance(quellen, str) else list(quellen or [])
+    quelle = quellen.pop() if quellen else "slot"
+    if quellen:
+        zahlungen[talent_name] = quellen
+    else:
+        zahlungen.pop(talent_name, None)
     if quelle == "handicap_punkte":
         daten["verbleibende_handicap_punkte"] = (
             daten.get("verbleibende_handicap_punkte", 0) + HANDICAP_EINLOESE_KOSTEN["talent"]

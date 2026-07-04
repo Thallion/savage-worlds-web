@@ -20,6 +20,16 @@ export interface AttributState {
   modifier: number
 }
 
+export type TalentZahlung = 'slot' | 'handicap_punkte' | 'aufstieg' | 'pathfinder_kostenlos'
+
+export interface TalentEffektSnapshot {
+  handicaps?: string[]
+  talente?: string[]
+  maechte?: string[]
+  attribut_stufen?: [string, string][]
+  fertigkeit_links?: Record<string, string | null>
+}
+
 export interface CharakterDaten {
   profil_daten: Record<string, string>
   active_setting_name: string
@@ -76,19 +86,14 @@ export interface CharakterDaten {
       }
     >
   }
-  // Zahlungsquelle je gekauftem Talent für korrekte Rückerstattung beim Entfernen
-  talent_zahlungen?: Record<string, 'slot' | 'handicap_punkte'>
+  // Zahlungsquelle je gekaufter Talent-Kopie für korrekte Rückerstattung
+  // beim Entfernen (Altbestand: einzelner String statt Liste)
+  talent_zahlungen?: Record<string, TalentZahlung | TalentZahlung[]>
+  // Savage Pathfinder: gewählte kostenlose Klassen-Talente (max. 1)
+  pathfinder_kostenlose_talente_gewaehlt?: number
   // Snapshot der Auto-Effekte gewählter Talente (Berserker, AH-Auto-Handicaps, ...)
-  talent_effekte?: Record<
-    string,
-    {
-      handicaps?: string[]
-      talente?: string[]
-      maechte?: string[]
-      attribut_stufen?: [string, string][]
-      fertigkeit_links?: Record<string, string | null>
-    }
-  >
+  // — eine Liste je Kopie bei Mehrfachauswahl (Altbestand: einzelnes Objekt)
+  talent_effekte?: Record<string, TalentEffektSnapshot | TalentEffektSnapshot[]>
 }
 
 export interface AbgeleiteteWerte {

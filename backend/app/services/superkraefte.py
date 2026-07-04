@@ -1,7 +1,8 @@
 """Superkräfte (Original: superkraft_funktionen.py, Superkräfte-Kompendium).
 
 - Die Kampagnen-Machtstufe (setting["machtstufen"], I–V) bestimmt das
-  Superkraftpunkte-Budget (SKP) und die Kraftobergrenze (max. SKP pro Kraft).
+  Superkraftpunkte-Budget (SKP) und die Kraftobergrenze (max. SKP pro Kraft,
+  normal 1/3 des Budgets; mit dem Talent "Der Beste" 1/2).
 - Voraussetzung ist das Talent "Superkräfte" (im Kompendium normalerweise
   kostenlos, hier ein regulärer Talent-Slot/Kauf).
 - Kräfte (setting["krafte"]) haben heterogene Kosten-Angaben ("2", "1-5",
@@ -19,6 +20,7 @@ die Stufe in daten["superkraft_stufe"] (Standard "I").
 import re
 
 TALENT_NAME = "Superkräfte"
+DER_BESTE_TALENT = "Der Beste"
 STANDARD_STUFE = "I"
 
 _ZAHL_RE = re.compile(r"-?\d+")
@@ -50,7 +52,10 @@ def skp_budget(daten: dict, setting: dict) -> int:
 
 
 def kraftobergrenze(daten: dict, setting: dict) -> int:
-    return _stufen_daten(daten, setting).get("kraftobergrenze", 0)
+    stufe = _stufen_daten(daten, setting)
+    if DER_BESTE_TALENT in daten.get("selected_talente", []):
+        return stufe.get("superkraftpunkte", 0) // 2
+    return stufe.get("kraftobergrenze", 0)
 
 
 def kraft_kosten(eintrag: dict) -> int:

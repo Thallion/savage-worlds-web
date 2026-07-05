@@ -23,7 +23,7 @@ from app.schemas.einstellungen import (
     SettingVerwaltungResponse,
 )
 from app.services import setting_verwaltung as sv
-from app.services.charakter_init import load_setting
+from app.services.charakter_init import load_config, load_setting
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -31,6 +31,13 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 @router.get("")
 def list_settings():
     return sv.liste_settings()
+
+
+@router.get("/volkseigenarten")
+def get_volkseigenarten():
+    """Volkseigenarten-Katalog (Punktesystem) für die Erstellung eigener
+    Abstammungen — muss vor /{setting_name} deklariert sein."""
+    return load_config("volkseigenarten_config.json")
 
 
 @router.get("/{setting_name}")

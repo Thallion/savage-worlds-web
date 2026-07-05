@@ -98,7 +98,7 @@ const MODI = [
 ] as const
 
 const BESCHREIBUNGEN: Record<string, string> = {
-  leer: 'Startet ohne Elemente — Völker, Talente usw. später über „Elemente hinzufügen" ergänzen.',
+  leer: 'Startet ohne Elemente — Abstammungen, Talente usw. später über „Elemente hinzufügen" ergänzen.',
   kopie: 'Übernimmt ein Setting komplett als bearbeitbare Kopie.',
   zusammenfuehrung:
     'Mischt die Elemente aller gewählten Settings; gleichnamige Elemente mit abweichenden Daten werden als Konflikt gemeldet.',

@@ -907,7 +907,7 @@ def superkraft_modifikator(req: SpiellogikRequest):
     return _mit_setting(req, aktion)
 
 
-_BERECHNE_STATS = ("parade", "robustheit", "bewegungsweite", "groesse", "bennys", "traglast_kg")
+_BERECHNE_STATS = ("parade", "robustheit", "bewegungsweite", "groesse", "bennys", "traglast_kg", "panzerung")
 
 
 def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
@@ -965,6 +965,8 @@ def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
         boni["bewegungsweite"] += effekte.get("bewegungsweite_bonus", 0)
         boni["robustheit"] += effekte.get("robustheit_bonus", 0)
         boni["groesse"] += effekte.get("groesse_modifikator", 0)
+        boni["parade"] += effekte.get("parade_bonus", 0)
+        boni["panzerung"] += effekte.get("panzerung_bonus", 0)
 
     return boni
 
@@ -987,6 +989,10 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
 
     boni = _sammle_effekt_boni(daten, setting)
     macht_slots, machtpunkte = macht_kapazitaet(daten, setting.get("talente", {}))
+    # Volks-Mächte (Eigenart "Macht" einer eigenen Abstammung) belegen eigene Slots
+    for volk_data in daten.get("voelker_selected", {}).values():
+        if isinstance(volk_data, dict):
+            macht_slots += len((volk_data.get("effects") or {}).get("auto_maechte") or [])
 
     cyber_aktiv = cyberware.ist_cyberware_setting(daten.get("active_setting_name", ""))
     cyber_boni = (
@@ -996,7 +1002,7 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
     )
 
     groesse = boni["groesse"] + cyber_boni["groesse"]
-    panzerung = panzerung_torso(daten, setting) + cyber_boni["panzerung"]
+    panzerung = panzerung_torso(daten, setting) + cyber_boni["panzerung"] + boni["panzerung"]
     parade = 2 + (kaempfen_wert // 2) + boni["parade"] + schild_parade(daten, setting)
     # Größe und Torso-Panzerung fließen nach SWAE in die Robustheit ein
     robustheit = 2 + (kon_wert // 2) + boni["robustheit"] + cyber_boni["robustheit"] + groesse + panzerung

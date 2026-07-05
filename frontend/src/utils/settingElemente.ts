@@ -2,7 +2,9 @@
 // Charakter-Overrides (eigene/bearbeitete/gelöschte Elemente) liegen in
 // charakter_daten.setting_overrides und werden hier über den Setting-Katalog gemischt.
 
-export type ElementTyp = 'talente' | 'handicaps' | 'maechte' | 'ausruestung'
+// 'voelker' (Anzeige: Abstammungen) hat einen eigenen Editor (AbstammungEditor.vue)
+// mit Volkseigenarten statt der generischen FELDER
+export type ElementTyp = 'talente' | 'handicaps' | 'maechte' | 'ausruestung' | 'voelker'
 
 export function mergeKatalog(
   basis: Record<string, any> | undefined | null,
@@ -70,6 +72,7 @@ export const FELDER: Record<ElementTyp, Feld[]> = {
     { key: 'parade', label: 'Parade-Bonus', typ: 'int', nurKategorie: ['Schild'] },
     { key: 'deckung', label: 'Deckung', typ: 'int', nurKategorie: ['Schild'] },
   ],
+  voelker: [],
 }
 
 export const TYP_LABEL: Record<ElementTyp, string> = {
@@ -77,6 +80,7 @@ export const TYP_LABEL: Record<ElementTyp, string> = {
   handicaps: 'Handicap',
   maechte: 'Macht',
   ausruestung: 'Ausrüstung',
+  voelker: 'Abstammung',
 }
 
 /** Formularwerte aus einem bestehenden Element befüllen. */

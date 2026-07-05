@@ -3,7 +3,7 @@
 Erzeugt einen kompakten Text-Statblock im SWADE-Stil:
 
     Name
-    Volk: Zwerg (SWAE)
+    Abstammung: Zwerg (SWAE)
     Attribute: Geschicklichkeit W6, Verstand W4, ...
     Fertigkeiten: Athletik W4, Kämpfen W6, ...
     Bewegungsweite: 5; Parade: 5; Robustheit: 7 (1); Größe: +0
@@ -124,7 +124,7 @@ def generiere_statblock(daten: dict, setting: dict, werte: dict) -> str:
     volk = ", ".join(k for k, v in daten.get("voelker_selected", {}).items() if v)
     setting_name = daten.get("active_setting_name", "")
     if volk:
-        zeilen.append(f"Volk: {volk} ({setting_name})" if setting_name else f"Volk: {volk}")
+        zeilen.append(f"Abstammung: {volk} ({setting_name})" if setting_name else f"Abstammung: {volk}")
     elif setting_name:
         zeilen.append(f"Setting: {setting_name}")
 

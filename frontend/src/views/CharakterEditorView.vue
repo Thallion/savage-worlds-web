@@ -104,7 +104,7 @@
 
     <v-tabs v-model="activeTab" color="primary" grow>
       <v-tab value="profil">Profil</v-tab>
-      <v-tab value="voelker">Volk</v-tab>
+      <v-tab value="voelker">Abstammungen</v-tab>
       <v-tab value="eigenschaften">Eigenschaften</v-tab>
       <v-tab value="handicaps">Handicaps</v-tab>
       <v-tab value="talente">Talente</v-tab>

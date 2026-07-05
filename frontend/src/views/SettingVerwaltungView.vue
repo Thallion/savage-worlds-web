@@ -75,6 +75,13 @@
               @click.stop="oeffneDetail(setting)"
             />
             <v-btn
+              icon="mdi-download"
+              size="small"
+              variant="text"
+              title="Als JSON exportieren"
+              @click.stop="exportiereSetting(setting.name)"
+            />
+            <v-btn
               v-if="setting.custom"
               icon="mdi-delete"
               size="small"
@@ -153,6 +160,15 @@ async function loescheSetting(name: string) {
     erfolg.value = `Setting '${name}' wurde gelöscht`
   } catch (e: any) {
     meldung.value = e?.message || 'Löschen fehlgeschlagen'
+    meldungSichtbar.value = true
+  }
+}
+
+async function exportiereSetting(name: string) {
+  try {
+    await store.exportiereSetting(name)
+  } catch (e: any) {
+    meldung.value = e?.message || 'Export fehlgeschlagen'
     meldungSichtbar.value = true
   }
 }

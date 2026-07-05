@@ -1,0 +1,68 @@
+/*
+ * Rollenspiel-Look: Schriftarten und Pergament-Textur.
+ * Schriften werden in index.html von Google Fonts geladen; die Fallbacks
+ * sorgen dafür, dass die App auch offline nach etwas "Charakterbogen" aussieht.
+ */
+
+:root {
+  --sw-font-titel: 'Cinzel', 'Palatino Linotype', 'Book Antiqua', Palatino, 'Times New Roman', serif;
+  --sw-font-text: 'EB Garamond', 'Palatino Linotype', Georgia, Cambria, 'Times New Roman', serif;
+}
+
+.v-application {
+  font-family: var(--sw-font-text);
+  font-size: 1.02rem;
+}
+
+/* Überschriften, Titel und Buttons wirken wie gestempelte Kapitälchen. */
+.v-application .text-h1,
+.v-application .text-h2,
+.v-application .text-h3,
+.v-application .text-h4,
+.v-application .text-h5,
+.v-application .text-h6,
+.v-app-bar-title,
+.v-toolbar-title,
+.v-card-title,
+.v-btn {
+  font-family: var(--sw-font-titel);
+  letter-spacing: 0.03em;
+}
+
+.v-app-bar-title {
+  font-weight: 600;
+}
+
+/* Pergament-Themes bekommen eine dezente Papierfaser-Textur. */
+body.sw-pergament .v-application,
+body.sw-pergamentDunkel .v-application {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.05'/></svg>");
+  background-attachment: fixed;
+}
+
+/* Sanfte Vignette wie bei altem Papier / Leder. */
+body.sw-pergament .v-main::before,
+body.sw-pergamentDunkel .v-main::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(255, 250, 235, 0.18), transparent 55%),
+    radial-gradient(ellipse at 50% 120%, rgba(60, 40, 20, 0.16), transparent 60%);
+}
+
+body.sw-pergamentDunkel .v-main::before {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(210, 170, 100, 0.08), transparent 55%),
+    radial-gradient(ellipse at 50% 120%, rgba(0, 0, 0, 0.35), transparent 60%);
+}
+
+/* Weiches Umblättern beim Themenwechsel. */
+.v-application,
+.v-app-bar,
+.v-card,
+.v-navigation-drawer {
+  transition: background-color 0.35s ease, color 0.35s ease;
+}

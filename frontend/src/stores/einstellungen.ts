@@ -38,12 +38,21 @@ export interface SettingErstellenPayload {
 export const useEinstellungenStore = defineStore('einstellungen', () => {
   const verfuegbareSettings = ref<SettingListItem[]>([])
   const aktuellesSetting = ref<Record<string, any> | null>(null)
+  // Volkseigenarten-Katalog für die Erstellung eigener Abstammungen
+  const volkseigenarten = ref<Record<string, any> | null>(null)
   const loading = ref(false)
   // Setting-JSONs sind groß — für Detail-Ansicht und Elementauswahl cachen
   const settingCache = new Map<string, Record<string, any>>()
 
   async function ladeSettings() {
     verfuegbareSettings.value = await api.get<SettingListItem[]>('/settings')
+  }
+
+  async function ladeVolkseigenarten() {
+    if (!volkseigenarten.value) {
+      volkseigenarten.value = await api.get<Record<string, any>>('/settings/volkseigenarten')
+    }
+    return volkseigenarten.value
   }
 
   async function ladeSetting(name: string) {
@@ -119,8 +128,10 @@ export const useEinstellungenStore = defineStore('einstellungen', () => {
   return {
     verfuegbareSettings,
     aktuellesSetting,
+    volkseigenarten,
     loading,
     ladeSettings,
+    ladeVolkseigenarten,
     ladeSetting,
     holeSetting,
     invalidiere,

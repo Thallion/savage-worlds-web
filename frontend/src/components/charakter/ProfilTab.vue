@@ -46,7 +46,7 @@
           <v-card-title>Setting wechseln?</v-card-title>
           <v-card-text>
             Beim Wechsel zu <strong>{{ neuesSetting }}</strong> werden Attribute,
-            Fertigkeiten, Volk, Handicaps, Talente und Mächte zurückgesetzt.
+            Fertigkeiten, Abstammung, Handicaps, Talente und Mächte zurückgesetzt.
             Das Profil bleibt erhalten.
           </v-card-text>
           <v-card-actions>

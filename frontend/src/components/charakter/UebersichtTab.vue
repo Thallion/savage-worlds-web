@@ -51,7 +51,7 @@
                 <td>{{ daten.active_setting_name }}</td>
               </tr>
               <tr>
-                <td class="font-weight-medium">Volk</td>
+                <td class="font-weight-medium">Abstammung</td>
                 <td>{{ gewaehlteVoelker || '-' }}</td>
               </tr>
             </tbody>

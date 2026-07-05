@@ -128,6 +128,12 @@ export const useEinstellungenStore = defineStore('einstellungen', () => {
     URL.revokeObjectURL(url)
   }
 
+  async function importiereSetting(setting: unknown) {
+    const antwort = await api.post<SettingVerwaltungAntwort>('/settings/import', setting)
+    await ladeSettings()
+    return antwort
+  }
+
   async function elementEntfernen(name: string, typ: string, elementName: string) {
     const antwort = await api.post<SettingVerwaltungAntwort>(
       `/settings/${encodeURIComponent(name)}/elemente/entfernen`,
@@ -154,5 +160,6 @@ export const useEinstellungenStore = defineStore('einstellungen', () => {
     elementeHinzufuegen,
     elementEntfernen,
     exportiereSetting,
+    importiereSetting,
   }
 })

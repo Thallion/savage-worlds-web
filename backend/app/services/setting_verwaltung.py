@@ -137,6 +137,44 @@ def speichere_custom_setting(name: str, setting: dict) -> None:
         json.dump(setting, f, ensure_ascii=False, indent=2)
 
 
+# Schlüssel, an denen ein Setting-JSON erkennbar ist (Element-Kataloge). Ein
+# Charakter-Export hat stattdessen fertigkeiten/voelker_selected/profil_daten
+# und passt hier bewusst nicht.
+_SETTING_MARKER = ("voelker", "fertigkeiten_daten", "talente", "handicaps", "maechte", "ausruestung")
+
+
+def _freier_name(basis: str) -> str:
+    """Findet einen freien Setting-Namen; nummeriert bei Kollision (nativ/custom)."""
+    basis = "".join("_" if z in _VERBOTENE_ZEICHEN else z for z in (basis or "")).strip().lstrip(".")
+    if not basis:
+        basis = "Importiertes Setting"
+    name = basis
+    n = 2
+    while ist_natives_setting(name) or ist_custom_setting(name):
+        name = f"{basis} ({n})"
+        n += 1
+    return name
+
+
+def importiere_setting(setting: dict, wunschname: str | None = None) -> tuple[dict, str]:
+    """Speichert ein importiertes Setting-JSON (eigener Export oder Kivy
+    custom_*.json) als neues eigenes Setting. Kollidierende Namen werden
+    nummeriert. Gibt (setting, name) zurück; ValueError bei ungültigem JSON."""
+    if not isinstance(setting, dict) or not setting:
+        raise ValueError("Kein gültiges Setting-JSON")
+    if not any(schluessel in setting for schluessel in _SETTING_MARKER):
+        raise ValueError(
+            "Die Datei sieht nicht wie ein Setting aus "
+            "(keine Völker/Fertigkeiten/Talente/Handicaps/Mächte enthalten)"
+        )
+    setting = copy.deepcopy(setting)
+    # Marker aus get_setting gehört nicht in die gespeicherte Datei
+    setting.pop("custom", None)
+    name = _freier_name(str(wunschname or setting.get("name") or "Importiertes Setting"))
+    speichere_custom_setting(name, setting)
+    return setting, name
+
+
 def loesche_custom_setting(name: str) -> tuple[bool, str]:
     if not ist_custom_setting(name):
         if ist_natives_setting(name):

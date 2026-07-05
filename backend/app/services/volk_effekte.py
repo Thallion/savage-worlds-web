@@ -149,9 +149,25 @@ def entferne_volk_effekte(daten: dict) -> dict:
             wuerfel["value"] = max(MIN_WUERFEL, wuerfel.get("value", MIN_WUERFEL) - info.get("delta", 0))
         fert["wuerfel"] = wuerfel
 
+    for fert_name, bonus in angewendet.get("fertigkeit_modifier", {}).items():
+        fert = daten.get("fertigkeiten", {}).get(fert_name)
+        if fert:
+            wuerfel = fert.get("wuerfel", {})
+            wuerfel["modifier"] = wuerfel.get("modifier", 0) - bonus
+            fert["wuerfel"] = wuerfel
+
+    for attr_name, mod in angewendet.get("attribut_modifikatoren", {}).items():
+        attr = daten.get("attribute", {}).get(attr_name)
+        if attr:
+            attr["modifier"] = attr.get("modifier", 0) - mod
+
     for talent in angewendet.get("talente", []):
         if talent in daten.get("selected_talente", []):
             daten["selected_talente"].remove(talent)
+
+    for macht in angewendet.get("maechte", []):
+        if macht in daten.get("selected_maechte", []):
+            daten["selected_maechte"].remove(macht)
 
     for handicap in angewendet.get("handicaps", []):
         if handicap in daten.get("selected_handicaps", []):
@@ -200,10 +216,33 @@ def wende_volk_an(daten: dict, volk_name: str, volk_data: dict) -> dict:
             angewendet["fertigkeiten"][fert_name] = {"war_untrainiert": False, "delta": neu - alt}
         fert["wuerfel"] = wuerfel
 
+    # Flache Wurf-Boni/-Mali (z. B. eigene Abstammung mit "Fertigkeitsbonus +1")
+    for fert_name, bonus in (effekte.get("fertigkeits_modifier_boni") or {}).items():
+        fert = daten.get("fertigkeiten", {}).get(fert_name)
+        if not fert or not bonus:
+            continue
+        wuerfel = fert.get("wuerfel", {"value": MIN_WUERFEL, "modifier": -2, "typ": "fertigkeit"})
+        wuerfel["modifier"] = wuerfel.get("modifier", 0) + bonus
+        fert["wuerfel"] = wuerfel
+        angewendet.setdefault("fertigkeit_modifier", {})[fert_name] = bonus
+
+    # Attributs-Mali als Modifier (z. B. Eigenart "Attributsabzug -1")
+    for attr_name, mod in (effekte.get("attribut_modifikatoren") or {}).items():
+        attr = daten.get("attribute", {}).get(attr_name)
+        if not attr or not mod:
+            continue
+        attr["modifier"] = attr.get("modifier", 0) + mod
+        angewendet.setdefault("attribut_modifikatoren", {})[attr_name] = mod
+
     for talent in effekte.get("auto_talente") or []:
         if talent not in daten.setdefault("selected_talente", []):
             daten["selected_talente"].append(talent)
             angewendet["talente"].append(talent)
+
+    for macht in effekte.get("auto_maechte") or []:
+        if macht not in daten.setdefault("selected_maechte", []):
+            daten["selected_maechte"].append(macht)
+            angewendet.setdefault("maechte", []).append(macht)
 
     # Volks-Handicaps zählen nicht zur 4-Punkte-Ökonomie und geben keine Punkte
     for handicap in effekte.get("auto_handicaps") or []:

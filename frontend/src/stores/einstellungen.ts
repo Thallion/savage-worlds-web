@@ -115,6 +115,19 @@ export const useEinstellungenStore = defineStore('einstellungen', () => {
     return antwort
   }
 
+  async function exportiereSetting(name: string) {
+    const setting = await api.get<Record<string, any>>(
+      `/settings/${encodeURIComponent(name)}/export`,
+    )
+    const blob = new Blob([JSON.stringify(setting, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${name || 'setting'}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   async function elementEntfernen(name: string, typ: string, elementName: string) {
     const antwort = await api.post<SettingVerwaltungAntwort>(
       `/settings/${encodeURIComponent(name)}/elemente/entfernen`,
@@ -140,5 +153,6 @@ export const useEinstellungenStore = defineStore('einstellungen', () => {
     loescheSetting,
     elementeHinzufuegen,
     elementEntfernen,
+    exportiereSetting,
   }
 })

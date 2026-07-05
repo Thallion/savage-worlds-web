@@ -10,6 +10,7 @@ umbenannt werden kann nur, was kein Charakter gerade benutzt.
 import copy
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -48,6 +49,22 @@ def get_setting(setting_name: str):
         raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
     setting["custom"] = sv.ist_custom_setting(setting_name)
     return setting
+
+
+@router.get("/{setting_name}/export")
+def export_setting(setting_name: str):
+    """Liefert das rohe Setting-JSON als Datei-Download (analog Charakter-Export).
+    Das Ergebnis lässt sich als Kopie-Quelle wieder einspielen."""
+    try:
+        setting = load_setting(setting_name)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
+    return JSONResponse(
+        content=setting,
+        headers={
+            "Content-Disposition": f'attachment; filename="{setting_name}.json"'
+        },
+    )
 
 
 def _verwendet_von(db: Session, setting_name: str) -> int:

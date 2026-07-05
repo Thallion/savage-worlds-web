@@ -2,7 +2,7 @@
 // backend/app/services/setting_verwaltung.py)
 
 export const TYP_LABELS: Record<string, string> = {
-  voelker: 'Völker',
+  voelker: 'Abstammungen',
   attribute: 'Attribute',
   fertigkeiten_daten: 'Fertigkeiten',
   talente: 'Talente',

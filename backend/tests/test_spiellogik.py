@@ -1338,7 +1338,7 @@ def test_statblock_basis(daten):
     text = statblock(d)
     zeilen = text.splitlines()
     assert zeilen[0] == "Grimnir"
-    assert zeilen[1] == "Volk: Zwerg (SWAE)"
+    assert zeilen[1] == "Abstammung: Zwerg (SWAE)"
     assert "Attribute: Geschicklichkeit W4, Verstand W4, Willenskraft W4, Stärke W4, Konstitution W6" in text
     assert "Bewegungsweite: 5; Parade: 2; Robustheit: 5; Größe: +0" in text
     assert "Talente: Nachtsicht" in text
@@ -1555,3 +1555,155 @@ def test_charakterbogen_altformat_voelker(daten):
     html = charakterbogen(daten)
     assert "<h2>Abstammung: Mensch</h2>" in html
     assert "Zwerg" not in html
+
+
+# --- Eigene Abstammungen aus Volkseigenarten (volk_erstellung.py) ---
+
+VOLK_EIGENARTEN = [
+    {"id": "attributserhoehung", "auswahl": "Stärke"},           # +2
+    {"id": "panzerung"},                                          # +1
+    {"id": "nachtsicht"},                                         # +1
+    {"id": "handicap", "stufe": 1, "auswahl": "Neugierig"},       # -2 (schwer)
+]
+
+
+def test_eigene_abstammung_erstellen_und_waehlen(daten):
+    r = element_aktion("speichern", daten, "voelker", "Felszwerg",
+                       {"beschreibung": "Steinernes Bergvolk.", "eigenarten": VOLK_EIGENARTEN})
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    volk = d["setting_overrides"]["voelker"]["Felszwerg"]
+    assert volk["custom"] is True
+    assert volk["eigenarten_punkte"] == 2
+    assert volk["effects"]["attribute_bonuses"] == {"Stärke": 2}
+    assert volk["effects"]["panzerung_bonus"] == 2
+    assert volk["effects"]["auto_talente"] == ["Nachtsicht"]
+    assert volk["effects"]["auto_handicaps"] == ["Neugierig"]
+    assert any(b.startswith("Attributserhöhung (Stärke)") for b in volk["besonderheiten"])
+
+    # Die Abstammung ist sofort wählbar und wendet ihre Effekte an
+    r = aktion("volk/waehlen", d, "Felszwerg")
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert "Nachtsicht" in d["selected_talente"]
+    assert "Neugierig" in d["selected_handicaps"]
+
+    # Panzerung fließt in die abgeleiteten Werte (Robustheit 2+2 Kon/2 +2 Panzerung)
+    resp = client.post("/api/spiellogik/berechne", json={"charakter_daten": d})
+    werte = resp.json()
+    assert werte["panzerung"] == 2
+    assert werte["robustheit"] == 6
+
+    # Gewählt: weder lösch- noch bearbeitbar
+    assert not element_aktion("loeschen", d, "voelker", "Felszwerg")["success"]
+    assert not element_aktion("speichern", d, "voelker", "Felszwerg",
+                              {"eigenarten": []}, alter_name="Felszwerg")["success"]
+
+    # Abwählen (Volk wechseln) nimmt die Effekte zurück, danach ist Löschen möglich
+    d = aktion("volk/waehlen", d, "Mensch")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert "Nachtsicht" not in d["selected_talente"]
+    r = element_aktion("loeschen", d, "voelker", "Felszwerg")
+    assert r["success"]
+    assert "Felszwerg" not in r["charakter_daten"]["setting_overrides"]["voelker"]
+
+
+def test_eigene_abstammung_punktelimit(daten):
+    r = element_aktion("speichern", daten, "voelker", "Overpowered", {"eigenarten": [
+        {"id": "attributserhoehung", "auswahl": "Stärke"},
+        {"id": "attributserhoehung", "auswahl": "Verstand"},
+    ]})
+    assert not r["success"]
+    assert "Punktelimit" in r["message"]
+
+
+def test_eigene_abstammung_max_auswahl_und_optionen(daten):
+    # Zäh ist nur 1x wählbar
+    r = element_aktion("speichern", daten, "voelker", "Doppelzaeh",
+                       {"eigenarten": [{"id": "zaeh"}, {"id": "zaeh"}, {"id": "attributsabzug_1", "auswahl": "Verstand"}]})
+    assert not r["success"]
+    assert "höchstens" in r["message"]
+
+    # Attributserhöhung ohne Attribut-Auswahl wird abgelehnt
+    r = element_aktion("speichern", daten, "voelker", "Unfertig",
+                       {"eigenarten": [{"id": "attributserhoehung"}]})
+    assert not r["success"]
+    assert "Auswahl" in r["message"]
+
+
+def test_eigene_abstammung_negative_eigenarten(daten):
+    r = element_aktion("speichern", daten, "voelker", "Bleichling", {"eigenarten": [
+        {"id": "attributserhoehung_zwei", "auswahl": "Verstand"},   # +4
+        {"id": "attributsabzug_1", "auswahl": "Stärke"},            # -2
+        {"id": "langsam"},                                          # -1
+        {"id": "zerbrechlich"},                                     # -1
+    ]})
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    volk = d["setting_overrides"]["voelker"]["Bleichling"]
+    assert volk["eigenarten_punkte"] == 0
+    assert volk["effects"]["attribut_modifikatoren"] == {"Stärke": -1}
+    assert volk["effects"]["bewegungsweite_bonus"] == -1
+    assert volk["effects"]["robustheit_bonus"] == -1
+
+    d = aktion("volk/waehlen", d, "Bleichling")["charakter_daten"]
+    assert d["attribute"]["Verstand"]["wert"] == 8
+    assert d["attribute"]["Stärke"]["modifier"] == -1
+
+    werte = client.post("/api/spiellogik/berechne", json={"charakter_daten": d}).json()
+    assert werte["bewegungsweite"] == 5
+    assert werte["robustheit"] == 3
+
+    # Wechsel zurück räumt auch die Modifikatoren auf
+    d = aktion("volk/waehlen", d, "Mensch")["charakter_daten"]
+    assert d["attribute"]["Verstand"]["wert"] == 4
+    assert d["attribute"]["Stärke"]["modifier"] == 0
+
+
+def test_eigene_abstammung_verzoegerte_wahlen(daten):
+    r = element_aktion("speichern", daten, "voelker", "Wandler", {"eigenarten": [
+        {"id": "freies_talent"},                                    # +2 -> wahlmoeglichkeit
+        {"id": "attributsabzug_1", "auswahl": "Konstitution"},      # -2
+        {"id": "magieaffin"},                                       # +2 -> spezialwahl
+    ]})
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    volk = d["setting_overrides"]["voelker"]["Wandler"]
+    assert volk["effects"]["wahlmoeglichkeiten"] == {"freies_talent": True, "magieaffin": True}
+
+    # Freies Talent gibt wie beim Menschen einen Talent-Slot
+    d = aktion("volk/waehlen", d, "Wandler")["charakter_daten"]
+    assert d["verbleibende_talente"] == 1
+    # Magieaffin ist als Spezial-Wahl einlösbar
+    r = aktion("volk/wahl", d, "magieaffin:AH (Magie)")
+    assert r["success"], r["message"]
+    assert "AH (Magie)" in r["charakter_daten"]["selected_talente"]
+
+
+def test_eigene_abstammung_bearbeiten_und_umbenennen(daten):
+    d = element_aktion("speichern", daten, "voelker", "Felszwerg",
+                       {"eigenarten": VOLK_EIGENARTEN})["charakter_daten"]
+    r = element_aktion("speichern", d, "voelker", "Granitzwerg",
+                       {"eigenarten": [{"id": "zaeh"}]}, alter_name="Felszwerg")
+    assert r["success"], r["message"]
+    voelker = r["charakter_daten"]["setting_overrides"]["voelker"]
+    assert "Felszwerg" not in voelker
+    assert voelker["Granitzwerg"]["effects"]["spezielle_effekte"] == {"zaeh": True}
+
+    # Native Abstammungen sind nicht bearbeitbar, aber ausblendbar
+    r = element_aktion("speichern", d, "voelker", "Elf", {"eigenarten": []}, alter_name="Elf")
+    assert not r["success"]
+    r = element_aktion("loeschen", d, "voelker", "Elf")
+    assert r["success"]
+    d2 = r["charakter_daten"]
+    assert "Elf" in d2["setting_overrides"]["geloescht"]["voelker"]
+    assert not aktion("volk/waehlen", d2, "Elf")["success"]
+
+
+def test_volkseigenarten_endpoint():
+    resp = client.get("/api/settings/volkseigenarten")
+    assert resp.status_code == 200
+    cfg = resp.json()
+    assert any(e["id"] == "attributserhoehung" for e in cfg["positive"])
+    assert any(e["id"] == "langsam" for e in cfg["negative"])

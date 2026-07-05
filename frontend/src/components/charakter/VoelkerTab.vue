@@ -1,8 +1,10 @@
 <template>
   <v-card flat>
     <v-card-text>
+      <AbstammungEditor />
+
       <v-alert v-if="selectedVolk" type="info" class="mb-4" density="compact" closable>
-        Gewähltes Volk: <strong>{{ selectedVolk }}</strong>
+        Gewählte Abstammung: <strong>{{ selectedVolk }}</strong>
       </v-alert>
 
       <!-- Wahlmöglichkeit des Volkes (z. B. Halbelf: Talent ODER Attribut) -->
@@ -109,7 +111,7 @@
 
       <v-text-field
         v-model="suche"
-        label="Volk suchen..."
+        label="Abstammung suchen..."
         prepend-inner-icon="mdi-magnify"
         clearable
         class="mb-4"
@@ -129,8 +131,16 @@
             hover
             @click="waehleVolk(String(name))"
           >
-            <v-card-title class="text-body-1">{{ volk.name || name }}</v-card-title>
+            <v-card-title class="text-body-1 d-flex align-center">
+              {{ volk.name || name }}
+              <v-chip v-if="volk.custom" size="x-small" class="ml-2" color="secondary">
+                Eigene
+              </v-chip>
+            </v-card-title>
             <v-card-text>
+              <div v-if="volk.beschreibung" class="text-caption mb-1">
+                {{ volk.beschreibung }}
+              </div>
               <div v-if="volk.besonderheiten?.length" class="text-caption">
                 <strong>Besonderheiten:</strong>
                 <ul class="ml-4">
@@ -149,7 +159,7 @@
       </v-row>
 
       <v-alert v-if="Object.keys(gefilterteVoelker).length === 0" type="warning" class="mt-4">
-        Keine Völker gefunden.
+        Keine Abstammungen gefunden.
       </v-alert>
     </v-card-text>
   </v-card>
@@ -159,6 +169,8 @@
 import { computed, reactive, ref, watchEffect } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
+import { mergeKatalog } from '@/utils/settingElemente'
+import AbstammungEditor from './AbstammungEditor.vue'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
@@ -171,7 +183,10 @@ const selectedVolk = computed(() => {
   return keys.length > 0 ? keys[0] : null
 })
 
-const voelker = computed(() => einstellungenStore.aktuellesSetting?.voelker ?? {})
+// Setting-Abstammungen plus eigene/ausgeblendete aus den Charakter-Overrides
+const voelker = computed(() =>
+  mergeKatalog(einstellungenStore.aktuellesSetting?.voelker, daten.value, 'voelker'),
+)
 
 const meldung = ref('')
 const meldungSichtbar = ref(false)

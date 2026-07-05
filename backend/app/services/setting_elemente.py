@@ -10,6 +10,7 @@ charakter_daten["setting_overrides"]:
     {
         "talente": {name: element_daten, ...},      # neue + bearbeitete
         "handicaps": {...}, "maechte": {...}, "ausruestung": {...},
+        "voelker": {...},                            # eigene Abstammungen (volk_erstellung.py)
         "geloescht": {"talente": [name, ...], ...}  # entfernte native Elemente
     }
 
@@ -18,14 +19,17 @@ alle Spiellogik-Endpoints nutzen das, damit eigene Elemente wählbar sind und
 gelöschte verschwinden. Die Overrides wandern mit Export/Import mit.
 """
 
-ELEMENT_TYPEN = ("talente", "handicaps", "maechte", "ausruestung")
+from app.services.volk_erstellung import baue_volk
 
-# Anzeige-Name pro Typ für Meldungen
+ELEMENT_TYPEN = ("talente", "handicaps", "maechte", "ausruestung", "voelker")
+
+# Anzeige-Name pro Typ für Meldungen (voelker heißt in der Anzeige "Abstammung")
 _TYP_LABEL = {
     "talente": "Talent",
     "handicaps": "Handicap",
     "maechte": "Macht",
     "ausruestung": "Ausrüstung",
+    "voelker": "Abstammung",
 }
 
 # Pflicht-Defaults je Typ (angelehnt an die Original-Modelle)
@@ -106,6 +110,8 @@ def _ist_gewaehlt(daten: dict, typ: str, name: str) -> bool:
     if typ == "ausruestung":
         eintrag = daten.get("ausruestung_selected", {}).get(name)
         return bool(eintrag and eintrag.get("anzahl", 0) > 0)
+    if typ == "voelker":
+        return name in (daten.get("voelker_selected") or {})
     return False
 
 
@@ -189,7 +195,8 @@ def speichere_element(
         return False, "Der Name darf nicht leer sein"
 
     label = _TYP_LABEL[typ]
-    merged = wende_setting_overrides_an(setting, daten).get(typ, {})
+    merged_setting = wende_setting_overrides_an(setting, daten)
+    merged = merged_setting.get(typ, {})
     ist_neu = not alter_name
 
     if ist_neu and name in merged:
@@ -202,7 +209,19 @@ def speichere_element(
 
     vorlage = merged.get(alter_name) if alter_name else None
     custom = True if ist_neu else bool((vorlage or {}).get("custom", False))
-    element, fehler = _normalisiere(typ, name, {**(vorlage or {}), **(element_daten or {})}, custom)
+
+    if typ == "voelker":
+        # Abstammungen werden aus Volkseigenarten kompiliert; die aktuell
+        # gewählte trägt eine Daten-Kopie in voelker_selected und muss vor
+        # dem Bearbeiten abgewählt werden
+        gewaehlt = daten.get("voelker_selected") or {}
+        if name in gewaehlt or (alter_name and alter_name in gewaehlt):
+            return False, f"{label} ist aktuell gewählt — bitte zuerst abwählen"
+        if alter_name and not custom:
+            return False, "Native Abstammungen können nicht bearbeitet werden — nur eigene"
+        element, fehler = baue_volk(name, element_daten or {}, merged_setting)
+    else:
+        element, fehler = _normalisiere(typ, name, {**(vorlage or {}), **(element_daten or {})}, custom)
     if element is None:
         return False, fehler
 

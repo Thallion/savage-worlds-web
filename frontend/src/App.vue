@@ -40,7 +40,7 @@ const themeStore = useThemeStore()
 
 function wendeThemeAn() {
   const id = themeStore.themeId
-  vuetifyTheme.global.name.value = id
+  vuetifyTheme.change(id)
 
   // Aktive Primärfarbe (benutzerdefinierter Akzent oder Theme-Standard) setzen.
   const colors = vuetifyTheme.themes.value[id]?.colors

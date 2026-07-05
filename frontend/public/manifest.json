@@ -4,8 +4,8 @@
   "description": "Charakter-Generator für Savage Worlds (deutsch)",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1E1E1E",
-  "theme_color": "#1E88E5",
+  "background_color": "#EDE3CC",
+  "theme_color": "#6F4A2A",
   "icons": [
     {
       "src": "/icons/icon-192.png",

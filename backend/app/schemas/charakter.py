@@ -18,6 +18,7 @@ class CharakterUpdate(BaseModel):
 
 class CharakterResponse(BaseModel):
     id: int
+    ordner_id: int | None = None
     char_name: str
     active_setting_name: str
     char_gen_completed: bool
@@ -33,9 +34,16 @@ class CharakterDetail(CharakterResponse):
 
 class CharakterListItem(BaseModel):
     id: int
+    ordner_id: int | None = None
     char_name: str
     active_setting_name: str
     char_gen_completed: bool
     aktualisiert_am: datetime
 
     model_config = {"from_attributes": True}
+
+
+class CharakterVerschieben(BaseModel):
+    """Verschiebt einen Charakter in einen Ordner (ordner_id) oder heraus (None)."""
+
+    ordner_id: int | None = None

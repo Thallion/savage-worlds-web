@@ -8,3 +8,6 @@ backend/**/__pycache__/
 # Frontend
 frontend/node_modules/
 frontend/dist/
+
+# Lokale Secrets / Deployment
+.env

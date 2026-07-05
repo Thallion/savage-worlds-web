@@ -131,6 +131,7 @@ export interface AbgeleiteteWerte {
 
 export interface CharakterListItem {
   id: number
+  ordner_id: number | null
   char_name: string
   active_setting_name: string
   char_gen_completed: boolean
@@ -140,4 +141,24 @@ export interface CharakterListItem {
 export interface CharakterDetail extends CharakterListItem {
   charakter_daten: CharakterDaten
   erstellt_am: string
+}
+
+export interface Ordner {
+  id: number
+  name: string
+  erstellt_am: string
+  anzahl_charaktere: number
+}
+
+// Schreibgeschützte Vorlage-Charaktere aus dem Original (Datei-basiert, für alle).
+export interface Archetyp {
+  id: string
+  name: string
+  setting: string
+  char_gen_completed: boolean
+}
+
+export interface ArchetypOrdner {
+  setting: string
+  anzahl: number
 }

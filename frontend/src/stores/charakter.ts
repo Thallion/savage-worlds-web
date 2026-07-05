@@ -1,10 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { api } from '@/api/client'
-import type { AbgeleiteteWerte, CharakterDaten, CharakterDetail, CharakterListItem } from '@/types/charakter'
+import type {
+  AbgeleiteteWerte,
+  Archetyp,
+  ArchetypOrdner,
+  CharakterDaten,
+  CharakterDetail,
+  CharakterListItem,
+  Ordner,
+} from '@/types/charakter'
 
 export const useCharakterStore = defineStore('charakter', () => {
   const liste = ref<CharakterListItem[]>([])
+  const ordnerListe = ref<Ordner[]>([])
+  const archetypen = ref<Archetyp[]>([])
+  const archetypenOrdner = ref<ArchetypOrdner[]>([])
   const aktuellerCharakter = ref<CharakterDetail | null>(null)
   const abgeleiteteWerte = ref<AbgeleiteteWerte | null>(null)
   const loading = ref(false)
@@ -77,6 +88,54 @@ export const useCharakterStore = defineStore('charakter', () => {
     return charakter
   }
 
+  // ---- Ordner ----
+
+  async function ladeOrdner() {
+    ordnerListe.value = await api.get<Ordner[]>('/ordner')
+  }
+
+  async function erstelleOrdner(name: string) {
+    const ordner = await api.post<Ordner>('/ordner', { name })
+    await ladeOrdner()
+    return ordner
+  }
+
+  async function benenneOrdner(id: number, name: string) {
+    await api.put(`/ordner/${id}`, { name })
+    await ladeOrdner()
+  }
+
+  async function loescheOrdner(id: number) {
+    await api.delete(`/ordner/${id}`)
+    // Charaktere bleiben erhalten (landen „ohne Ordner"), daher beides neu laden.
+    await Promise.all([ladeListe(), ladeOrdner()])
+  }
+
+  async function verschiebeCharakter(charakterId: number, ordnerId: number | null) {
+    await api.put(`/charaktere/${charakterId}/verschieben`, { ordner_id: ordnerId })
+    await Promise.all([ladeListe(), ladeOrdner()])
+  }
+
+  // ---- Archetypen (schreibgeschützte Bibliothek) ----
+
+  async function ladeArchetypen() {
+    const [alle, ordner] = await Promise.all([
+      api.get<Archetyp[]>('/archetypen'),
+      api.get<ArchetypOrdner[]>('/archetypen/ordner'),
+    ])
+    archetypen.value = alle
+    archetypenOrdner.value = ordner
+  }
+
+  async function dupliziereArchetyp(id: string, ordnerId: number | null = null) {
+    const charakter = await api.post<CharakterDetail>(
+      `/archetypen/${encodeURIComponent(id)}/duplizieren`,
+      { ordner_id: ordnerId },
+    )
+    await Promise.all([ladeListe(), ladeOrdner()])
+    return charakter
+  }
+
   async function spiellogikAktion(
     aktion: string,
     elementName?: string,
@@ -142,6 +201,9 @@ export const useCharakterStore = defineStore('charakter', () => {
 
   return {
     liste,
+    ordnerListe,
+    archetypen,
+    archetypenOrdner,
     aktuellerCharakter,
     abgeleiteteWerte,
     loading,
@@ -153,6 +215,13 @@ export const useCharakterStore = defineStore('charakter', () => {
     loescheCharakter,
     exportiereCharakter,
     importiereCharakter,
+    ladeOrdner,
+    erstelleOrdner,
+    benenneOrdner,
+    loescheOrdner,
+    verschiebeCharakter,
+    ladeArchetypen,
+    dupliziereArchetyp,
     spiellogikAktion,
     elementSpeichern,
     elementLoeschen,

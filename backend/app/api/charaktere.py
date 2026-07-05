@@ -13,6 +13,7 @@ from app.schemas.charakter import (
     CharakterUpdate,
     CharakterDetail,
     CharakterListItem,
+    CharakterVerschieben,
 )
 from app.services.charakter_init import (
     ergaenze_fehlende_eigenschaften,
@@ -138,6 +139,35 @@ def update_charakter(
         charakter.charakter_daten = data.charakter_daten
 
     charakter.aktualisiert_am = datetime.utcnow()
+    db.commit()
+    db.refresh(charakter)
+    return charakter
+
+
+@router.put("/{charakter_id}/verschieben", response_model=CharakterDetail)
+def verschiebe_charakter(
+    charakter_id: int,
+    data: CharakterVerschieben,
+    db: Session = Depends(get_db),
+    current_user: db_models.User = Depends(get_current_user),
+):
+    """Verschiebt einen Charakter in einen Ordner (ordner_id) oder heraus (None)."""
+    charakter = _get_own_charakter(db, charakter_id, current_user.id)
+
+    if data.ordner_id is not None:
+        # Zielordner muss existieren und dem Nutzer gehören.
+        ordner = (
+            db.query(db_models.Ordner)
+            .filter(
+                db_models.Ordner.id == data.ordner_id,
+                db_models.Ordner.user_id == current_user.id,
+            )
+            .first()
+        )
+        if not ordner:
+            raise HTTPException(status_code=404, detail="Ordner nicht gefunden")
+
+    charakter.ordner_id = data.ordner_id
     db.commit()
     db.refresh(charakter)
     return charakter

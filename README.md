@@ -63,6 +63,15 @@ CHARGEN_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d
 
 Die App ist dann unter Port 80 erreichbar. Die Datenbank liegt persistent im Volume `./data`.
 
+### Deployment auf einen Testserver
+
+`deploy.sh` überträgt den aktuellen Arbeitsstand per rsync auf einen Server und baut die Container dort neu (`docker-compose up -d --build`). Datenbank (`data/`) und `.env` auf dem Server bleiben dabei unangetastet:
+
+```bash
+./deploy.sh                              # Standard: exnef@PlexPi:~/savage-worlds-web
+REMOTE=user@host DIR=~/app ./deploy.sh   # anderes Ziel
+```
+
 ## Projektstruktur
 
 ```

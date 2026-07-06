@@ -21,6 +21,7 @@ Web-Port des Kivy-Charakter-Generators. Architektur:
 - [x] **Talent-Voraussetzungen + Talent-Ökonomie** (`app/services/talent_voraussetzungen.py`) — Parser für `WIL W8`, `Kämpfen W6`, `Athletik oder Schießen W8`, `AH`, Talent-Namen; Rang-Sperre bei Erschaffung (nur Anfänger); Rang-/Voraussetzungs-Ablehnungen per „Trotzdem auswählen" überspringbar (`ignoriere_pruefungen`, Bestätigungsdialog in Talente-/Mächte-Tab)
 - [x] **Mächte** — `macht/waehlen|entfernen`; Slots und Machtpunkte aus AH-Talenten (`neue_maechte`/`machtpunkte`, inkl. „Neue Mächte"/„Machtpunkte"); MaechteTab nur bei arkanem Hintergrund sichtbar
 - [x] **Setting-Wechsel** — `setting/wechseln` re-initialisiert Eigenschaften und Auswahl über `initialisiere_charakter_daten`, Profil bleibt erhalten; Bestätigungsdialog im ProfilTab
+- [x] **Undo/Redo** (Original: `undo_manager`) — Snapshot-Historie im Frontend-Store (`frontend/src/stores/charakter.ts`): jede erfolgreiche Spiellogik-/Element-Aktion merkt den Charakter-Blob davor, `undo`/`redo` stellen ihn wieder her (bis zu 50 Schritte, Historie pro Charakter). Buttons in der Editor-Kopfleiste und Tastenkürzel Strg+Z / Strg+Y (Strg+Umschalt+Z); Undo/Redo eines Setting-Wechsels lädt das aktive Setting nach. Persistenz bleibt wie gehabt am expliziten „Speichern"
 - [x] **Volk-Wahlmöglichkeiten (Kern)** — `volk/wahl`-Endpoint: freies Attribut (+1 Würfeltyp), Talent-oder-Attribut (Halbelf), Talent-oder-2-Fertigkeitspunkte (Anari), Stärke-oder-Konstitution (Halbork); Wahl wechselbar, Volk-Wechsel nimmt sie zurück; Auswahl-Karte im VoelkerTab
 - [x] **Spezial-Handicap-Effekte** (`app/services/handicap_effekte.py`) — „Alt" (schwer) +5 Fertigkeitspunkte, „Jung" reduzierte Steigerungen (delta-basiert aus `handicap_config.json`, ausgegebene Punkte bleiben erhalten); Bewegungsweiten-Mali laufen weiter über `abgeleitete_effekte.json`
 - [x] **Talent-Auto-Effekte** (`app/services/talent_effekte.py`) — `auto_handicaps`/`auto_talente`/`auto_maechte` ohne Punkte/Slots (z. B. AH (Verdorbener) → „Verderbnis"), Berserker +1 Stärke-Würfeltyp, `effekt.attribut_bonus` (Deadlands), Rohling/Naturgespür-Attributlink; Snapshot in `talent_effekte`, Auto-Elemente nicht manuell entfernbar
@@ -52,7 +53,6 @@ Der Abgleich mit der Erschaffungs-Geschäftslogik des Originals (`functions/`-Mo
 - **SciFi-Startgeld**: `SciFi Kompendium.json` definiert kein `startgeld` (Standard 500) — Implantate ab 1.000 sind ohne Einlösung/Cyborg nicht bezahlbar.
 - **PDF-Statblock**: aktuell Text + Zwischenablage + .txt-Download; echtes PDF z. B. über reportlab.
 - **Komfort-/Meta-Funktionen aus dem Original** (kein Erschaffungs-Regelkern, reine Bedienung/Anzeige):
-  - **Undo/Redo** (`undo_manager`): Rückgängig/Wiederherstellen über die Aktions-Historie. Im Web bislang nicht vorhanden — Aktionen wirken direkt auf den Charakter-Blob.
   - **Historie-/Log-Ansicht**: Protokoll der ausgeführten Aktionen als eigene Ansicht.
   - **Statistik-Manager**: aggregierte Auswertungen über Charaktere/Settings.
   - **Tutorial/Wizard-geführte Erschaffung**: Schritt-für-Schritt-Assistent statt frei anwählbarer Tabs.

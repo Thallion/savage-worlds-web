@@ -67,8 +67,33 @@
               <td class="text-right">{{ inst.anzahl }}</td>
               <td class="text-right">{{ inst.stress * inst.anzahl }}</td>
               <td class="text-right">
-                <v-btn icon="mdi-plus" size="x-small" variant="text" @click="installieren(inst.name)" />
-                <v-btn icon="mdi-minus" size="x-small" variant="text" @click="deinstallieren(inst.name)" />
+                <div class="d-flex ga-1 align-center justify-end flex-nowrap">
+                  <v-text-field
+                    :model-value="preisWert(besitzPreis, inst.name, inst.kosten)"
+                    type="number"
+                    min="0"
+                    label="Preis"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    style="width: 100px"
+                    @update:model-value="(v: string) => setPreis(besitzPreis, inst.name, v)"
+                  />
+                  <v-btn
+                    icon="mdi-plus"
+                    size="x-small"
+                    variant="text"
+                    title="Installieren"
+                    @click="installieren(inst.name, preisWert(besitzPreis, inst.name, inst.kosten))"
+                  />
+                  <v-btn
+                    icon="mdi-minus"
+                    size="x-small"
+                    variant="text"
+                    title="Deinstallieren"
+                    @click="deinstallieren(inst.name, preisWert(besitzPreis, inst.name, inst.kosten))"
+                  />
+                </div>
               </td>
             </tr>
           </tbody>
@@ -93,7 +118,7 @@
         <thead>
           <tr>
             <th>Implantat</th>
-            <th class="text-right">Kosten</th>
+            <th class="text-right">Preis</th>
             <th class="text-right">Stress</th>
             <th></th>
           </tr>
@@ -107,10 +132,27 @@
               </div>
               <div class="text-caption text-medium-emphasis">{{ (item.beschreibung || '').slice(0, 110) }}</div>
             </td>
-            <td class="text-right">{{ (item.kosten ?? 0).toLocaleString('de-DE') }}</td>
+            <td class="text-right">
+              <v-text-field
+                :model-value="preisWert(katalogPreis, item.name, item.kosten ?? 0)"
+                type="number"
+                min="0"
+                density="compact"
+                hide-details
+                variant="outlined"
+                style="width: 110px"
+                class="ml-auto"
+                @update:model-value="(v: string) => setPreis(katalogPreis, item.name, v)"
+              />
+            </td>
             <td class="text-right">{{ item.stress }}</td>
             <td class="text-right">
-              <v-btn size="small" variant="tonal" color="primary" @click="installieren(item.name)">
+              <v-btn
+                size="small"
+                variant="tonal"
+                color="primary"
+                @click="installieren(item.name, preisWert(katalogPreis, item.name, item.kosten ?? 0))"
+              >
                 Installieren
               </v-btn>
             </td>
@@ -122,7 +164,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 
@@ -132,6 +174,11 @@ const einstellungenStore = useEinstellungenStore()
 const suche = ref('')
 const meldung = ref('')
 const meldungSichtbar = ref(false)
+
+// Pro Implantat einstellbarer Preis (wie im Original anpassbar).
+// Leer = Katalogpreis.
+const katalogPreis = reactive<Record<string, number>>({})
+const besitzPreis = reactive<Record<string, number>>({})
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const werte = computed(() => store.abgeleiteteWerte)
@@ -157,6 +204,7 @@ const installationen = computed(() => {
       anzahl,
       aktiv: !inaktiv.includes(name),
       stress: katalog.value[name]?.stress ?? 0,
+      kosten: katalog.value[name]?.kosten ?? 0,
       beschreibung: katalog.value[name]?.beschreibung ?? '',
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
@@ -169,16 +217,28 @@ const katalogGefiltert = computed(() => {
     .sort((a: any, b: any) => a.name.localeCompare(b.name))
 })
 
-async function ausfuehren(aktion: string, element?: string) {
-  const result = await store.spiellogikAktion(aktion, element)
+function preisWert(rec: Record<string, number>, name: string, standard: number): number {
+  const p = Number(rec[name])
+  return Number.isFinite(p) && p >= 0 ? p : (standard ?? 0)
+}
+
+function setPreis(rec: Record<string, number>, name: string, v: string | number): void {
+  const n = Number(v)
+  rec[name] = Number.isFinite(n) && n >= 0 ? n : 0
+}
+
+async function ausfuehren(aktion: string, element?: string, extra?: Record<string, unknown>) {
+  const result = await store.spiellogikAktion(aktion, element, false, extra)
   if (result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true
   }
 }
 
-const installieren = (name: string) => ausfuehren('cyberware/installieren', name)
-const deinstallieren = (name: string) => ausfuehren('cyberware/deinstallieren', name)
+const installieren = (name: string, preis?: number) =>
+  ausfuehren('cyberware/installieren', name, { preis })
+const deinstallieren = (name: string, preis?: number) =>
+  ausfuehren('cyberware/deinstallieren', name, { preis })
 const aktivUmschalten = (name: string, aktiv: boolean) =>
   ausfuehren(aktiv ? 'cyberware/aktivieren' : 'cyberware/deaktivieren', name)
 const nebenwirkungWuerfeln = () => ausfuehren('cyberware/nebenwirkung')

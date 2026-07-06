@@ -140,9 +140,23 @@ def stat_boni(daten: dict, setting: dict) -> dict:
     return boni
 
 
-def installiere(daten: dict, setting: dict, item_name: str, geld_verfuegbar: float) -> tuple[bool, str]:
+def _kosten(item: dict, preis: float | None) -> float:
+    """Abweichender Preis, sonst Katalogpreis des Implantats (Original: anpassbar)."""
+    if preis is not None:
+        return preis
+    return item.get("kosten", 0) or 0
+
+
+def installiere(
+    daten: dict,
+    setting: dict,
+    item_name: str,
+    geld_verfuegbar: float,
+    preis: float | None = None,
+) -> tuple[bool, str]:
     """geld_verfuegbar: aktuell verfügbares Geld (inkl. bereits abgezogener
-    Cyberware-Belastung), gegen das der Budget-Überhang geprüft wird."""
+    Cyberware-Belastung), gegen das der Budget-Überhang geprüft wird.
+    preis=None -> Katalogpreis; abweichend wie bei normaler Ausrüstung."""
     if not ist_cyberware_setting(daten.get("active_setting_name", "")):
         return False, "Dieses Setting nutzt kein Cyberware-System"
 
@@ -163,7 +177,9 @@ def installiere(daten: dict, setting: dict, item_name: str, geld_verfuegbar: flo
             "Installation nicht möglich"
         )
 
-    kosten = item.get("kosten", 0) or 0
+    kosten = _kosten(item, preis)
+    if kosten < 0:
+        return False, "Preis darf nicht negativ sein"
     ausgegeben = daten.get("cyberware_ausgegeben", 0)
     budget = cyberware_budget(daten, setting)
     # Nur der Anteil über dem zweckgebundenen Budget belastet das Geld
@@ -183,12 +199,16 @@ def installiere(daten: dict, setting: dict, item_name: str, geld_verfuegbar: flo
     return True, ""
 
 
-def deinstalliere(daten: dict, setting: dict, item_name: str) -> tuple[bool, str]:
+def deinstalliere(
+    daten: dict, setting: dict, item_name: str, preis: float | None = None
+) -> tuple[bool, str]:
     installationen = daten.get("cyberware_installationen", {})
     if installationen.get(item_name, 0) <= 0:
         return False, f"'{item_name}' ist nicht installiert"
 
-    kosten = cyberware_items(setting).get(item_name, {}).get("kosten", 0) or 0
+    kosten = _kosten(cyberware_items(setting).get(item_name, {}), preis)
+    if kosten < 0:
+        return False, "Preis darf nicht negativ sein"
     installationen[item_name] -= 1
     if installationen[item_name] <= 0:
         del installationen[item_name]

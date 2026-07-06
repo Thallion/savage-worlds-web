@@ -955,14 +955,14 @@ def _mit_setting(req: SpiellogikRequest, aktion) -> SpiellogikResponse:
 def cyberware_installieren(req: SpiellogikRequest):
     def aktion(daten, setting, element):
         geld, _ = verfuegbares_geld(daten, setting)
-        return cyberware.installiere(daten, setting, element, geld)
+        return cyberware.installiere(daten, setting, element, geld, req.preis)
 
     return _mit_setting(req, aktion)
 
 
 @router.post("/cyberware/deinstallieren", response_model=SpiellogikResponse)
 def cyberware_deinstallieren(req: SpiellogikRequest):
-    return _mit_setting(req, lambda d, s, e: cyberware.deinstalliere(d, s, e))
+    return _mit_setting(req, lambda d, s, e: cyberware.deinstalliere(d, s, e, req.preis))
 
 
 @router.post("/cyberware/aktivieren", response_model=SpiellogikResponse)

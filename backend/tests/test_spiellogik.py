@@ -1327,6 +1327,27 @@ def test_cyberware_talent_boni_und_cyborg_budget(scifi):
     assert berechne(d)["vermoegen"] == 10500
 
 
+def test_cyberware_installieren_abweichender_preis(scifi):
+    # Preis wie im Original anpassbar (Standard 1000 -> 400)
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner", preis=400)["charakter_daten"]
+    assert d["cyberware_installationen"] == {"Cyberware: Scanner": 1}
+    assert berechne(d)["vermoegen"] == 10500 - 400
+
+
+def test_cyberware_installieren_negativer_preis(scifi):
+    r = aktion("cyberware/installieren", scifi, "Cyberware: Scanner", preis=-5)
+    assert not r["success"]
+    assert "negativ" in r["message"]
+
+
+def test_cyberware_deinstallieren_abweichender_preis_erstattet(scifi):
+    # Zum Sonderpreis gekauft, während der Erschaffung voll erstattet
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner", preis=400)["charakter_daten"]
+    d = aktion("cyberware/deinstallieren", d, "Cyberware: Scanner", preis=400)["charakter_daten"]
+    assert d["cyberware_installationen"] == {}
+    assert berechne(d)["vermoegen"] == 10500
+
+
 def test_cyberware_deinstallieren(scifi):
     d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner")["charakter_daten"]
     d = aktion("cyberware/deinstallieren", d, "Cyberware: Scanner")["charakter_daten"]

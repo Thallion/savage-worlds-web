@@ -965,6 +965,20 @@ def cyberware_deinstallieren(req: SpiellogikRequest):
     return _mit_setting(req, lambda d, s, e: cyberware.deinstalliere(d, s, e))
 
 
+@router.post("/cyberware/aktivieren", response_model=SpiellogikResponse)
+def cyberware_aktivieren(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    ok, message = cyberware.setze_aktiv(daten, req.element_name or "", True)
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
+@router.post("/cyberware/deaktivieren", response_model=SpiellogikResponse)
+def cyberware_deaktivieren(req: SpiellogikRequest):
+    daten = req.charakter_daten
+    ok, message = cyberware.setze_aktiv(daten, req.element_name or "", False)
+    return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
+
+
 @router.post("/cyberware/nebenwirkung", response_model=SpiellogikResponse)
 def cyberware_nebenwirkung(req: SpiellogikRequest):
     return _mit_setting(req, lambda d, s, e: cyberware.wuerfle_nebenwirkung(d, s))

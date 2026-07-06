@@ -17,6 +17,12 @@ Regeln wie im Original:
   zurücknehmen); danach keine Erstattung plus 25 % Deinstallationskosten
   (deinstallations_kosten_faktor aus cyberware_config.json).
 
+Installierte Implantate lassen sich an- und abschalten (Original:
+aktiviere_cyberware/deaktiviere_cyberware). Deaktivierte Implantate bleiben
+installiert (Stress und Deinstallationskosten unverändert), aber ihre
+Stat-Effekte greifen nicht mehr. Abgeschaltete Implantat-Namen stehen in
+daten["cyberware_inaktiv"].
+
 Installationen liegen in daten["cyberware_installationen"] = {name: anzahl},
 das Kauf-Journal in daten["cyberware_ausgegeben"], erlittene Nebenwirkungen
 in daten["cyberware_nebenwirkungen"] (Liste von {wurf, name, effekt}).
@@ -60,6 +66,12 @@ def _installierte_items(daten: dict, setting: dict):
         item = items.get(name)
         if item and anzahl > 0:
             yield item, anzahl
+
+
+def ist_aktiv(daten: dict, item_name: str) -> bool:
+    """Ein installiertes Implantat gilt als aktiv, solange es nicht auf der
+    Inaktiv-Liste steht (Default: aktiv)."""
+    return item_name not in daten.get("cyberware_inaktiv", [])
 
 
 def _talent_cyberware_effekte(daten: dict, setting: dict) -> dict:
@@ -111,9 +123,16 @@ def geld_belastung(daten: dict, setting: dict) -> float:
 
 
 def stat_boni(daten: dict, setting: dict) -> dict:
-    """Stat-Effekte installierter Implantate für /berechne."""
+    """Stat-Effekte installierter Implantate für /berechne.
+
+    Nur aktive Implantate steuern Boni bei; deaktivierte bleiben installiert,
+    ihre Stat-Effekte greifen aber nicht."""
     boni = {"robustheit": 0, "bewegungsweite": 0, "groesse": 0, "panzerung": 0}
-    for item, anzahl in _installierte_items(daten, setting):
+    items = cyberware_items(setting)
+    for name, anzahl in daten.get("cyberware_installationen", {}).items():
+        item = items.get(name)
+        if not item or anzahl <= 0 or not ist_aktiv(daten, name):
+            continue
         for effekt, wert in (item.get("effekte") or {}).items():
             stat = _STAT_EFFEKTE.get(effekt)
             if stat and isinstance(wert, (int, float)):
@@ -173,6 +192,9 @@ def deinstalliere(daten: dict, setting: dict, item_name: str) -> tuple[bool, str
     installationen[item_name] -= 1
     if installationen[item_name] <= 0:
         del installationen[item_name]
+        inaktiv = daten.get("cyberware_inaktiv")
+        if inaktiv and item_name in inaktiv:
+            inaktiv.remove(item_name)
 
     if daten.get("char_gen_completed"):
         # Original: keine Erstattung, Deinstallation kostet zusätzlich 25 %
@@ -182,6 +204,26 @@ def deinstalliere(daten: dict, setting: dict, item_name: str) -> tuple[bool, str
 
     daten["cyberware_ausgegeben"] = daten.get("cyberware_ausgegeben", 0) - kosten
     return True, ""
+
+
+def setze_aktiv(daten: dict, item_name: str, aktiv: bool) -> tuple[bool, str]:
+    """Schaltet ein installiertes Implantat an oder ab. Deaktivierte Implantate
+    bleiben installiert, ihre Stat-Effekte greifen aber nicht mehr."""
+    installationen = daten.get("cyberware_installationen", {})
+    if installationen.get(item_name, 0) <= 0:
+        return False, f"'{item_name}' ist nicht installiert"
+
+    inaktiv = daten.setdefault("cyberware_inaktiv", [])
+    if aktiv:
+        if item_name not in inaktiv:
+            return False, f"'{item_name}' ist bereits aktiv"
+        inaktiv.remove(item_name)
+        return True, f"'{item_name}' aktiviert"
+
+    if item_name in inaktiv:
+        return False, f"'{item_name}' ist bereits inaktiv"
+    inaktiv.append(item_name)
+    return True, f"'{item_name}' deaktiviert"
 
 
 def wuerfle_nebenwirkung(daten: dict, setting: dict, wurf: int | None = None) -> tuple[bool, str]:

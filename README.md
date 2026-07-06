@@ -84,3 +84,9 @@ frontend/
 ```
 
 Die Spiellogik ist zustandslos: Die Endpunkte unter `/api/spiellogik/...` erhalten den kompletten Charakter als JSON, wenden eine Regel an (z. B. Attribut steigern) und geben den geänderten Charakter zurück. Gespeichert wird explizit über `PUT /api/charaktere/{id}`.
+
+## Lizenz
+
+Dieses Projekt ist – wie das Original – lizenziert unter der [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/) (CC BY-NC-SA 4.0). Den vollständigen Lizenztext sowie die Savage-Worlds-Fan-Produkt-Hinweise findest du in [`LICENSE.md`](LICENSE.md).
+
+Als Web-Portierung ist dies ein bearbeitetes Werk des [Savage-Worlds-Charakter-Generators (deutsch)](https://github.com/Thallion/Savage-Worlds-Charakter-Generator-deutsch) von Jean-Michel Fenske (Thallion) und wird unter derselben Lizenz weitergegeben. Eine kommerzielle Nutzung ist nicht gestattet.

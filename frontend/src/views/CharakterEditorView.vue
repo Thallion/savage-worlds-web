@@ -8,7 +8,21 @@
         <h2 class="text-h5">{{ daten.profil_daten?.Name || 'Neuer Charakter' }}</h2>
         <span class="text-caption">{{ store.aktuellerCharakter.active_setting_name }}</span>
       </v-col>
-      <v-col cols="auto" class="d-flex ga-2">
+      <v-col cols="auto" class="d-flex ga-2 align-center">
+        <v-btn
+          icon="mdi-undo"
+          variant="text"
+          :disabled="!store.kannUndo"
+          title="Rückgängig (Strg+Z)"
+          @click="rueckgaengig"
+        />
+        <v-btn
+          icon="mdi-redo"
+          variant="text"
+          :disabled="!store.kannRedo"
+          title="Wiederherstellen (Strg+Y)"
+          @click="wiederherstellen"
+        />
         <v-btn
           v-if="!erschaffungAbgeschlossen"
           color="success"
@@ -156,7 +170,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
@@ -205,7 +219,52 @@ onMounted(async () => {
   if (store.aktuellerCharakter) {
     await einstellungenStore.ladeSetting(store.aktuellerCharakter.active_setting_name)
   }
+  window.addEventListener('keydown', tastenkuerzel)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', tastenkuerzel)
+})
+
+// Nach Undo/Redo kann sich das Setting geändert haben (setting/wechseln) —
+// das aktive Setting neu laden, damit die Tabs die richtigen Daten zeigen.
+async function rueckgaengig() {
+  if (!store.kannUndo) return
+  const vorher = store.aktuellerCharakter?.active_setting_name
+  await store.undo()
+  await synchronisiereSetting(vorher)
+}
+
+async function wiederherstellen() {
+  if (!store.kannRedo) return
+  const vorher = store.aktuellerCharakter?.active_setting_name
+  await store.redo()
+  await synchronisiereSetting(vorher)
+}
+
+async function synchronisiereSetting(vorher?: string) {
+  const setting = store.aktuellerCharakter?.active_setting_name
+  if (setting && setting !== vorher) {
+    await einstellungenStore.ladeSetting(setting)
+  }
+}
+
+function tastenkuerzel(event: KeyboardEvent) {
+  if (!(event.ctrlKey || event.metaKey)) return
+  // Texteingaben (z. B. Profilfelder) sollen ihr eigenes Undo behalten
+  const ziel = event.target as HTMLElement | null
+  if (ziel && (ziel.tagName === 'INPUT' || ziel.tagName === 'TEXTAREA' || ziel.isContentEditable)) {
+    return
+  }
+  const taste = event.key.toLowerCase()
+  if (taste === 'z' && !event.shiftKey) {
+    event.preventDefault()
+    rueckgaengig()
+  } else if (taste === 'y' || (taste === 'z' && event.shiftKey)) {
+    event.preventDefault()
+    wiederherstellen()
+  }
+}
 
 async function speichern() {
   saving.value = true

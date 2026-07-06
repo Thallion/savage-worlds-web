@@ -140,6 +140,7 @@ export const useCharakterStore = defineStore('charakter', () => {
     aktion: string,
     elementName?: string,
     ignorierePruefungen = false,
+    extra?: Record<string, unknown>,
   ): Promise<{ success: boolean; message: string; bestaetigung_moeglich?: boolean }> {
     if (!aktuellerCharakter.value) return { success: false, message: 'Kein Charakter geladen' }
 
@@ -152,6 +153,7 @@ export const useCharakterStore = defineStore('charakter', () => {
       charakter_daten: aktuellerCharakter.value.charakter_daten,
       element_name: elementName,
       ignoriere_pruefungen: ignorierePruefungen,
+      ...extra,
     })
 
     if (result.success && result.charakter_daten) {

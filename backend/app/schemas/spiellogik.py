@@ -9,6 +9,10 @@ class SpiellogikRequest(BaseModel):
     # "Trotzdem auswählen": überspringt Rang- und Voraussetzungs-Prüfung
     # (Original: ignore_rang_check / ignore_voraussetzungen)
     ignoriere_pruefungen: bool = False
+    # Ausrüstung kaufen/verkaufen: Menge und abweichender Stückpreis (wie im
+    # Original anpassbar). preis=None -> Katalogpreis des Settings.
+    menge: int = 1
+    preis: float | None = None
 
 
 class CharakterbogenRequest(SpiellogikRequest):

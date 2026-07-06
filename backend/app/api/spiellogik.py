@@ -902,7 +902,7 @@ def ausruestung_kaufen(req: SpiellogikRequest):
         setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
-    ok, message = kaufe_ausruestung(daten, setting, req.element_name or "")
+    ok, message = kaufe_ausruestung(daten, setting, req.element_name or "", req.menge, req.preis)
     return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
 
 
@@ -914,7 +914,7 @@ def ausruestung_verkaufen(req: SpiellogikRequest):
         setting = _load_setting(setting_name, daten)
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
-    ok, message = verkaufe_ausruestung(daten, setting, req.element_name or "")
+    ok, message = verkaufe_ausruestung(daten, setting, req.element_name or "", req.menge, req.preis)
     return SpiellogikResponse(success=ok, message=message, charakter_daten=daten)
 
 

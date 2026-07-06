@@ -53,37 +53,59 @@ def verfuegbares_geld(daten: dict, setting: dict) -> tuple[float, float]:
     return gesamt - daten.get("ausruestung_ausgegeben", 0) - geld_belastung(daten, setting), gesamt
 
 
-def kaufe_ausruestung(daten: dict, setting: dict, item_name: str) -> tuple[bool, str]:
+def _stueckpreis(setting: dict, item_name: str, preis: float | None) -> float:
+    """Abweichender Preis, sonst Katalogpreis des Settings (Original: anpassbar)."""
+    if preis is not None:
+        return preis
+    return setting.get("ausruestung", {}).get(item_name, {}).get("kosten", 0) or 0
+
+
+def kaufe_ausruestung(
+    daten: dict, setting: dict, item_name: str, menge: int = 1, preis: float | None = None
+) -> tuple[bool, str]:
     item = setting.get("ausruestung", {}).get(item_name)
     if not item:
         return False, f"Ausrüstung '{item_name}' nicht gefunden"
+    if menge < 1:
+        return False, "Menge muss mindestens 1 sein"
 
-    kosten = item.get("kosten", 0) or 0
+    stueckpreis = _stueckpreis(setting, item_name, preis)
+    if stueckpreis < 0:
+        return False, "Preis darf nicht negativ sein"
+
+    gesamt = stueckpreis * menge
     verfuegbar, _ = verfuegbares_geld(daten, setting)
-    if kosten > verfuegbar:
-        return False, f"Nicht genug Geld ({kosten:g} benötigt, {verfuegbar:g} verfügbar)"
+    if gesamt > verfuegbar:
+        return False, f"Nicht genug Geld ({gesamt:g} benötigt, {verfuegbar:g} verfügbar)"
 
     eintrag = daten.setdefault("ausruestung_selected", {}).setdefault(
         item_name, {"anzahl": 0, "angelegt": False}
     )
-    eintrag["anzahl"] += 1
-    daten["ausruestung_ausgegeben"] = daten.get("ausruestung_ausgegeben", 0) + kosten
+    eintrag["anzahl"] += menge
+    daten["ausruestung_ausgegeben"] = daten.get("ausruestung_ausgegeben", 0) + gesamt
     return True, ""
 
 
-def verkaufe_ausruestung(daten: dict, setting: dict, item_name: str) -> tuple[bool, str]:
+def verkaufe_ausruestung(
+    daten: dict, setting: dict, item_name: str, menge: int = 1, preis: float | None = None
+) -> tuple[bool, str]:
     eintrag = daten.get("ausruestung_selected", {}).get(item_name)
     if not eintrag or eintrag.get("anzahl", 0) <= 0:
         return False, f"'{item_name}' ist nicht im Besitz"
+    if menge < 1:
+        return False, "Menge muss mindestens 1 sein"
 
-    kosten = setting.get("ausruestung", {}).get(item_name, {}).get("kosten", 0) or 0
+    menge = min(menge, eintrag["anzahl"])
+    stueckpreis = _stueckpreis(setting, item_name, preis)
     # Während der Erschaffung ist Verkaufen ein Zurücknehmen der Auswahl
     # (volle Erstattung); danach gilt der Original-Wiederverkaufswert von 50 %
     faktor = VERKAUF_FAKTOR_NACH_ERSCHAFFUNG if daten.get("char_gen_completed") else 1.0
-    eintrag["anzahl"] -= 1
+    eintrag["anzahl"] -= menge
     if eintrag["anzahl"] <= 0:
         del daten["ausruestung_selected"][item_name]
-    daten["ausruestung_ausgegeben"] = daten.get("ausruestung_ausgegeben", 0) - kosten * faktor
+    daten["ausruestung_ausgegeben"] = (
+        daten.get("ausruestung_ausgegeben", 0) - stueckpreis * faktor * menge
+    )
     return True, ""
 
 

@@ -4,10 +4,20 @@
       <v-col>
         <h1 class="text-h4">Setting-Verwaltung</h1>
       </v-col>
-      <v-col cols="auto">
+      <v-col cols="auto" class="d-flex ga-2">
+        <v-btn variant="tonal" prepend-icon="mdi-upload" @click="importDatei?.click()">
+          Importieren
+        </v-btn>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="erstellenOffen = true">
           Neues Setting
         </v-btn>
+        <input
+          ref="importDatei"
+          type="file"
+          accept="application/json,.json"
+          class="d-none"
+          @change="importiereDatei"
+        />
       </v-col>
     </v-row>
 
@@ -75,6 +85,13 @@
               @click.stop="oeffneDetail(setting)"
             />
             <v-btn
+              icon="mdi-download"
+              size="small"
+              variant="text"
+              title="Als JSON exportieren"
+              @click.stop="exportiereSetting(setting.name)"
+            />
+            <v-btn
               v-if="setting.custom"
               icon="mdi-delete"
               size="small"
@@ -107,6 +124,7 @@ import {
   type SettingVerwaltungAntwort,
 } from '@/stores/einstellungen'
 import { useCharakterStore } from '@/stores/charakter'
+import { ApiError } from '@/api/client'
 import { TYP_LABELS, STATISTIK_TYPEN } from '@/utils/settingVerwaltung'
 import SettingErstellenDialog from '@/components/settings/SettingErstellenDialog.vue'
 import SettingDetailDialog from '@/components/settings/SettingDetailDialog.vue'
@@ -115,6 +133,7 @@ const store = useEinstellungenStore()
 const charakterStore = useCharakterStore()
 
 const erstellenOffen = ref(false)
+const importDatei = ref<HTMLInputElement>()
 const detailOffen = ref(false)
 const detailName = ref('')
 const detailCustom = ref(false)
@@ -153,6 +172,42 @@ async function loescheSetting(name: string) {
     erfolg.value = `Setting '${name}' wurde gelöscht`
   } catch (e: any) {
     meldung.value = e?.message || 'Löschen fehlgeschlagen'
+    meldungSichtbar.value = true
+  }
+}
+
+async function exportiereSetting(name: string) {
+  try {
+    await store.exportiereSetting(name)
+  } catch (e: any) {
+    meldung.value = e?.message || 'Export fehlgeschlagen'
+    meldungSichtbar.value = true
+  }
+}
+
+async function importiereDatei(event: Event) {
+  const input = event.target as HTMLInputElement
+  const datei = input.files?.[0]
+  input.value = ''
+  if (!datei) return
+
+  // Führendes UTF-8-BOM (Windows-/Alt-Exporte) vor dem Parsen entfernen.
+  let daten: unknown
+  try {
+    const text = (await datei.text()).replace(/^\uFEFF/, '')
+    daten = JSON.parse(text)
+  } catch {
+    meldung.value = 'Import fehlgeschlagen — die Datei ist kein gültiges JSON.'
+    meldungSichtbar.value = true
+    return
+  }
+
+  try {
+    const antwort = await store.importiereSetting(daten)
+    erfolg.value = `Setting '${antwort.name}' wurde importiert`
+  } catch (e) {
+    const grund = e instanceof ApiError ? e.message : 'unbekannter Fehler'
+    meldung.value = `Import fehlgeschlagen — ${grund}`
     meldungSichtbar.value = true
   }
 }

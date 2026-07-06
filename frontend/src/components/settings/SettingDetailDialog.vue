@@ -5,6 +5,12 @@
         {{ settingName }}
         <v-chip v-if="custom" size="small" color="primary" class="ml-2">Eigenes Setting</v-chip>
         <v-spacer />
+        <v-btn
+          icon="mdi-download"
+          variant="text"
+          title="Als JSON exportieren"
+          @click="exportiere"
+        />
         <v-btn icon="mdi-close" variant="text" @click="schliessen" />
       </v-card-title>
 
@@ -198,6 +204,15 @@ async function fuegeElementeHinzu() {
     fehler.value = e?.message || 'Hinzufügen fehlgeschlagen'
   } finally {
     hinzufuegenLaeuft.value = false
+  }
+}
+
+async function exportiere() {
+  fehler.value = ''
+  try {
+    await store.exportiereSetting(props.settingName)
+  } catch (e: any) {
+    fehler.value = e?.message || 'Export fehlgeschlagen'
   }
 }
 

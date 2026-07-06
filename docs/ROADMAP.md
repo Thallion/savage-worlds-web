@@ -1,6 +1,6 @@
 # Savage Worlds Web — Roadmap
 
-Stand: 2026-07-04 · Abgleich mit dem Original (Kivy): https://github.com/Thallion/Savage-Worlds-Charakter-Generator-deutsch
+Stand: 2026-07-06 · Abgleich mit dem Original (Kivy): https://github.com/Thallion/Savage-Worlds-Charakter-Generator-deutsch
 
 ## Status quo
 
@@ -38,7 +38,13 @@ Web-Port des Kivy-Charakter-Generators. Architektur:
 
 ## Geplante Schritte
 
-Der Abgleich mit der Geschäftslogik des Originals (`functions/`-Module) ist abgeschlossen. Offen bleiben Vertiefungen und Qualität:
+Der Abgleich mit der Erschaffungs-Geschäftslogik des Originals (`functions/`-Module) ist weitgehend abgeschlossen. Beim erneuten Abgleich sind noch einige Original-Funktionen ohne Web-Entsprechung aufgefallen (siehe „Offene Original-Funktionen"). Daneben bleiben Vertiefungen und Qualität:
+
+### Offene Original-Funktionen
+
+- **Handicap reduzieren (schwer → leicht)**: `reduziere_handicap` (`handicap_funktionen.py:474`) hat keine Web-Entsprechung. Relevant als Aufstiegs-Option nach SWADE (ein schweres Handicap kann per Aufstieg auf die leichte Stufe reduziert bzw. ganz abgekauft werden) — im Web fehlt die Aktion samt Punkte-/Aufstiegs-Rückabwicklung.
+- **Zustände: Erschöpfung / Wunden / Entschlossenheit**: Der Web-Port trackt diese Spielzustände gar nicht. Damit fehlt auch der Original-Sonderfall „Überladung setzt Erschöpfung" (`_pruefe_traglast`): Das Gewicht/Traglast-Verhältnis wird zwar angezeigt und als Überladen-Warnung markiert, hat aber keine Regel-Folge. Umsetzung erfordert Zustands-Tracking im `charakter_daten`-Blob plus Anzeige/Bedienung.
+- **Cyberware aktivieren/deaktivieren**: Das Original kann installierte Cyberware an- und abschalten (`aktiviere_cyberware`/`deaktiviere_cyberware`), sodass ihre Stat-Effekte nur im aktiven Zustand greifen. Der Web-Port kennt bislang nur installieren/deinstallieren — der Aktiv-/Inaktiv-Schalter (inkl. Berücksichtigung in `/berechne`) fehlt.
 
 ### Ideen für weitere Ausbaustufen
 
@@ -46,6 +52,12 @@ Der Abgleich mit der Geschäftslogik des Originals (`functions/`-Module) ist abg
 - **Tierart-/Pflanzenerbe-Effekte**: Regel-Effekte je Wahl fehlen auch im Original als Daten — bei Bedarf in `volk_wahl_config.json` ergänzen.
 - **SciFi-Startgeld**: `SciFi Kompendium.json` definiert kein `startgeld` (Standard 500) — Implantate ab 1.000 sind ohne Einlösung/Cyborg nicht bezahlbar.
 - **PDF-Statblock**: aktuell Text + Zwischenablage + .txt-Download; echtes PDF z. B. über reportlab.
+- **Komfort-/Meta-Funktionen aus dem Original** (kein Erschaffungs-Regelkern, reine Bedienung/Anzeige):
+  - **Undo/Redo** (`undo_manager`): Rückgängig/Wiederherstellen über die Aktions-Historie. Im Web bislang nicht vorhanden — Aktionen wirken direkt auf den Charakter-Blob.
+  - **Historie-/Log-Ansicht**: Protokoll der ausgeführten Aktionen als eigene Ansicht.
+  - **Statistik-Manager**: aggregierte Auswertungen über Charaktere/Settings.
+  - **Tutorial/Wizard-geführte Erschaffung**: Schritt-für-Schritt-Assistent statt frei anwählbarer Tabs.
+  - **Anzeige der Settingregeln**: Die Regeln stehen in den Setting-JSONs und werden beim Merge korrekt mitgeführt, haben aber auch im Original keine Spiellogik-Wirkung (reine Anzeige) — im Web fehlt nur die Darstellung.
 
 ### Begleitend: Tests ausbauen
 

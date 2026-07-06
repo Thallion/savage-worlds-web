@@ -9,7 +9,8 @@ umbenannt werden kann nur, was kein Charakter gerade benutzt.
 
 import copy
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -48,6 +49,22 @@ def get_setting(setting_name: str):
         raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
     setting["custom"] = sv.ist_custom_setting(setting_name)
     return setting
+
+
+@router.get("/{setting_name}/export")
+def export_setting(setting_name: str):
+    """Liefert das rohe Setting-JSON als Datei-Download (analog Charakter-Export).
+    Das Ergebnis lässt sich als Kopie-Quelle wieder einspielen."""
+    try:
+        setting = load_setting(setting_name)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
+    return JSONResponse(
+        content=setting,
+        headers={
+            "Content-Disposition": f'attachment; filename="{setting_name}.json"'
+        },
+    )
 
 
 def _verwendet_von(db: Session, setting_name: str) -> int:
@@ -124,6 +141,21 @@ def erstelle_setting(
 
     sv.speichere_custom_setting(name, setting)
     return _antwort(name, setting, konflikte, warnungen)
+
+
+@router.post("/import", response_model=SettingVerwaltungResponse, status_code=status.HTTP_201_CREATED)
+def import_setting(
+    setting: dict = Body(...),
+    current_user: db_models.User = Depends(get_current_user),
+):
+    """Importiert ein Setting-JSON (eigener Export oder Kivy custom_*.json) als
+    neues eigenes Setting. Der Name kommt aus dem JSON und wird bei Kollision
+    mit einem vorhandenen Setting nummeriert."""
+    try:
+        gespeichert, name = sv.importiere_setting(setting)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return _antwort(name, gespeichert)
 
 
 @router.put("/{setting_name}", response_model=SettingVerwaltungResponse)

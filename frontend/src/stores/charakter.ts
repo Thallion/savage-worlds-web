@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { api } from '@/api/client'
 import type {
   AbgeleiteteWerte,
@@ -20,6 +20,58 @@ export const useCharakterStore = defineStore('charakter', () => {
   const abgeleiteteWerte = ref<AbgeleiteteWerte | null>(null)
   const loading = ref(false)
 
+  // ---- Undo/Redo (Original: undo_manager) ----
+  // Der gesamte Charakter liegt in einem JSON-Blob und jede Spiellogik-Aktion
+  // ersetzt ihn. Daher genügt eine Historie aus Blob-Snapshots: vor jeder
+  // erfolgreichen Mutation wird der Zustand davor gemerkt, Undo stellt ihn
+  // wieder her, Redo führt ihn erneut aus.
+  const MAX_HISTORIE = 50
+  const undoStack = ref<CharakterDaten[]>([])
+  const redoStack = ref<CharakterDaten[]>([])
+  const kannUndo = computed(() => undoStack.value.length > 0)
+  const kannRedo = computed(() => redoStack.value.length > 0)
+
+  function klon<T>(wert: T): T {
+    return JSON.parse(JSON.stringify(wert)) as T
+  }
+
+  function historieZuruecksetzen() {
+    undoStack.value = []
+    redoStack.value = []
+  }
+
+  /** Merkt den Zustand vor einer Mutation und verwirft die Redo-Kette. */
+  function merkeSchritt(vorher: CharakterDaten) {
+    undoStack.value.push(vorher)
+    if (undoStack.value.length > MAX_HISTORIE) undoStack.value.shift()
+    redoStack.value = []
+  }
+
+  /** Setzt den Blob und synchronisiert die davon abgeleiteten Zeilen-Spalten. */
+  function wendeDatenAn(daten: CharakterDaten) {
+    const char = aktuellerCharakter.value
+    if (!char) return
+    char.charakter_daten = daten
+    char.active_setting_name = daten.active_setting_name ?? char.active_setting_name
+    char.char_gen_completed = daten.char_gen_completed ?? char.char_gen_completed
+    const name = daten.profil_daten?.Name
+    if (name) char.char_name = name
+  }
+
+  async function undo() {
+    if (!aktuellerCharakter.value || undoStack.value.length === 0) return
+    redoStack.value.push(klon(aktuellerCharakter.value.charakter_daten))
+    wendeDatenAn(undoStack.value.pop()!)
+    await berechneWerte()
+  }
+
+  async function redo() {
+    if (!aktuellerCharakter.value || redoStack.value.length === 0) return
+    undoStack.value.push(klon(aktuellerCharakter.value.charakter_daten))
+    wendeDatenAn(redoStack.value.pop()!)
+    await berechneWerte()
+  }
+
   async function ladeListe() {
     loading.value = true
     try {
@@ -33,6 +85,7 @@ export const useCharakterStore = defineStore('charakter', () => {
     loading.value = true
     try {
       aktuellerCharakter.value = await api.get<CharakterDetail>(`/charaktere/${id}`)
+      historieZuruecksetzen()
       await berechneWerte()
     } finally {
       loading.value = false
@@ -144,6 +197,7 @@ export const useCharakterStore = defineStore('charakter', () => {
   ): Promise<{ success: boolean; message: string; bestaetigung_moeglich?: boolean }> {
     if (!aktuellerCharakter.value) return { success: false, message: 'Kein Charakter geladen' }
 
+    const vorher = klon(aktuellerCharakter.value.charakter_daten)
     const result = await api.post<{
       success: boolean
       message: string
@@ -157,6 +211,7 @@ export const useCharakterStore = defineStore('charakter', () => {
     })
 
     if (result.success && result.charakter_daten) {
+      merkeSchritt(vorher)
       aktuellerCharakter.value.charakter_daten = result.charakter_daten
       await berechneWerte()
     }
@@ -168,6 +223,7 @@ export const useCharakterStore = defineStore('charakter', () => {
     body: Record<string, unknown>,
   ): Promise<{ success: boolean; message: string }> {
     if (!aktuellerCharakter.value) return { success: false, message: 'Kein Charakter geladen' }
+    const vorher = klon(aktuellerCharakter.value.charakter_daten)
     const result = await api.post<{
       success: boolean
       message: string
@@ -177,6 +233,7 @@ export const useCharakterStore = defineStore('charakter', () => {
       ...body,
     })
     if (result.success && result.charakter_daten) {
+      merkeSchritt(vorher)
       aktuellerCharakter.value.charakter_daten = result.charakter_daten
       await berechneWerte()
     }
@@ -209,6 +266,11 @@ export const useCharakterStore = defineStore('charakter', () => {
     aktuellerCharakter,
     abgeleiteteWerte,
     loading,
+    kannUndo,
+    kannRedo,
+    undo,
+    redo,
+    historieZuruecksetzen,
     ladeListe,
     ladeCharakter,
     berechneWerte,

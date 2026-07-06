@@ -45,20 +45,62 @@
                   @update:model-value="(v: unknown) => anlegen(eintrag.name, Boolean(v))"
                 />
               </td>
-              <td class="text-right">
-                <v-btn
-                  icon="mdi-plus"
-                  size="x-small"
-                  variant="text"
-                  :disabled="eintrag.kosten > (werte?.vermoegen ?? 0)"
-                  @click="kaufen(eintrag.name)"
-                />
-                <v-btn
-                  icon="mdi-minus"
-                  size="x-small"
-                  variant="text"
-                  @click="verkaufen(eintrag.name)"
-                />
+              <td>
+                <div class="d-flex ga-1 align-center justify-end flex-nowrap">
+                  <v-text-field
+                    :model-value="mengeWert(besitzMenge, eintrag.name)"
+                    type="number"
+                    min="1"
+                    label="Menge"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    style="width: 80px"
+                    @update:model-value="(v: string) => setMenge(besitzMenge, eintrag.name, v)"
+                  />
+                  <v-text-field
+                    :model-value="preisWert(besitzPreis, eintrag.name, eintrag.kosten)"
+                    type="number"
+                    min="0"
+                    label="Preis"
+                    density="compact"
+                    hide-details
+                    variant="outlined"
+                    style="width: 90px"
+                    @update:model-value="(v: string) => setPreis(besitzPreis, eintrag.name, v)"
+                  />
+                  <v-btn
+                    icon="mdi-plus"
+                    size="x-small"
+                    variant="text"
+                    title="Kaufen"
+                    :disabled="
+                      preisWert(besitzPreis, eintrag.name, eintrag.kosten) *
+                        mengeWert(besitzMenge, eintrag.name) >
+                      (werte?.vermoegen ?? 0)
+                    "
+                    @click="
+                      kaufen(
+                        eintrag.name,
+                        mengeWert(besitzMenge, eintrag.name),
+                        preisWert(besitzPreis, eintrag.name, eintrag.kosten),
+                      )
+                    "
+                  />
+                  <v-btn
+                    icon="mdi-minus"
+                    size="x-small"
+                    variant="text"
+                    title="Verkaufen"
+                    @click="
+                      verkaufen(
+                        eintrag.name,
+                        mengeWert(besitzMenge, eintrag.name),
+                        preisWert(besitzPreis, eintrag.name, eintrag.kosten),
+                      )
+                    "
+                  />
+                </div>
               </td>
             </tr>
           </tbody>
@@ -110,8 +152,9 @@
         <thead>
           <tr>
             <th>Gegenstand</th>
-            <th class="text-right">Kosten</th>
+            <th class="text-right">Preis</th>
             <th class="text-right">Gewicht</th>
+            <th class="text-right">Menge</th>
             <th></th>
           </tr>
         </thead>
@@ -126,15 +169,50 @@
                 {{ (item.beschreibung || '').slice(0, 110) }}
               </div>
             </td>
-            <td class="text-right">{{ geldAnzeige(item.kosten) }}</td>
+            <td class="text-right">
+              <v-text-field
+                :model-value="preisWert(katalogPreis, item.name, item.kosten ?? 0)"
+                type="number"
+                min="0"
+                density="compact"
+                hide-details
+                variant="outlined"
+                style="width: 100px"
+                class="ml-auto"
+                @update:model-value="(v: string) => setPreis(katalogPreis, item.name, v)"
+              />
+            </td>
             <td class="text-right">{{ gewichtAnzeige(item.gewicht) }} kg</td>
+            <td class="text-right">
+              <v-text-field
+                :model-value="mengeWert(katalogMenge, item.name)"
+                type="number"
+                min="1"
+                density="compact"
+                hide-details
+                variant="outlined"
+                style="width: 80px"
+                class="ml-auto"
+                @update:model-value="(v: string) => setMenge(katalogMenge, item.name, v)"
+              />
+            </td>
             <td class="text-right">
               <v-btn
                 size="small"
                 variant="tonal"
                 color="primary"
-                :disabled="(item.kosten ?? 0) > (werte?.vermoegen ?? 0)"
-                @click="kaufen(item.name)"
+                :disabled="
+                  preisWert(katalogPreis, item.name, item.kosten ?? 0) *
+                    mengeWert(katalogMenge, item.name) >
+                  (werte?.vermoegen ?? 0)
+                "
+                @click="
+                  kaufen(
+                    item.name,
+                    mengeWert(katalogMenge, item.name),
+                    preisWert(katalogPreis, item.name, item.kosten ?? 0),
+                  )
+                "
               >
                 Kaufen
               </v-btn>
@@ -151,7 +229,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import ElementEditor from '@/components/charakter/ElementEditor.vue'
@@ -168,6 +246,13 @@ const sortOption = ref('Name')
 const sortAbsteigend = ref(false)
 const meldung = ref('')
 const meldungSichtbar = ref(false)
+
+// Pro Gegenstand einstellbare Menge/Preis (wie im Original anpassbar).
+// Leer = Standard (Menge 1 bzw. Katalogpreis).
+const katalogMenge = reactive<Record<string, number>>({})
+const katalogPreis = reactive<Record<string, number>>({})
+const besitzMenge = reactive<Record<string, number>>({})
+const besitzPreis = reactive<Record<string, number>>({})
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const werte = computed(() => store.abgeleiteteWerte)
@@ -231,16 +316,38 @@ function gewichtAnzeige(wert?: number | null): string {
   return (wert ?? 0).toLocaleString('de-DE', { maximumFractionDigits: 1 })
 }
 
-async function ausfuehren(aktion: string, name: string) {
-  const result = await store.spiellogikAktion(aktion, name)
+function mengeWert(rec: Record<string, number>, name: string): number {
+  const m = Math.floor(Number(rec[name]))
+  return Number.isFinite(m) && m >= 1 ? m : 1
+}
+
+function setMenge(rec: Record<string, number>, name: string, v: string | number): void {
+  const n = Math.floor(Number(v))
+  rec[name] = Number.isFinite(n) && n >= 1 ? n : 1
+}
+
+function preisWert(rec: Record<string, number>, name: string, standard: number): number {
+  const p = Number(rec[name])
+  return Number.isFinite(p) && p >= 0 ? p : (standard ?? 0)
+}
+
+function setPreis(rec: Record<string, number>, name: string, v: string | number): void {
+  const n = Number(v)
+  rec[name] = Number.isFinite(n) && n >= 0 ? n : 0
+}
+
+async function ausfuehren(aktion: string, name: string, extra?: Record<string, unknown>) {
+  const result = await store.spiellogikAktion(aktion, name, false, extra)
   if (!result.success && result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true
   }
 }
 
-const kaufen = (name: string) => ausfuehren('ausruestung/kaufen', name)
-const verkaufen = (name: string) => ausfuehren('ausruestung/verkaufen', name)
+const kaufen = (name: string, menge = 1, preis?: number) =>
+  ausfuehren('ausruestung/kaufen', name, { menge, preis })
+const verkaufen = (name: string, menge = 1, preis?: number) =>
+  ausfuehren('ausruestung/verkaufen', name, { menge, preis })
 const anlegen = (name: string, an: boolean) =>
   ausfuehren(an ? 'ausruestung/anlegen' : 'ausruestung/ablegen', name)
 </script>

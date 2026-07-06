@@ -12,8 +12,11 @@ def daten():
     return initialisiere_charakter_daten("Testheld", "SWAE")
 
 
-def aktion(pfad: str, daten: dict, element: str | None = None) -> dict:
-    resp = client.post(f"/api/spiellogik/{pfad}", json={"charakter_daten": daten, "element_name": element})
+def aktion(pfad: str, daten: dict, element: str | None = None, **extra) -> dict:
+    resp = client.post(
+        f"/api/spiellogik/{pfad}",
+        json={"charakter_daten": daten, "element_name": element, **extra},
+    )
     assert resp.status_code == 200
     return resp.json()
 
@@ -1151,6 +1154,46 @@ def test_ausruestung_verkaufen_nach_erschaffung_halber_preis(daten):
 def test_ausruestung_verkaufen_ohne_besitz_abgelehnt(daten):
     r = aktion("ausruestung/verkaufen", daten, "Fackel")
     assert not r["success"]
+
+
+def test_ausruestung_kaufen_menge(daten):
+    r = aktion("ausruestung/kaufen", daten, "Fackel", menge=3)  # Fackel kostet 5
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["ausruestung_selected"]["Fackel"]["anzahl"] == 3
+    assert berechne(d)["vermoegen"] == 485
+
+
+def test_ausruestung_kaufen_abweichender_preis(daten):
+    # Feilschen/SL-Anpassung: Stückpreis 2 statt Katalog 5
+    r = aktion("ausruestung/kaufen", daten, "Fackel", menge=2, preis=2)
+    assert r["success"]
+    assert berechne(r["charakter_daten"])["vermoegen"] == 496
+
+
+def test_ausruestung_kaufen_menge_zu_teuer_abgelehnt(daten):
+    r = aktion("ausruestung/kaufen", daten, "Kleiner Schild", menge=20)  # 50 je Stück
+    assert not r["success"]
+    assert "Nicht genug Geld" in r["message"]
+
+
+def test_ausruestung_kaufen_menge_ungueltig_abgelehnt(daten):
+    r = aktion("ausruestung/kaufen", daten, "Fackel", menge=0)
+    assert not r["success"]
+
+
+def test_ausruestung_verkaufen_menge_begrenzt_auf_besitz(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel", menge=2)["charakter_daten"]
+    # Verkauf von 5 obwohl nur 2 im Besitz -> auf 2 begrenzt, voller Refund
+    d = aktion("ausruestung/verkaufen", d, "Fackel", menge=5)["charakter_daten"]
+    assert "Fackel" not in d["ausruestung_selected"]
+    assert berechne(d)["vermoegen"] == 500
+
+
+def test_ausruestung_verkaufen_abweichender_preis(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel", menge=2, preis=10)["charakter_daten"]  # -20
+    d = aktion("ausruestung/verkaufen", d, "Fackel", menge=2, preis=10)["charakter_daten"]  # +20
+    assert berechne(d)["vermoegen"] == 500
 
 
 def test_ruestung_anlegen_erhoeht_robustheit(daten):

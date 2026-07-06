@@ -12,6 +12,7 @@ from app.services.kompatibilitaet import handicap_konflikt, talent_konflikt
 from app.services.aufstiege import (
     AUFSTIEG_KOSTEN_ATTRIBUT,
     AUFSTIEG_KOSTEN_FERTIGKEIT,
+    AUFSTIEG_KOSTEN_HANDICAP,
     AUFSTIEG_KOSTEN_TALENT,
     charakter_rang,
     rang_erlaubt,
@@ -342,6 +343,27 @@ def handicap_entfernen(req: SpiellogikRequest):
     stufe = handicap_data.get("stufe", "leicht").lower()
     punkte = 1 if stufe == "leicht" else 2
 
+    # Nach der Erschaffung wird ein Handicap per Aufstieg ganz abgekauft
+    # (SWADE-Aufstiegsoption). Die Erschaffungs-Punkte-Buchhaltung bleibt dabei
+    # eingefroren; ein schweres Handicap muss zuvor auf leicht reduziert werden.
+    if daten.get("char_gen_completed"):
+        if stufe == "schwer":
+            return SpiellogikResponse(
+                success=False,
+                message="Schweres Handicap erst auf 'leicht' reduzieren, bevor es ganz abgekauft werden kann",
+                charakter_daten=daten,
+            )
+        if daten.get("verbleibende_aufstiege", 0) < AUFSTIEG_KOSTEN_HANDICAP:
+            return SpiellogikResponse(
+                success=False,
+                message="Kein Aufstieg verfügbar (Handicap abkaufen kostet 1 Aufstieg)",
+                charakter_daten=daten,
+            )
+        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_HANDICAP
+        selected.remove(handicap_name)
+        daten["selected_handicaps"] = selected
+        return SpiellogikResponse(success=True, charakter_daten=daten)
+
     if daten.get("verbleibende_handicap_punkte", 0) < punkte:
         return SpiellogikResponse(
             success=False,
@@ -354,6 +376,100 @@ def handicap_entfernen(req: SpiellogikRequest):
     daten["gesamt_handicap_punkte"] = max(0, daten.get("gesamt_handicap_punkte", 0) - punkte)
     daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) - punkte
     wende_handicap_punkte_effekte_an(daten, handicap_name, stufe, vorzeichen=-1)
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/handicap/reduzieren", response_model=SpiellogikResponse)
+def handicap_reduzieren(req: SpiellogikRequest):
+    """Reduziert ein schweres Handicap auf sein leichtes Gegenstück.
+
+    Während der Erschaffung sinkt das Handicap-Punkte-Budget um 1 (schwer 2 →
+    leicht 1); nach der Erschaffung kostet die Reduzierung 1 Aufstieg (SWADE).
+    Original: reduziere_handicap (handicap_funktionen.py).
+    """
+    daten = req.charakter_daten
+    handicap_name = req.element_name
+    selected = daten.get("selected_handicaps", [])
+
+    if handicap_name not in selected:
+        return SpiellogikResponse(success=False, message=f"'{handicap_name}' ist nicht ausgewählt")
+
+    if handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{handicap_name}' stammt vom gewählten Volk und kann nicht reduziert werden",
+        )
+
+    if ist_auto_element(daten, "handicaps", handicap_name):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{handicap_name}' wurde automatisch durch ein Talent gewährt "
+            "und kann nicht reduziert werden",
+        )
+
+    setting_name = daten.get("active_setting_name", "SWAE")
+    try:
+        setting = _load_setting(setting_name, daten)
+    except HTTPException:
+        return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
+
+    handicaps = setting.get("handicaps", {})
+    handicap_data = handicaps.get(handicap_name, {})
+    if handicap_data.get("stufe", "leicht").lower() != "schwer":
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{handicap_name}' ist nicht schwer und kann nicht reduziert werden",
+        )
+
+    # Leichtes Gegenstück mit gleichem Anzeigenamen suchen (Original-Logik)
+    basis_name = handicap_data.get("name", handicap_name)
+    leicht_key = next(
+        (
+            key
+            for key, hd in handicaps.items()
+            if hd.get("name") == basis_name and str(hd.get("stufe", "")).lower() == "leicht"
+        ),
+        None,
+    )
+    if leicht_key is None:
+        return SpiellogikResponse(
+            success=False,
+            message=f"Kein leichtes Gegenstück für '{basis_name}' vorhanden — "
+            "das Handicap kann nur ganz abgekauft (entfernt) werden",
+        )
+    if leicht_key in selected:
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{basis_name}' ist bereits als leichtes Handicap ausgewählt",
+        )
+
+    abgeschlossen = daten.get("char_gen_completed", False)
+    if abgeschlossen:
+        if daten.get("verbleibende_aufstiege", 0) < AUFSTIEG_KOSTEN_HANDICAP:
+            return SpiellogikResponse(
+                success=False,
+                message="Kein Aufstieg verfügbar (Handicap reduzieren kostet 1 Aufstieg)",
+                charakter_daten=daten,
+            )
+        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_HANDICAP
+    else:
+        # Differenz schwer (2) → leicht (1); das Budget muss noch frei sein
+        differenz = 2 - 1
+        if daten.get("verbleibende_handicap_punkte", 0) < differenz:
+            return SpiellogikResponse(
+                success=False,
+                message="Handicap-Punkte bereits ausgegeben — zuerst Einlösungen rückgängig machen",
+                charakter_daten=daten,
+            )
+        daten["gesamt_handicap_punkte"] = max(0, daten.get("gesamt_handicap_punkte", 0) - differenz)
+        daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) - differenz
+        # Spezial-Punkteeffekte umstellen (schwer zurücknehmen, leicht anwenden)
+        wende_handicap_punkte_effekte_an(daten, handicap_name, "schwer", vorzeichen=-1)
+        wende_handicap_punkte_effekte_an(daten, leicht_key, "leicht")
+
+    selected.remove(handicap_name)
+    selected.append(leicht_key)
+    daten["selected_handicaps"] = selected
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 

@@ -109,6 +109,88 @@ def test_handicap_entfernen_nach_ausgeben_abgelehnt(daten):
     assert not r["success"]
 
 
+# --- Handicap reduzieren (schwer → leicht) ---
+
+def test_handicap_reduzieren_bei_erschaffung(daten):
+    d = aktion("handicap/waehlen", daten, "Angetrieben_schwer")["charakter_daten"]
+    assert d["gesamt_handicap_punkte"] == 2
+    assert d["verbleibende_handicap_punkte"] == 2
+    r = aktion("handicap/reduzieren", d, "Angetrieben_schwer")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert "Angetrieben_schwer" not in d["selected_handicaps"]
+    assert "Angetrieben_leicht" in d["selected_handicaps"]
+    # Budget sinkt von 2 auf 1 Punkt
+    assert d["gesamt_handicap_punkte"] == 1
+    assert d["verbleibende_handicap_punkte"] == 1
+
+
+def test_handicap_reduzieren_ohne_leicht_variante_abgelehnt(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # nur schwer
+    r = aktion("handicap/reduzieren", d, "Alt")
+    assert not r["success"]
+    assert "leichtes Gegenstück" in r["message"]
+
+
+def test_handicap_reduzieren_leichtes_abgelehnt(daten):
+    d = aktion("handicap/waehlen", daten, "Arm")["charakter_daten"]  # leicht
+    r = aktion("handicap/reduzieren", d, "Arm")
+    assert not r["success"]
+    assert "nicht schwer" in r["message"]
+
+
+def test_handicap_reduzieren_nach_ausgeben_abgelehnt(daten):
+    d = aktion("handicap/waehlen", daten, "Langsam_schwer")["charakter_daten"]
+    d = aktion("handicap-punkte/einloesen", d, "fertigkeit")["charakter_daten"]  # 1 Punkt übrig
+    d = aktion("handicap-punkte/einloesen", d, "fertigkeit")["charakter_daten"]  # 0 Punkte übrig
+    r = aktion("handicap/reduzieren", d, "Langsam_schwer")
+    assert not r["success"]
+    assert "bereits ausgegeben" in r["message"]
+
+
+def test_handicap_reduzieren_nach_erschaffung_kostet_aufstieg(daten):
+    d = aktion("handicap/waehlen", daten, "Langsam_schwer")["charakter_daten"]
+    d = mit_abschluss(d)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 1
+    punkte_vorher = d["gesamt_handicap_punkte"]
+    r = aktion("handicap/reduzieren", d, "Langsam_schwer")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 0
+    assert "Langsam_leicht" in d["selected_handicaps"]
+    # Erschaffungs-Punkte bleiben nach dem Abschluss eingefroren
+    assert d["gesamt_handicap_punkte"] == punkte_vorher
+
+
+def test_handicap_reduzieren_nach_erschaffung_ohne_aufstieg_abgelehnt(daten):
+    d = aktion("handicap/waehlen", daten, "Langsam_schwer")["charakter_daten"]
+    d = mit_abschluss(d)
+    r = aktion("handicap/reduzieren", d, "Langsam_schwer")
+    assert not r["success"]
+    assert "Kein Aufstieg" in r["message"]
+
+
+def test_handicap_abkaufen_nach_erschaffung_kostet_aufstieg(daten):
+    d = aktion("handicap/waehlen", daten, "Arm")["charakter_daten"]  # leicht
+    d = mit_abschluss(d)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    r = aktion("handicap/entfernen", d, "Arm")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 0
+    assert "Arm" not in d["selected_handicaps"]
+
+
+def test_handicap_schwer_abkaufen_nach_erschaffung_abgelehnt(daten):
+    d = aktion("handicap/waehlen", daten, "Langsam_schwer")["charakter_daten"]
+    d = mit_abschluss(d)
+    d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    r = aktion("handicap/entfernen", d, "Langsam_schwer")
+    assert not r["success"]
+    assert "reduzieren" in r["message"]
+
+
 def test_einloesen_attribut_und_fertigkeit(daten):
     d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # 2 Punkte
     d = aktion("handicap-punkte/einloesen", d, "attribut")["charakter_daten"]

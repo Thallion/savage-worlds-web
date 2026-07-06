@@ -88,10 +88,15 @@ def _cyberware(daten: dict, werte: dict) -> str:
     cyber = werte.get("cyberware")
     if not installationen or not cyber:
         return ""
+    inaktiv = daten.get("cyberware_inaktiv", [])
     teile = []
     for name, anzahl in sorted(installationen.items()):
         kurz = name.removeprefix("Cyberware: ")
-        teile.append(f"{kurz} ({anzahl}x)" if anzahl > 1 else kurz)
+        if anzahl > 1:
+            kurz = f"{kurz} ({anzahl}x)"
+        if name in inaktiv:
+            kurz = f"{kurz} [inaktiv]"
+        teile.append(kurz)
     return ", ".join(teile) + f" (Stress {cyber.get('stress')}/{cyber.get('stresslimit')})"
 
 

@@ -46,6 +46,7 @@ export interface CharakterDaten {
   startgeld_bonus_punkte?: number
   // Cyberware (SciFi-Kompendium)
   cyberware_installationen?: Record<string, number>
+  cyberware_inaktiv?: string[]
   cyberware_ausgegeben?: number
   cyberware_nebenwirkungen?: { wurf: number; name: string; effekt: string }[]
   // Superkräfte (Superkräfte-Kompendium)

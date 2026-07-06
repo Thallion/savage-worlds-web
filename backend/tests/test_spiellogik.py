@@ -1319,6 +1319,52 @@ def test_cyberware_stat_effekte_in_berechne(scifi):
         assert w["panzerung"] >= 1
 
 
+def test_cyberware_deaktivieren_hebt_stat_effekte_auf(scifi):
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Robustheit")["charakter_daten"]
+    w_aktiv = berechne(d)
+    robustheit_aktiv = w_aktiv["robustheit"]
+    stress_aktiv = w_aktiv["cyberware"]["stress"]
+
+    # Deaktivieren: Implantat bleibt installiert, Stress unverändert, Stat-Effekt weg
+    r = aktion("cyberware/deaktivieren", d, "Cyberware: Robustheit")
+    assert r["success"] and "deaktiviert" in r["message"]
+    d = r["charakter_daten"]
+    assert d["cyberware_inaktiv"] == ["Cyberware: Robustheit"]
+    assert d["cyberware_installationen"] == {"Cyberware: Robustheit": 1}
+    w = berechne(d)
+    assert w["robustheit"] == robustheit_aktiv - 1
+    # Stress bleibt bestehen (Implantat weiterhin installiert)
+    assert w["cyberware"]["stress"] == stress_aktiv
+
+    # Wieder aktivieren stellt den Effekt her
+    r = aktion("cyberware/aktivieren", d, "Cyberware: Robustheit")
+    assert r["success"] and "aktiviert" in r["message"]
+    d = r["charakter_daten"]
+    assert d["cyberware_inaktiv"] == []
+    assert berechne(d)["robustheit"] == robustheit_aktiv
+
+
+def test_cyberware_aktivieren_deaktivieren_grenzfaelle(scifi):
+    # Nicht installiert -> Fehler
+    r = aktion("cyberware/deaktivieren", scifi, "Cyberware: Scanner")
+    assert not r["success"] and "nicht installiert" in r["message"]
+
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Scanner")["charakter_daten"]
+    # Aktiv aktivieren -> bereits aktiv
+    r = aktion("cyberware/aktivieren", d, "Cyberware: Scanner")
+    assert not r["success"] and "bereits aktiv" in r["message"]
+
+    d = aktion("cyberware/deaktivieren", d, "Cyberware: Scanner")["charakter_daten"]
+    # Nochmal deaktivieren -> bereits inaktiv
+    r = aktion("cyberware/deaktivieren", d, "Cyberware: Scanner")
+    assert not r["success"] and "bereits inaktiv" in r["message"]
+
+    # Deinstallieren räumt den Inaktiv-Eintrag mit auf
+    d = aktion("cyberware/deinstallieren", d, "Cyberware: Scanner")["charakter_daten"]
+    assert d["cyberware_installationen"] == {}
+    assert d["cyberware_inaktiv"] == []
+
+
 # --- Superkräfte (superkraefte.py) ---
 
 @pytest.fixture

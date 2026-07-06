@@ -40,16 +40,29 @@
           <thead>
             <tr>
               <th>Implantat</th>
+              <th class="text-center">Aktiv</th>
               <th class="text-right">Anzahl</th>
               <th class="text-right">Stress</th>
               <th class="text-right">Aktionen</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="inst in installationen" :key="inst.name">
+            <tr v-for="inst in installationen" :key="inst.name" :class="{ 'text-medium-emphasis': !inst.aktiv }">
               <td>
                 {{ inst.name }}
+                <span v-if="!inst.aktiv" class="text-caption font-italic">(inaktiv)</span>
                 <div class="text-caption text-medium-emphasis">{{ inst.beschreibung.slice(0, 100) }}</div>
+              </td>
+              <td class="text-center">
+                <v-switch
+                  :model-value="inst.aktiv"
+                  color="primary"
+                  density="compact"
+                  hide-details
+                  inset
+                  class="d-inline-flex"
+                  @update:model-value="aktivUmschalten(inst.name, $event as boolean)"
+                />
               </td>
               <td class="text-right">{{ inst.anzahl }}</td>
               <td class="text-right">{{ inst.stress * inst.anzahl }}</td>
@@ -135,17 +148,19 @@ const katalog = computed<Record<string, any>>(() => {
   return cyberware
 })
 
-const installationen = computed(() =>
-  Object.entries(daten.value.cyberware_installationen ?? {})
+const installationen = computed(() => {
+  const inaktiv = daten.value.cyberware_inaktiv ?? []
+  return Object.entries(daten.value.cyberware_installationen ?? {})
     .filter(([, anzahl]) => anzahl > 0)
     .map(([name, anzahl]) => ({
       name,
       anzahl,
+      aktiv: !inaktiv.includes(name),
       stress: katalog.value[name]?.stress ?? 0,
       beschreibung: katalog.value[name]?.beschreibung ?? '',
     }))
-    .sort((a, b) => a.name.localeCompare(b.name)),
-)
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
 
 const katalogGefiltert = computed(() => {
   const s = (suche.value ?? '').toLowerCase()
@@ -164,6 +179,8 @@ async function ausfuehren(aktion: string, element?: string) {
 
 const installieren = (name: string) => ausfuehren('cyberware/installieren', name)
 const deinstallieren = (name: string) => ausfuehren('cyberware/deinstallieren', name)
+const aktivUmschalten = (name: string, aktiv: boolean) =>
+  ausfuehren(aktiv ? 'cyberware/aktivieren' : 'cyberware/deaktivieren', name)
 const nebenwirkungWuerfeln = () => ausfuehren('cyberware/nebenwirkung')
 const nebenwirkungEntfernen = (index: number) => ausfuehren('cyberware/nebenwirkung-entfernen', String(index))
 </script>

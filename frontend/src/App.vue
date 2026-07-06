@@ -8,6 +8,7 @@
         <v-btn to="/settings" variant="text" prepend-icon="mdi-book-cog">Settings</v-btn>
         <v-chip class="mr-2 ml-2" variant="outlined">{{ authStore.user?.benutzername }}</v-chip>
       </template>
+      <v-btn to="/info" variant="text" icon="mdi-information-outline" title="Info" />
       <theme-manager />
       <v-btn v-if="authStore.isLoggedIn" icon="mdi-logout" @click="logout" />
     </v-app-bar>
@@ -15,6 +16,12 @@
     <v-main>
       <router-view />
     </v-main>
+
+    <v-footer color="surface-variant" class="justify-center py-2">
+      <v-btn to="/info" variant="text" size="small" class="text-none">Info</v-btn>
+      <v-btn to="/impressum" variant="text" size="small" class="text-none">Impressum</v-btn>
+      <v-btn to="/datenschutz" variant="text" size="small" class="text-none">Datenschutz</v-btn>
+    </v-footer>
 
     <v-snackbar v-model="snackbar.show" :color="snackbar.color" :timeout="3000">
       {{ snackbar.text }}

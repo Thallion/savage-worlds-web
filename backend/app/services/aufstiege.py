@@ -20,6 +20,9 @@ RANG_REIHENFOLGE = ["A", "F", "V", "H", "L"]
 AUFSTIEG_KOSTEN_ATTRIBUT = 1
 AUFSTIEG_KOSTEN_FERTIGKEIT = 0.5
 AUFSTIEG_KOSTEN_TALENT = 1
+# Ein schweres Handicap auf leicht reduzieren oder ein leichtes ganz abkaufen
+# kostet je einen Aufstieg (SWADE: "Ein Handicap abkaufen").
+AUFSTIEG_KOSTEN_HANDICAP = 1
 
 
 def ausgegebene_aufstiege(daten: dict) -> float:

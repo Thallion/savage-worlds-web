@@ -273,6 +273,105 @@ def fertigkeit_senken(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
+def _fertigkeit_investierte_punkte(wuerfel: dict, attr_wert: int, basis: float) -> float:
+    """Summe der in eine (Nicht-Grund-)Fertigkeit investierten Punkte, ermittelt
+    durch Simulation der Senken-Schritte bis zum ungelernten Grundzustand (W4-2).
+    Spiegelt die Kostenregel aus /fertigkeit/senken (Steigerung über dem
+    verknüpften Attribut zählt doppelt; der erste Kauf ungelernt→W4 einfach)."""
+    value = wuerfel.get("value", 4)
+    modifier = wuerfel.get("modifier", -2)
+    total = 0.0
+    for _ in range(20):  # Schutz gegen Endlosschleifen bei kaputten Daten
+        if value <= 4 and modifier <= -2:
+            break
+        if value == 12 and modifier > 0:
+            total += basis * 2 if value > attr_wert else basis
+            modifier -= 1
+        elif value > 4:
+            total += basis * 2 if value > attr_wert else basis
+            value -= 2
+        elif value == 4 and modifier == 0:
+            total += basis  # ungelernt -> W4 kostet immer einfach
+            modifier = -2
+        else:
+            break
+    return total
+
+
+@router.post("/fertigkeit/hinzufuegen", response_model=SpiellogikResponse)
+def fertigkeit_hinzufuegen(req: SpiellogikRequest):
+    """Eigene Fertigkeit anlegen (Original: add_fertigkeit) — z. B. eine
+    Spezialisierung oder Homebrew-Fertigkeit, die nicht im Setting steht. Sie
+    startet ungelernt (W4-2) und ist an ein Attribut gebunden."""
+    daten = req.charakter_daten
+    name = (req.element_name or "").strip()
+    if not name:
+        return SpiellogikResponse(success=False, message="Bitte einen Fertigkeitsnamen angeben")
+
+    fertigkeiten = daten.setdefault("fertigkeiten", {})
+    if name in fertigkeiten:
+        return SpiellogikResponse(
+            success=False, message=f"Fertigkeit '{name}' existiert bereits", charakter_daten=daten
+        )
+
+    attribut = (req.attribut or "").strip()
+    if attribut not in daten.get("attribute", {}):
+        return SpiellogikResponse(
+            success=False,
+            message="Bitte ein gültiges verknüpftes Attribut wählen",
+            charakter_daten=daten,
+        )
+
+    fertigkeiten[name] = {
+        "fertigkeit_name": name,
+        "grundfertigkeit": False,
+        "ausgewaehlt": False,
+        "aktiv": True,
+        "wuerfel": {"value": 4, "modifier": -2, "typ": "fertigkeit"},
+        "attribut": attribut,
+        "custom": True,
+    }
+    return SpiellogikResponse(
+        success=True, message=f"Fertigkeit '{name}' hinzugefügt", charakter_daten=daten
+    )
+
+
+@router.post("/fertigkeit/entfernen", response_model=SpiellogikResponse)
+def fertigkeit_entfernen(req: SpiellogikRequest):
+    """Eigene Fertigkeit entfernen (Original: remove_fertigkeit). Nur selbst
+    angelegte Fertigkeiten sind entfernbar; Setting-Fertigkeiten sind geschützt.
+    Bereits investierte Punkte werden in den passenden Topf erstattet."""
+    daten = req.charakter_daten
+    name = req.element_name
+    fert = daten.get("fertigkeiten", {}).get(name) if name else None
+    if not fert:
+        return SpiellogikResponse(success=False, message=f"Fertigkeit '{name}' nicht gefunden")
+    if not fert.get("custom"):
+        return SpiellogikResponse(
+            success=False,
+            message=f"'{name}' ist eine Setting-Fertigkeit und kann nicht entfernt werden",
+            charakter_daten=daten,
+        )
+
+    attr_name = fert.get("attribut", "")
+    attr_wert = daten.get("attribute", {}).get(attr_name, {}).get("wert", 4)
+    abgeschlossen = daten.get("char_gen_completed", False)
+    basis = AUFSTIEG_KOSTEN_FERTIGKEIT if abgeschlossen else 1
+    refund = _fertigkeit_investierte_punkte(fert.get("wuerfel", {}), attr_wert, basis)
+
+    del daten["fertigkeiten"][name]
+    if refund:
+        if abgeschlossen:
+            daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + refund
+        else:
+            daten["verbleibende_fertigkeitssteigerungen"] = (
+                daten.get("verbleibende_fertigkeitssteigerungen", 0) + refund
+            )
+    return SpiellogikResponse(
+        success=True, message=f"Fertigkeit '{name}' entfernt", charakter_daten=daten
+    )
+
+
 @router.post("/handicap/waehlen", response_model=SpiellogikResponse)
 def handicap_waehlen(req: SpiellogikRequest):
     daten = req.charakter_daten

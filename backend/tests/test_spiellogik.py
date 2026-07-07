@@ -81,6 +81,55 @@ def test_grundfertigkeit_nicht_unter_w4_senkbar(daten):
     assert not r["success"]
 
 
+# --- Eigene Fertigkeiten (add_fertigkeit / remove_fertigkeit) ---
+
+def test_eigene_fertigkeit_hinzufuegen(daten):
+    r = aktion("fertigkeit/hinzufuegen", daten, "Spurenlesen", attribut="Verstand")
+    assert r["success"]
+    fert = r["charakter_daten"]["fertigkeiten"]["Spurenlesen"]
+    assert fert["custom"] is True
+    assert fert["grundfertigkeit"] is False
+    assert fert["attribut"] == "Verstand"
+    assert fert["wuerfel"] == {"value": 4, "modifier": -2, "typ": "fertigkeit"}
+
+
+def test_eigene_fertigkeit_duplikat_abgelehnt(daten):
+    d = aktion("fertigkeit/hinzufuegen", daten, "Spurenlesen", attribut="Verstand")["charakter_daten"]
+    r = aktion("fertigkeit/hinzufuegen", d, "Spurenlesen", attribut="Verstand")
+    assert not r["success"]
+    # auch eine vorhandene Setting-Fertigkeit ist keine gültige Neuanlage
+    r = aktion("fertigkeit/hinzufuegen", daten, "Athletik", attribut="Geschicklichkeit")
+    assert not r["success"]
+
+
+def test_eigene_fertigkeit_ohne_gueltiges_attribut_abgelehnt(daten):
+    r = aktion("fertigkeit/hinzufuegen", daten, "Spurenlesen", attribut="Weisheit")
+    assert not r["success"]
+    r = aktion("fertigkeit/hinzufuegen", daten, "Spurenlesen")
+    assert not r["success"]
+    r = aktion("fertigkeit/hinzufuegen", daten, "   ", attribut="Verstand")
+    assert not r["success"]
+
+
+def test_eigene_fertigkeit_entfernen_erstattet_punkte(daten):
+    d = aktion("fertigkeit/hinzufuegen", daten, "Spurenlesen", attribut="Verstand")["charakter_daten"]
+    start = d["verbleibende_fertigkeitssteigerungen"]
+    d = aktion("fertigkeit/steigern", d, "Spurenlesen")["charakter_daten"]  # ungelernt -> W4, 1 Punkt
+    assert d["verbleibende_fertigkeitssteigerungen"] == start - 1
+
+    r = aktion("fertigkeit/entfernen", d, "Spurenlesen")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert "Spurenlesen" not in d["fertigkeiten"]
+    assert d["verbleibende_fertigkeitssteigerungen"] == start  # investierter Punkt zurück
+
+
+def test_setting_fertigkeit_nicht_entfernbar(daten):
+    r = aktion("fertigkeit/entfernen", daten, "Athletik")
+    assert not r["success"]
+    assert "Athletik" in r["charakter_daten"]["fertigkeiten"]
+
+
 # --- Handicaps: Punkte-Ökonomie ---
 
 def test_handicap_punkte_addieren_sich(daten):

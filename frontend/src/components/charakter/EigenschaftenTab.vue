@@ -60,8 +60,17 @@
                 <span class="text-body-2 font-weight-medium">{{ name }}</span>
                 <span class="text-caption text-grey ml-1">({{ fert.attribut }})</span>
                 <v-chip v-if="fert.grundfertigkeit" size="x-small" class="ml-1">Grund</v-chip>
+                <v-chip v-if="fert.custom" size="x-small" color="primary" class="ml-1">Eigen</v-chip>
               </div>
               <div class="d-flex align-center ga-1">
+                <v-btn
+                  v-if="fert.custom"
+                  icon="mdi-delete-outline"
+                  size="x-small"
+                  variant="text"
+                  color="error"
+                  @click="entferneFertigkeit(String(name))"
+                />
                 <v-btn
                   icon="mdi-minus"
                   size="x-small"
@@ -85,10 +94,52 @@
               </div>
             </div>
           </v-card>
+
+          <v-btn
+            variant="tonal"
+            size="small"
+            prepend-icon="mdi-plus"
+            class="mt-2"
+            @click="oeffneHinzufuegen"
+          >
+            Fertigkeit hinzufügen
+          </v-btn>
         </v-col>
       </v-row>
 
       <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
+
+      <!-- Eigene Fertigkeit anlegen (Original: add_fertigkeit) -->
+      <v-dialog v-model="hinzufuegenSichtbar" max-width="480">
+        <v-card>
+          <v-card-title>Eigene Fertigkeit hinzufügen</v-card-title>
+          <v-card-text>
+            <v-text-field
+              v-model="neuerName"
+              label="Name"
+              autofocus
+              @keyup.enter="bestaetigeHinzufuegen"
+            />
+            <v-select
+              v-model="neuesAttribut"
+              :items="attributNamen"
+              label="Verknüpftes Attribut"
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="hinzufuegenSichtbar = false">Abbrechen</v-btn>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              :disabled="!neuerName.trim() || !neuesAttribut"
+              @click="bestaetigeHinzufuegen"
+            >
+              Hinzufügen
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Warnung bei doppelten Kosten (Fertigkeit über Attribut) -->
       <v-dialog v-model="bestaetigungSichtbar" max-width="480">
@@ -122,6 +173,41 @@ const meldungSichtbar = ref(false)
 const bestaetigungSichtbar = ref(false)
 const bestaetigungMeldung = ref('')
 const bestaetigungFertigkeit = ref('')
+
+const hinzufuegenSichtbar = ref(false)
+const neuerName = ref('')
+const neuesAttribut = ref('')
+const attributNamen = computed(() => Object.keys(daten.value.attribute || {}))
+
+function zeigeMeldung(text: string) {
+  meldung.value = text
+  meldungSichtbar.value = true
+}
+
+function oeffneHinzufuegen() {
+  neuerName.value = ''
+  neuesAttribut.value = attributNamen.value[0] ?? ''
+  hinzufuegenSichtbar.value = true
+}
+
+async function bestaetigeHinzufuegen() {
+  const name = neuerName.value.trim()
+  if (!name || !neuesAttribut.value) return
+  const result = await store.spiellogikAktion('fertigkeit/hinzufuegen', name, false, {
+    attribut: neuesAttribut.value,
+  })
+  if (result.success) {
+    hinzufuegenSichtbar.value = false
+    sucheFertigkeit.value = ''
+  } else if (result.message) {
+    zeigeMeldung(result.message)
+  }
+}
+
+async function entferneFertigkeit(name: string) {
+  const result = await store.spiellogikAktion('fertigkeit/entfernen', name)
+  if (!result.success && result.message) zeigeMeldung(result.message)
+}
 
 async function steigereFertigkeit(name: string) {
   const result = await store.spiellogikAktion('fertigkeit/steigern', name)

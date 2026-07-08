@@ -13,6 +13,8 @@ class SpiellogikRequest(BaseModel):
     # Original anpassbar). preis=None -> Katalogpreis des Settings.
     menge: int = 1
     preis: float | None = None
+    # Eigene Fertigkeit hinzufügen: verknüpftes Attribut (Original: add_fertigkeit)
+    attribut: str | None = None
 
 
 class CharakterbogenRequest(SpiellogikRequest):

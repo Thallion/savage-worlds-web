@@ -23,16 +23,16 @@ services:
 
   # Öffentlicher Zugang per Cloudflare-Tunnel — kein Portforwarding/DynDNS nötig.
   #
-  # Standard: Quick-Tunnel → wechselnde https://<zufall>.trycloudflare.com-URL
-  #   (URL steht im Log:  docker compose logs cloudflared)
+  # Feste Domain (Named Tunnel): https://sw-char-generator.org
+  #   - TUNNEL_TOKEN muss in .env stehen (aus Cloudflare Zero Trust, siehe README/Memory).
+  #   - Das Public-Hostname-Routing (sw-char-generator.org → http://nginx:80) wird
+  #     im Cloudflare-Dashboard des Tunnels konfiguriert, nicht hier.
   #
-  # Feste URL (named tunnel): setzt eine eigene Domain bei Cloudflare voraus.
-  #   1) In Cloudflare Zero Trust einen Tunnel anlegen und Token kopieren.
-  #   2) TUNNEL_TOKEN in .env setzen und 'command' unten ersetzen durch:
-  #        command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+  # Fallback ohne Token → Quick-Tunnel mit wechselnder …trycloudflare.com-URL
+  #   (URL steht dann im Log:  docker compose logs cloudflared)
   cloudflared:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --url http://nginx:80
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
     depends_on:
       - nginx
     restart: unless-stopped

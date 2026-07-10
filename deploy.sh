@@ -22,5 +22,5 @@ echo "==> Baue und starte Container neu ..."
 ssh "$REMOTE" "cd $DIR && sudo docker-compose up -d --build"
 
 echo
-echo "==> Fertig. App erreichbar unter: https://sw-char-generator.org"
-echo "    Tunnel-Status prüfen: ssh $REMOTE 'cd $DIR && sudo docker-compose logs --tail=20 cloudflared'"
+echo "==> Fertig. Öffentlich erreichbar unter: https://sw-char-generator.org"
+echo "    Tunnel-Status bei Bedarf: ssh $REMOTE 'cd $DIR && sudo docker-compose logs --tail=20 cloudflared'"

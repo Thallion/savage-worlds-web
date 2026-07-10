@@ -28,11 +28,12 @@ services:
   #   - Domain als Site in Cloudflare, Nameserver umgestellt.
   #   - Tunnel „savage-worlds" (Typ cloudflared) angelegt, Token kopiert.
   #   - Public Hostname des Tunnels: sw-char-generator.org → Service HTTP →
-  #     http://nginx:80 (nginx ist hier im selben Compose-Netz erreichbar).
+  #     http://nginx:80 (im Dashboard konfiguriert, nicht hier). nginx ist im
+  #     selben Compose-Netz erreichbar.
   #
   # Auf dem Pi nur den Token bereitstellen: TUNNEL_TOKEN=<token> in .env.
   # cloudflared läuft ausschließlich hier im Container — kein zusätzlicher
-  # systemd-Dienst (sonst zweiter Connector / zweiter Tunnel).
+  # systemd-Dienst (sonst zweiter Connector → sporadische 502).
   cloudflared:
     image: cloudflare/cloudflared:latest
     command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}

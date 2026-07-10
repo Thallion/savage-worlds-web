@@ -21,18 +21,21 @@ services:
       - backend
     restart: unless-stopped
 
-  # Öffentlicher Zugang per Cloudflare-Tunnel — kein Portforwarding/DynDNS nötig.
+  # Öffentlicher Zugang per Cloudflare Named Tunnel — feste Domain
+  # (https://sw-char-generator.org), kein Portforwarding/DynDNS nötig.
   #
-  # Standard: Quick-Tunnel → wechselnde https://<zufall>.trycloudflare.com-URL
-  #   (URL steht im Log:  docker compose logs cloudflared)
+  # Voraussetzungen (einmalig in Cloudflare Zero Trust):
+  #   - Domain als Site in Cloudflare, Nameserver umgestellt.
+  #   - Tunnel „savage-worlds" (Typ cloudflared) angelegt, Token kopiert.
+  #   - Public Hostname des Tunnels: sw-char-generator.org → Service HTTP →
+  #     http://nginx:80 (nginx ist hier im selben Compose-Netz erreichbar).
   #
-  # Feste URL (named tunnel): setzt eine eigene Domain bei Cloudflare voraus.
-  #   1) In Cloudflare Zero Trust einen Tunnel anlegen und Token kopieren.
-  #   2) TUNNEL_TOKEN in .env setzen und 'command' unten ersetzen durch:
-  #        command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+  # Auf dem Pi nur den Token bereitstellen: TUNNEL_TOKEN=<token> in .env.
+  # cloudflared läuft ausschließlich hier im Container — kein zusätzlicher
+  # systemd-Dienst (sonst zweiter Connector / zweiter Tunnel).
   cloudflared:
     image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate --url http://nginx:80
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
     depends_on:
       - nginx
     restart: unless-stopped

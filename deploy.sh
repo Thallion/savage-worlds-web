@@ -22,5 +22,5 @@ echo "==> Baue und starte Container neu ..."
 ssh "$REMOTE" "cd $DIR && sudo docker-compose up -d --build"
 
 echo
-echo "==> Fertig. Öffentliche URL steht in den cloudflared-Logs:"
-echo "    ssh $REMOTE 'cd $DIR && sudo docker-compose logs --tail=20 cloudflared'"
+echo "==> Fertig. App erreichbar unter: https://sw-char-generator.org"
+echo "    Tunnel-Status prüfen: ssh $REMOTE 'cd $DIR && sudo docker-compose logs --tail=20 cloudflared'"

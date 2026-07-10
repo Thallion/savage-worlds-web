@@ -1,10 +1,10 @@
 <template>
   <v-container>
     <v-row class="mb-4" align="center">
-      <v-col>
+      <v-col cols="12" sm="">
         <h1 class="text-h4">Meine Charaktere</h1>
       </v-col>
-      <v-col cols="auto" class="d-flex ga-2">
+      <v-col cols="12" sm="auto" class="d-flex flex-wrap ga-2">
         <v-btn variant="tonal" prepend-icon="mdi-upload" @click="importDatei?.click()">
           Importieren
         </v-btn>

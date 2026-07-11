@@ -270,3 +270,67 @@ def test_entpacke_charakter_export():
         "email": "test@test.de",
     }
     assert entpacke_charakter_export(wrapper) is nackt
+
+
+def _kivy_cyberware_export(vermoegen=3000.0, talente=None):
+    """Kivy-Export mit gekaufter Cyberware: Installationen unter
+    selected_elements.cyberware, Implantate zusätzlich in der Ausrüstungsliste,
+    Kaufkosten bereits vom Vermögen abgezogen."""
+    return {
+        "active_setting_name": "SciFi Kompendium",
+        "char_gen_completed": False,
+        "profil_daten": {"Name": "Cybertest"},
+        "vermoegen": vermoegen,
+        "selected_talente": talente or [],
+        "selected_cyberware": ["Cyberware: Datenbuchse", "Cyberware: Ersatzgliedmaße"],
+        "selected_elements": {
+            "cyberware": {
+                "uuid-1": {
+                    "name": "Cyberware: Datenbuchse", "kosten": 5000, "stress": 1,
+                    "installiert": True, "aktiv": True, "installations_id": "uuid-1",
+                },
+                "uuid-2": {
+                    "name": "Cyberware: Ersatzgliedmaße", "kosten": 2000, "stress": 1,
+                    "installiert": True, "aktiv": False, "installations_id": "uuid-2",
+                },
+            },
+            "ausruestung": {
+                "Cyberware: Datenbuchse": {"ausgewaehlt": True, "anzahl": 1},
+                "Cyberware: Ersatzgliedmaße": {"ausgewaehlt": True, "anzahl": 1},
+                "Rucksack": {"ausgewaehlt": True, "anzahl": 1},
+            },
+        },
+        "voelker_selected": {"Mensch": True},
+    }
+
+
+def test_kivy_import_cyberware_installationen():
+    daten, geaendert = ergaenze_fehlende_eigenschaften(_kivy_cyberware_export())
+    assert geaendert
+    assert daten["cyberware_installationen"] == {
+        "Cyberware: Datenbuchse": 1,
+        "Cyberware: Ersatzgliedmaße": 1,
+    }
+    assert daten["cyberware_inaktiv"] == ["Cyberware: Ersatzgliedmaße"]
+    assert daten["cyberware_ausgegeben"] == 7000
+    # Implantate nicht zusätzlich als normale Ausrüstung, Rest schon
+    assert "Cyberware: Datenbuchse" not in daten["ausruestung_selected"]
+    assert "Rucksack" in daten["ausruestung_selected"]
+
+
+def test_kivy_import_cyberware_geld_bleibt_erhalten():
+    from app.services.ausruestung import verfuegbares_geld
+    from app.services.charakter_init import load_setting
+
+    setting = load_setting("SciFi Kompendium")
+    daten, _ = ergaenze_fehlende_eigenschaften(_kivy_cyberware_export(vermoegen=3000.0))
+    verfuegbar, _ = verfuegbares_geld(daten, setting)
+    assert verfuegbar == 3000.0
+
+    # Mit Cyborg-Budget (deckt Cyberware-Kosten teilweise) muss das
+    # verfügbare Geld trotzdem exakt dem Kivy-Vermögen entsprechen
+    daten, _ = ergaenze_fehlende_eigenschaften(
+        _kivy_cyberware_export(vermoegen=3000.0, talente=["Cyborg"])
+    )
+    verfuegbar, _ = verfuegbares_geld(daten, setting)
+    assert verfuegbar == 3000.0

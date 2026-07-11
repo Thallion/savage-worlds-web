@@ -2018,3 +2018,30 @@ def test_waehrung_setzen_und_zuruecksetzen(daten):
     # leere Eingabe entfernt den Override -> Setting-Währung (SWAE: keine)
     d = aktion("startkapital/setzen", d, waehrung="")["charakter_daten"]
     assert "waehrungseinheit" not in d
+
+
+def test_geld_erhalten_erhoeht_verfuegbar_und_gesamt(daten):
+    d = aktion("startkapital/setzen", daten, betrag=200)["charakter_daten"]
+    assert d["geld_angepasst"] == 200
+    w = berechne(d)
+    assert w["vermoegen"] == 700
+    assert w["startkapital_gesamt"] == 700
+
+
+def test_geld_verlieren(daten):
+    d = aktion("startkapital/setzen", daten, betrag=-100)["charakter_daten"]
+    assert berechne(d)["vermoegen"] == 400
+
+
+def test_geld_verlieren_unter_null_abgelehnt(daten):
+    r = aktion("startkapital/setzen", daten, betrag=-600)
+    assert not r["success"]
+    assert "Nicht genug Geld" in r["message"]
+    assert r["charakter_daten"]["geld_angepasst"] == 0
+
+
+def test_geld_anpassung_wird_nicht_multipliziert(daten):
+    # Reich verdreifacht nur das Startkapital, nicht später erhaltenes Geld
+    d = aktion("startkapital/setzen", daten, betrag=200)["charakter_daten"]
+    d["selected_talente"] = ["Reich"]
+    assert berechne(d)["vermoegen"] == 1700

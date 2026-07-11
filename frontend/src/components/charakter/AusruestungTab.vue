@@ -31,9 +31,17 @@
               min="0"
             />
             <v-text-field v-model="vermoegenWaehrung" label="Währung" placeholder="z. B. Gold" />
+            <v-text-field
+              v-model.number="vermoegenBetrag"
+              label="Geld erhalten (+) / verlieren (−)"
+              type="number"
+              placeholder="0"
+            />
             <div class="text-caption text-medium-emphasis">
               Das Startkapital ersetzt das Setting-Startgeld; Talente wie Reich und eingelöste
-              Handicap-Punkte rechnen weiter darauf auf. Leere Währung = Setting-Währung.
+              Handicap-Punkte rechnen weiter darauf auf. Leere Währung = Setting-Währung. Der
+              Betrag wird einmalig auf das verfügbare Geld angerechnet (z. B. Belohnung oder
+              Diebstahl).
             </div>
           </v-card-text>
           <v-card-actions>
@@ -300,6 +308,7 @@ const waehrungSuffix = computed(() => (werte.value?.waehrung ? ` ${werte.value.w
 const vermoegenSichtbar = ref(false)
 const vermoegenStartkapital = ref<number | string>(500)
 const vermoegenWaehrung = ref('')
+const vermoegenBetrag = ref<number | string>('')
 
 const startkapitalWert = computed(() => {
   const n = Number(vermoegenStartkapital.value)
@@ -309,14 +318,17 @@ const startkapitalWert = computed(() => {
 function oeffneVermoegen() {
   vermoegenStartkapital.value = werte.value?.startkapital_basis ?? 500
   vermoegenWaehrung.value = daten.value.waehrungseinheit ?? ''
+  vermoegenBetrag.value = ''
   vermoegenSichtbar.value = true
 }
 
 async function bestaetigeVermoegen() {
   if (startkapitalWert.value === null) return
+  const betrag = Number(vermoegenBetrag.value)
   const result = await store.spiellogikAktion('startkapital/setzen', undefined, false, {
     startkapital: startkapitalWert.value,
     waehrung: vermoegenWaehrung.value,
+    betrag: vermoegenBetrag.value !== '' && Number.isFinite(betrag) ? betrag : 0,
   })
   if (result.success) {
     vermoegenSichtbar.value = false

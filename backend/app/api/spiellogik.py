@@ -932,9 +932,10 @@ def startpunkte_setzen(req: SpiellogikRequest):
 
 @router.post("/startkapital/setzen", response_model=SpiellogikResponse)
 def startkapital_setzen(req: SpiellogikRequest):
-    """Passt Startkapital und Währung an (Original: Vermögens-Popup). Das
-    Startkapital überschreibt das Setting-Startgeld; Multiplikatoren (Arm,
-    Reich) und eingelöste Handicap-Punkte rechnen weiter darauf auf."""
+    """Passt Startkapital, Währung und Geld an (Original: Vermögens-Popup).
+    Das Startkapital überschreibt das Setting-Startgeld; Multiplikatoren (Arm,
+    Reich) und eingelöste Handicap-Punkte rechnen weiter darauf auf. betrag
+    ist im Spiel erhaltenes (+) oder verlorenes (−) Geld."""
     daten = req.charakter_daten
     if req.startkapital is not None:
         if req.startkapital < 0:
@@ -948,6 +949,20 @@ def startkapital_setzen(req: SpiellogikRequest):
             daten["waehrungseinheit"] = req.waehrung.strip()
         else:
             daten.pop("waehrungseinheit", None)
+    if req.betrag:
+        daten["geld_angepasst"] = daten.get("geld_angepasst", 0) + req.betrag
+        # Verlieren nur bis 0 — wie beim Kaufen ("Nicht genug Geld")
+        if req.betrag < 0:
+            setting = _load_setting(daten.get("active_setting_name", ""), daten)
+            verfuegbar, _ = verfuegbares_geld(daten, setting)
+            if verfuegbar < 0:
+                daten["geld_angepasst"] -= req.betrag
+                return SpiellogikResponse(
+                    success=False,
+                    message=f"Nicht genug Geld ({-req.betrag:g} verlieren, "
+                    f"{verfuegbar - req.betrag:g} verfügbar)",
+                    charakter_daten=daten,
+                )
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 

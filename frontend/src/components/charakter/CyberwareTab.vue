@@ -18,6 +18,29 @@
 
       <v-snackbar v-model="meldungSichtbar" :timeout="6000">{{ meldung }}</v-snackbar>
 
+      <!-- Wahl für konfigurierbare Implantate (Original: Konfigurations-Dialog) -->
+      <v-dialog v-model="konfigSichtbar" max-width="420">
+        <v-card>
+          <v-card-title>{{ konfigItem }}</v-card-title>
+          <v-card-text>
+            <v-autocomplete
+              v-model="konfigWahl"
+              :items="konfigOptionen"
+              :label="konfigLabel"
+              density="compact"
+              autofocus
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="konfigSichtbar = false">Abbrechen</v-btn>
+            <v-btn color="primary" variant="tonal" :disabled="!konfigWahl" @click="konfigBestaetigen">
+              Installieren
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <!-- Erlittene Nebenwirkungen -->
       <div v-if="nebenwirkungen.length" class="mb-4">
         <h3 class="text-subtitle-1 mb-2">Nebenwirkungen</h3>
@@ -50,6 +73,15 @@
             <tr v-for="inst in installationen" :key="inst.name" :class="{ 'text-medium-emphasis': !inst.aktiv }">
               <td>
                 {{ inst.name }}
+                <v-chip
+                  v-for="(wahl, i) in inst.konfigurationen"
+                  :key="i"
+                  size="x-small"
+                  class="ml-1"
+                  variant="outlined"
+                >
+                  {{ wahl }}
+                </v-chip>
                 <span v-if="!inst.aktiv" class="text-caption font-italic">(inaktiv)</span>
                 <div class="text-caption text-medium-emphasis">{{ inst.beschreibung.slice(0, 100) }}</div>
               </td>
@@ -197,6 +229,7 @@ const katalog = computed<Record<string, any>>(() => {
 
 const installationen = computed(() => {
   const inaktiv = daten.value.cyberware_inaktiv ?? []
+  const effekte = daten.value.cyberware_effekte ?? {}
   return Object.entries(daten.value.cyberware_installationen ?? {})
     .filter(([, anzahl]) => anzahl > 0)
     .map(([name, anzahl]) => ({
@@ -206,6 +239,10 @@ const installationen = computed(() => {
       stress: katalog.value[name]?.stress ?? 0,
       kosten: katalog.value[name]?.kosten ?? 0,
       beschreibung: katalog.value[name]?.beschreibung ?? '',
+      // getroffene Wahlen der Instanzen (z. B. "Stärke" bei Attributerhöhung)
+      konfigurationen: (effekte[name] ?? [])
+        .map((s) => Object.values(s.konfiguration ?? {}).join(', '))
+        .filter(Boolean),
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 })
@@ -235,8 +272,62 @@ async function ausfuehren(aktion: string, element?: string, extra?: Record<strin
   }
 }
 
-const installieren = (name: string, preis?: number) =>
-  ausfuehren('cyberware/installieren', name, { preis })
+// Konfigurierbare Implantate brauchen eine Wahl vor der Installation
+// (Original: get_cyberware_konfiguration)
+const konfigSichtbar = ref(false)
+const konfigItem = ref('')
+const konfigPreis = ref<number | undefined>(undefined)
+const konfigTyp = ref('')
+const konfigLabel = ref('')
+const konfigOptionen = ref<string[]>([])
+const konfigWahl = ref('')
+
+function benoetigteKonfiguration(item: any): { typ: string; label: string } | null {
+  const effekte = item?.effekte ?? {}
+  if (effekte.attribut_erhoehung) return { typ: 'attribut', label: 'Attribut wählen (+1 Würfeltyp)' }
+  const fb = effekte.fertigkeit_bonus
+  if (fb && fb.fertigkeit === 'waehlbar')
+    return { typ: 'fertigkeit', label: `Fertigkeit wählen (+${fb.bonus ?? 1})` }
+  if (effekte.fertigkeitschip)
+    return { typ: 'fertigkeit', label: `Fertigkeit wählen (wird auf W${effekte.fertigkeit_wert ?? 6} gesetzt)` }
+  if (effekte.kampftalent_gewaehrt) return { typ: 'talent', label: 'Kampftalent wählen' }
+  return null
+}
+
+function konfigOptionenFuer(typ: string): string[] {
+  if (typ === 'attribut') return Object.keys(daten.value.attribute ?? {})
+  if (typ === 'fertigkeit') return Object.keys(daten.value.fertigkeiten ?? {}).sort()
+  // Kampftalente des Settings, die noch nicht gewählt sind
+  const talente = einstellungenStore.aktuellesSetting?.talente ?? {}
+  const gewaehlt = daten.value.selected_talente ?? []
+  return Object.entries(talente)
+    .filter(([name, t]: [string, any]) => t.kategorie === 'Kampf' && !gewaehlt.includes(name))
+    .map(([name]) => name)
+    .sort()
+}
+
+function installieren(name: string, preis?: number) {
+  const wahl = benoetigteKonfiguration(katalog.value[name])
+  if (!wahl) {
+    ausfuehren('cyberware/installieren', name, { preis })
+    return
+  }
+  konfigItem.value = name
+  konfigPreis.value = preis
+  konfigTyp.value = wahl.typ
+  konfigLabel.value = wahl.label
+  konfigOptionen.value = konfigOptionenFuer(wahl.typ)
+  konfigWahl.value = ''
+  konfigSichtbar.value = true
+}
+
+function konfigBestaetigen() {
+  konfigSichtbar.value = false
+  ausfuehren('cyberware/installieren', konfigItem.value, {
+    preis: konfigPreis.value,
+    konfiguration: { [konfigTyp.value]: konfigWahl.value },
+  })
+}
 const deinstallieren = (name: string, preis?: number) =>
   ausfuehren('cyberware/deinstallieren', name, { preis })
 const aktivUmschalten = (name: string, aktiv: boolean) =>

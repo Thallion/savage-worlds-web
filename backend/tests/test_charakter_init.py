@@ -334,3 +334,34 @@ def test_kivy_import_cyberware_geld_bleibt_erhalten():
     )
     verfuegbar, _ = verfuegbares_geld(daten, setting)
     assert verfuegbar == 3000.0
+
+
+def test_kivy_import_cyberware_effekt_snapshots_rekonstruiert():
+    """Effekte importierter Implantate stecken schon in den Werten — die
+    rekonstruierten Snapshots müssen sie bei Deinstallation zurücknehmen."""
+    export = _kivy_cyberware_export()
+    export["selected_elements"]["cyberware"]["uuid-3"] = {
+        "name": "Cyberware: Attributerhöhung", "kosten": 5000, "stress": 2,
+        "installiert": True, "aktiv": True, "installations_id": "uuid-3",
+        "effekte": {"attribut_erhoehung": True},
+        "konfiguration": {"attribut": "Stärke"},
+    }
+    export["attribute"] = {
+        "Stärke": {"attribut_name": "Stärke", "wert": 6, "modifier": 0},  # inkl. Implantat
+        "Geschicklichkeit": {"attribut_name": "Geschicklichkeit", "wert": 4, "modifier": 0},
+        "Konstitution": {"attribut_name": "Konstitution", "wert": 4, "modifier": 0},
+        "Verstand": {"attribut_name": "Verstand", "wert": 4, "modifier": 0},
+        "Willenskraft": {"attribut_name": "Willenskraft", "wert": 4, "modifier": 0},
+    }
+    daten, _ = ergaenze_fehlende_eigenschaften(export)
+    snap = daten["cyberware_effekte"]["Cyberware: Attributerhöhung"][0]
+    assert snap["attribut"] == "Stärke"
+    assert snap["konfiguration"] == {"attribut": "Stärke"}
+
+    from app.services.cyberware import deinstalliere
+    from app.services.charakter_init import load_setting
+
+    setting = load_setting("SciFi Kompendium")
+    ok, _ = deinstalliere(daten, setting, "Cyberware: Attributerhöhung")
+    assert ok
+    assert daten["attribute"]["Stärke"]["wert"] == 4

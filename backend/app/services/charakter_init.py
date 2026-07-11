@@ -292,6 +292,7 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
     cyber_namen: set = set()
     if kivy_cyber and not daten.get("cyberware_installationen"):
         installationen: dict = {}
+        instanzen: list = []
         aktive: set = set()
         cyber_kosten = 0.0
         for inst in kivy_cyber.values():
@@ -299,6 +300,7 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
             if not name or not inst.get("installiert", True):
                 continue
             installationen[name] = installationen.get(name, 0) + 1
+            instanzen.append(inst)
             cyber_kosten += inst.get("kosten", 0) or 0
             if inst.get("aktiv", True):
                 aktive.add(name)
@@ -308,6 +310,14 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
             # keine Instanz des Implantats aktiv war
             daten["cyberware_inaktiv"] = sorted(set(installationen) - aktive)
             daten["cyberware_ausgegeben"] = cyber_kosten
+            # Effekte stecken bereits in den exportierten Werten — die
+            # Snapshots werden rekonstruiert, damit Deinstallation sie
+            # exakt zurücknehmen kann
+            from app.services.cyberware import rekonstruiere_effekt_snapshots
+
+            effekt_snapshots = rekonstruiere_effekt_snapshots(daten, instanzen)
+            if effekt_snapshots:
+                daten["cyberware_effekte"] = effekt_snapshots
             cyber_namen = set(installationen)
             geaendert = True
 

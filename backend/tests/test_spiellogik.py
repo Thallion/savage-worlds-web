@@ -2045,3 +2045,111 @@ def test_geld_anpassung_wird_nicht_multipliziert(daten):
     d = aktion("startkapital/setzen", daten, betrag=200)["charakter_daten"]
     d["selected_talente"] = ["Reich"]
     assert berechne(d)["vermoegen"] == 1700
+
+
+# --- Cyberware-Effekte (Original: appliziere_cyberware_effekte) ---
+# nutzt die scifi-Fixture von oben (10.500 Budget)
+
+def test_cyberware_attributerhoehung_mit_konfiguration(scifi):
+    r = aktion(
+        "cyberware/installieren", scifi, "Cyberware: Attributerhöhung",
+        konfiguration={"attribut": "Stärke"},
+    )
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert d["cyberware_effekte"]["Cyberware: Attributerhöhung"][0]["attribut"] == "Stärke"
+
+    r = aktion("cyberware/deinstallieren", d, "Cyberware: Attributerhöhung")
+    d = r["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert "cyberware_effekte" not in d
+
+
+def test_cyberware_konfiguration_erforderlich(scifi):
+    r = aktion("cyberware/installieren", scifi, "Cyberware: Attributerhöhung")
+    assert not r["success"]
+    assert "Wahl erforderlich" in r["message"]
+
+    r = aktion(
+        "cyberware/installieren", scifi, "Cyberware: Attributerhöhung",
+        konfiguration={"attribut": "Chuzpe"},
+    )
+    assert not r["success"]
+
+
+def test_cyberware_fester_fertigkeitsbonus_attraktiv(scifi):
+    # Attraktiv: +1 auf Auftreten/Überreden — Auftreten gibt es im SciFi
+    # Kompendium nicht und wird wie im Original still übersprungen
+    r = aktion("cyberware/installieren", scifi, "Cyberware: Attraktiv")
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Überreden"]["wuerfel"] == {"value": 6, "modifier": 0, "typ": "fertigkeit"}
+
+    r = aktion("cyberware/deinstallieren", d, "Cyberware: Attraktiv")
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Überreden"]["wuerfel"]["value"] == 4
+
+
+def test_cyberware_fertigkeitschip_setzt_und_stellt_zurueck(scifi):
+    # Katalogpreis 15.000 übersteigt das Budget — abweichender Preis wie im Original
+    r = aktion(
+        "cyberware/installieren", scifi, "Cyberware: Fertigkeitschip",
+        konfiguration={"fertigkeit": "Schießen"}, preis=5000,
+    )
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Schießen"]["wuerfel"] == {"value": 6, "modifier": 0, "typ": "fertigkeit"}
+
+    r = aktion("cyberware/deinstallieren", d, "Cyberware: Fertigkeitschip")
+    d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Schießen"]["wuerfel"]["value"] == 4
+    assert d["fertigkeiten"]["Schießen"]["wuerfel"]["modifier"] == -2
+
+
+def test_cyberware_talent_gewaehrt(scifi):
+    r = aktion("cyberware/installieren", scifi, "Cyberware: Bedrohungseinschätzer")
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert "Sechster Sinn" in d["selected_talente"]
+
+    r = aktion("cyberware/deinstallieren", d, "Cyberware: Bedrohungseinschätzer")
+    assert "Sechster Sinn" not in r["charakter_daten"]["selected_talente"]
+
+
+def test_cyberware_kampftalent_waehlbar(scifi):
+    r = aktion(
+        "cyberware/installieren", scifi, "Cyberware: Kampftalent",
+        konfiguration={"talent": "Ausweichen"},
+    )
+    assert r["success"], r["message"]
+    assert "Ausweichen" in r["charakter_daten"]["selected_talente"]
+
+
+def test_cyberware_traglast_maultier(scifi):
+    vorher = berechne(scifi)["traglast"]
+    d = aktion("cyberware/installieren", scifi, "Cyberware: Maultier")["charakter_daten"]
+    assert berechne(d)["traglast"] == vorher + 20
+    # deaktiviert ruht der Stat-Bonus, Installation bleibt
+    d = aktion("cyberware/deaktivieren", d, "Cyberware: Maultier")["charakter_daten"]
+    assert berechne(d)["traglast"] == vorher
+
+
+def test_cyberware_mehrfach_fertigkeitsbonus_und_reihenfolge(scifi):
+    # 2× wählbarer Bonus auf Schießen (ungelernt): W4−2 -> W4 -> W6;
+    # Deinstallation nimmt zuerst die letzte Instanz zurück
+    d = scifi
+    for _ in range(2):
+        r = aktion(
+            "cyberware/installieren", d, "Cyberware: Fertigkeitsbonus",
+            konfiguration={"fertigkeit": "Schießen"},
+        )
+        assert r["success"], r["message"]
+        d = r["charakter_daten"]
+    assert d["fertigkeiten"]["Schießen"]["wuerfel"] == {"value": 6, "modifier": 0, "typ": "fertigkeit"}
+
+    d = aktion("cyberware/deinstallieren", d, "Cyberware: Fertigkeitsbonus")["charakter_daten"]
+    assert d["fertigkeiten"]["Schießen"]["wuerfel"]["value"] == 4
+    assert d["fertigkeiten"]["Schießen"]["wuerfel"]["modifier"] == 0
+    d = aktion("cyberware/deinstallieren", d, "Cyberware: Fertigkeitsbonus")["charakter_daten"]
+    assert d["fertigkeiten"]["Schießen"]["wuerfel"]["modifier"] == -2

@@ -23,6 +23,9 @@ class SpiellogikRequest(BaseModel):
     waehrung: str | None = None
     # Geld erhalten (+) oder verlieren (−) außerhalb von Käufen
     betrag: float | None = None
+    # Cyberware installieren: Wahl konfigurierbarer Implantate,
+    # z. B. {"attribut": "Stärke"} oder {"fertigkeit": "Schießen"}
+    konfiguration: dict[str, str] | None = None
 
 
 class CharakterbogenRequest(SpiellogikRequest):

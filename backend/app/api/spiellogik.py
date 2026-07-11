@@ -1130,7 +1130,7 @@ def _mit_setting(req: SpiellogikRequest, aktion) -> SpiellogikResponse:
 def cyberware_installieren(req: SpiellogikRequest):
     def aktion(daten, setting, element):
         geld, _ = verfuegbares_geld(daten, setting)
-        return cyberware.installiere(daten, setting, element, geld, req.preis)
+        return cyberware.installiere(daten, setting, element, geld, req.preis, req.konfiguration)
 
     return _mit_setting(req, aktion)
 
@@ -1303,7 +1303,7 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
     cyber_boni = (
         cyberware.stat_boni(daten, setting)
         if cyber_aktiv
-        else {"robustheit": 0, "bewegungsweite": 0, "groesse": 0, "panzerung": 0}
+        else {"robustheit": 0, "bewegungsweite": 0, "groesse": 0, "panzerung": 0, "traglast_kg": 0}
     )
 
     groesse = boni["groesse"] + cyber_boni["groesse"]
@@ -1354,7 +1354,7 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
         "startkapital_gesamt": geld_gesamt,
         "startkapital_basis": startkapital_basis(setting, daten),
         "waehrung": waehrung,
-        "traglast": traglast_kg(daten, boni["traglast_kg"]),
+        "traglast": traglast_kg(daten, boni["traglast_kg"] + cyber_boni["traglast_kg"]),
         "gesamtgewicht": gesamtgewicht(daten, setting),
         "machtpunkte": machtpunkte,
         "verbleibende_maechte": max(0, macht_slots - len(daten.get("selected_maechte", []))),

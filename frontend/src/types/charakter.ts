@@ -54,6 +54,17 @@ export interface CharakterDaten {
   cyberware_inaktiv?: string[]
   cyberware_ausgegeben?: number
   cyberware_nebenwirkungen?: { wurf: number; name: string; effekt: string }[]
+  // Effekt-Snapshots je installierter Instanz (Rücknahme bei Deinstallation)
+  cyberware_effekte?: Record<
+    string,
+    {
+      konfiguration?: Record<string, string>
+      attribut?: string
+      fertigkeit_schritte?: Record<string, string[]>
+      chip?: { fertigkeit: string; alter_wert: number; alter_modifier: number; war_ausgewaehlt: boolean }
+      talente?: string[]
+    }[]
+  >
   // Superkräfte (Superkräfte-Kompendium)
   superkraft_stufe?: string
   selected_superkraefte?: Record<string, { punkte: number; modifikatoren: Record<string, number> }>

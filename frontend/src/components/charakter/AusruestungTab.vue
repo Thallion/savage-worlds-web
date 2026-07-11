@@ -158,7 +158,7 @@
       </div>
 
       <!-- Katalog -->
-      <ElementEditor typ="ausruestung" />
+      <ElementEditor ref="elementEditor" typ="ausruestung" />
       <div class="d-flex ga-2 flex-wrap mb-2">
         <v-text-field
           v-model="suche"
@@ -244,25 +244,41 @@
               />
             </td>
             <td class="text-right">
-              <v-btn
-                size="small"
-                variant="tonal"
-                color="primary"
-                :disabled="
-                  preisWert(katalogPreis, item.name, item.kosten ?? 0) *
-                    mengeWert(katalogMenge, item.name) >
-                  (werte?.vermoegen ?? 0)
-                "
-                @click="
-                  kaufen(
-                    item.name,
-                    mengeWert(katalogMenge, item.name),
-                    preisWert(katalogPreis, item.name, item.kosten ?? 0),
-                  )
-                "
-              >
-                Kaufen
-              </v-btn>
+              <div class="d-flex ga-1 align-center justify-end flex-nowrap">
+                <v-btn
+                  icon="mdi-pencil"
+                  size="x-small"
+                  variant="text"
+                  title="Bearbeiten"
+                  @click="elementEditor?.bearbeiteElement(item.name)"
+                />
+                <v-btn
+                  icon="mdi-delete-outline"
+                  size="x-small"
+                  variant="text"
+                  title="Löschen"
+                  @click="elementEditor?.loescheElement(item.name)"
+                />
+                <v-btn
+                  size="small"
+                  variant="tonal"
+                  color="primary"
+                  :disabled="
+                    preisWert(katalogPreis, item.name, item.kosten ?? 0) *
+                      mengeWert(katalogMenge, item.name) >
+                    (werte?.vermoegen ?? 0)
+                  "
+                  @click="
+                    kaufen(
+                      item.name,
+                      mengeWert(katalogMenge, item.name),
+                      preisWert(katalogPreis, item.name, item.kosten ?? 0),
+                    )
+                  "
+                >
+                  Kaufen
+                </v-btn>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -286,6 +302,7 @@ const ANLEGBARE_KATEGORIEN = ['Rüstung', 'Schild']
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
+const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
 
 const suche = ref('')
 const kategorieFilter = ref<string | null>(null)

@@ -42,7 +42,7 @@
         </v-chip>
       </div>
 
-      <ElementEditor typ="talente" />
+      <ElementEditor ref="elementEditor" typ="talente" />
 
       <div class="d-flex ga-2 flex-wrap align-center mb-2">
         <v-text-field
@@ -125,6 +125,22 @@
           <v-list-item-subtitle v-if="talent.voraussetzungen?.length" class="text-wrap">
             Voraussetzungen: {{ talent.voraussetzungen.join(', ') }}
           </v-list-item-subtitle>
+          <template #append>
+            <v-btn
+              icon="mdi-pencil"
+              size="x-small"
+              variant="text"
+              title="Bearbeiten"
+              @click.stop="elementEditor?.bearbeiteElement(String(name))"
+            />
+            <v-btn
+              icon="mdi-delete-outline"
+              size="x-small"
+              variant="text"
+              title="Löschen"
+              @click.stop="elementEditor?.loescheElement(String(name))"
+            />
+          </template>
         </v-list-item>
       </v-list>
     </v-card-text>
@@ -142,6 +158,7 @@ import { RANG_ORDNUNG, sortiertesObjekt } from '@/utils/sortierung'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
+const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
 const suche = ref('')
 const rangFilter = ref('Alle')
 const kategorieFilter = ref('Alle Kategorien')

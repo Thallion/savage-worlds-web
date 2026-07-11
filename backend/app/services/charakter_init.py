@@ -283,6 +283,34 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
     if migrierte_talente != (daten.get("selected_talente") or []):
         daten["selected_talente"] = migrierte_talente
 
+    # Cyberware: Kivy speichert Installationen als {uuid: Installation-Dict}
+    # unter selected_elements.cyberware und führt die Implantate zusätzlich in
+    # der Ausrüstungsliste; das Web nutzt {name: anzahl} plus das Kauf-Journal
+    # cyberware_ausgegeben. Die Namen werden gemerkt, damit die Implantate
+    # unten nicht noch einmal als normale Ausrüstung migriert werden.
+    kivy_cyber = (daten.get("selected_elements") or {}).get("cyberware") or {}
+    cyber_namen: set = set()
+    if kivy_cyber and not daten.get("cyberware_installationen"):
+        installationen: dict = {}
+        aktive: set = set()
+        cyber_kosten = 0.0
+        for inst in kivy_cyber.values():
+            name = inst.get("name")
+            if not name or not inst.get("installiert", True):
+                continue
+            installationen[name] = installationen.get(name, 0) + 1
+            cyber_kosten += inst.get("kosten", 0) or 0
+            if inst.get("aktiv", True):
+                aktive.add(name)
+        if installationen:
+            daten["cyberware_installationen"] = installationen
+            # Kivy schaltet pro Instanz, das Web pro Name: inaktiv nur, wenn
+            # keine Instanz des Implantats aktiv war
+            daten["cyberware_inaktiv"] = sorted(set(installationen) - aktive)
+            daten["cyberware_ausgegeben"] = cyber_kosten
+            cyber_namen = set(installationen)
+            geaendert = True
+
     alt = (daten.get("selected_elements") or {}).get("ausruestung") or {}
     if not alt:
         mengen = daten.get("ausruestung_mengen") or {}
@@ -301,20 +329,30 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
         )
         migriert = {}
         for name, eintrag in alt.items():
+            # installierte Implantate leben im Cyberware-System, nicht im Besitz
+            if name in cyber_namen:
+                continue
             anzahl = eintrag.get("anzahl", 1) or 1
             if eintrag.get("ausgewaehlt", True):
                 migriert[name] = {"anzahl": anzahl, "angelegt": name in angelegt_namen}
-        if migriert:
-            daten["ausruestung_selected"] = migriert
+        if migriert or cyber_namen:
+            if migriert:
+                daten["ausruestung_selected"] = migriert
             # Kivy speichert das Rest-Vermögen; Web speichert die Ausgaben
             from app.services.ausruestung import startkapital_basis, vermoegen_multiplikator
+            from app.services.cyberware import geld_belastung
 
             basis = startkapital_basis(setting, daten)
             gesamt = basis * vermoegen_multiplikator(daten) + basis * daten.get(
                 "startgeld_bonus_punkte", 0
             )
             if isinstance(daten.get("vermoegen"), (int, float)):
-                daten["ausruestung_ausgegeben"] = gesamt - daten["vermoegen"]
+                # geld_belastung (Cyberware über dem Cyborg-Budget) wird in
+                # /berechne erneut abgezogen — hier gegenrechnen, damit das
+                # verfügbare Geld exakt dem Kivy-Vermögen entspricht
+                daten["ausruestung_ausgegeben"] = (
+                    gesamt - daten["vermoegen"] - geld_belastung(daten, setting)
+                )
             else:
                 katalog = setting.get("ausruestung", {})
                 daten["ausruestung_ausgegeben"] = sum(

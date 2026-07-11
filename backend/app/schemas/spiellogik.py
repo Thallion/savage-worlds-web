@@ -21,6 +21,8 @@ class SpiellogikRequest(BaseModel):
     # Startkapital/Währung anpassen (Original: Vermögens-Popup)
     startkapital: float | None = None
     waehrung: str | None = None
+    # Geld erhalten (+) oder verlieren (−) außerhalb von Käufen
+    betrag: float | None = None
 
 
 class CharakterbogenRequest(SpiellogikRequest):

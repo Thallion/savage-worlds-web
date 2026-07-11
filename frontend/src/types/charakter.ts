@@ -47,6 +47,8 @@ export interface CharakterDaten {
   // Overrides aus dem Vermögens-Dialog (Original: Vermögens-Popup)
   startkapital?: number
   waehrungseinheit?: string
+  // im Spiel erhaltenes (+) / verlorenes (−) Geld, fließt in die Herleitung ein
+  geld_angepasst?: number
   // Cyberware (SciFi-Kompendium)
   cyberware_installationen?: Record<string, number>
   cyberware_inaktiv?: string[]

@@ -52,7 +52,12 @@ def verfuegbares_geld(daten: dict, setting: dict) -> tuple[float, float]:
     from app.services.cyberware import geld_belastung
 
     basis = startkapital_basis(setting, daten)
-    gesamt = basis * vermoegen_multiplikator(daten) + basis * daten.get("startgeld_bonus_punkte", 0)
+    gesamt = (
+        basis * vermoegen_multiplikator(daten)
+        + basis * daten.get("startgeld_bonus_punkte", 0)
+        # im Spiel erhaltenes/verlorenes Geld (Original: vermoegen direkt editierbar)
+        + daten.get("geld_angepasst", 0)
+    )
     # Cyberware-Installationen über dem Cyborg-Budget belasten das Geld mit
     return gesamt - daten.get("ausruestung_ausgegeben", 0) - geld_belastung(daten, setting), gesamt
 

@@ -176,6 +176,20 @@ function oeffneLoeschen() {
   loeschenSichtbar.value = true
 }
 
+// Direkt-Aufruf von den Element-Zeilen der Tabs (ohne Suchfeld im Dialog)
+function bearbeiteElement(name: string) {
+  modus.value = 'bearbeiten'
+  ladeElement(name)
+  formSichtbar.value = true
+}
+
+function loescheElement(name: string) {
+  loeschName.value = name
+  loeschenSichtbar.value = true
+}
+
+defineExpose({ bearbeiteElement, loescheElement })
+
 async function speichern() {
   const elementDaten = formularZuElement(props.typ, formWerte.value)
   const result = await store.elementSpeichern(

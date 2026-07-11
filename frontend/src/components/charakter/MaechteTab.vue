@@ -41,7 +41,7 @@
         </v-chip>
       </div>
 
-      <ElementEditor typ="maechte" />
+      <ElementEditor ref="elementEditor" typ="maechte" />
 
       <div class="d-flex ga-2 flex-wrap align-center mb-2">
         <v-text-field
@@ -81,8 +81,7 @@
         <v-list-item
           v-for="(macht, name) in gefilterteMaechte"
           :key="name"
-          :disabled="selectedMaechte.includes(String(name))"
-          @click="waehleMacht(String(name))"
+          @click="!selectedMaechte.includes(String(name)) && waehleMacht(String(name))"
         >
           <template #prepend>
             <v-icon :color="selectedMaechte.includes(String(name)) ? 'success' : ''">
@@ -99,6 +98,22 @@
           <v-list-item-subtitle v-if="macht.beschreibung" class="text-wrap">
             {{ macht.beschreibung?.substring(0, 120) }}{{ macht.beschreibung?.length > 120 ? '...' : '' }}
           </v-list-item-subtitle>
+          <template #append>
+            <v-btn
+              icon="mdi-pencil"
+              size="x-small"
+              variant="text"
+              title="Bearbeiten"
+              @click.stop="elementEditor?.bearbeiteElement(String(name))"
+            />
+            <v-btn
+              icon="mdi-delete-outline"
+              size="x-small"
+              variant="text"
+              title="Löschen"
+              @click.stop="elementEditor?.loescheElement(String(name))"
+            />
+          </template>
         </v-list-item>
       </v-list>
     </v-card-text>
@@ -115,6 +130,7 @@ import { RANG_ORDNUNG, sortiertesObjekt } from '@/utils/sortierung'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
+const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
 const suche = ref('')
 const sortOption = ref('Name')
 const sortAbsteigend = ref(false)

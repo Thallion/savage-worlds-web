@@ -86,7 +86,7 @@
         </div>
       </div>
 
-      <ElementEditor typ="handicaps" />
+      <ElementEditor ref="elementEditor" typ="handicaps" />
 
       <div class="d-flex ga-2 flex-wrap align-center mb-2">
         <v-text-field
@@ -126,8 +126,9 @@
         <v-list-item
           v-for="(handicap, name) in gefilterteHandicaps"
           :key="name"
-          :disabled="selectedHandicaps.includes(String(name))"
-          @click="waehleHandicap(String(name))"
+          @click="
+            !selectedHandicaps.includes(String(name)) && waehleHandicap(String(name))
+          "
         >
           <template #prepend>
             <v-icon :color="selectedHandicaps.includes(String(name)) ? 'success' : ''">
@@ -143,6 +144,22 @@
           <v-list-item-subtitle v-if="handicap.beschreibung" class="text-wrap">
             {{ handicap.beschreibung?.substring(0, 120) }}{{ handicap.beschreibung?.length > 120 ? '...' : '' }}
           </v-list-item-subtitle>
+          <template #append>
+            <v-btn
+              icon="mdi-pencil"
+              size="x-small"
+              variant="text"
+              title="Bearbeiten"
+              @click.stop="elementEditor?.bearbeiteElement(String(name))"
+            />
+            <v-btn
+              icon="mdi-delete-outline"
+              size="x-small"
+              variant="text"
+              title="Löschen"
+              @click.stop="elementEditor?.loescheElement(String(name))"
+            />
+          </template>
         </v-list-item>
       </v-list>
     </v-card-text>
@@ -159,6 +176,7 @@ import { sortiertesObjekt } from '@/utils/sortierung'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
+const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
 const suche = ref('')
 const stufenFilter = ref('Alle Stufen')
 const sortAbsteigend = ref(false)

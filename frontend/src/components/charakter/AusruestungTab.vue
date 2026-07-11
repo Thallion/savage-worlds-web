@@ -2,15 +2,54 @@
   <v-card flat>
     <v-card-text>
       <v-alert type="info" density="compact" class="mb-4">
-        Geld: <strong>{{ geldAnzeige(werte?.vermoegen) }}</strong> von
-        {{ geldAnzeige(werte?.startkapital_gesamt) }} —
-        Traglast:
+        Geld: <strong>{{ geldAnzeige(werte?.vermoegen) }}{{ waehrungSuffix }}</strong> von
+        {{ geldAnzeige(werte?.startkapital_gesamt) }}{{ waehrungSuffix }}
+        <v-btn
+          icon="mdi-pencil"
+          size="x-small"
+          variant="text"
+          title="Vermögen & Währung anpassen"
+          @click="oeffneVermoegen"
+        />
+        — Traglast:
         <strong :class="ueberladen ? 'text-error' : ''">
           {{ gewichtAnzeige(werte?.gesamtgewicht) }} / {{ gewichtAnzeige(werte?.traglast) }} kg
         </strong>
         <span v-if="ueberladen"> (überladen!)</span>
         <span v-if="(werte?.panzerung ?? 0) > 0"> — Panzerung: +{{ werte?.panzerung }}</span>
       </v-alert>
+
+      <!-- Vermögen & Währung anpassen (Original: Vermögens-Popup) -->
+      <v-dialog v-model="vermoegenSichtbar" max-width="420">
+        <v-card>
+          <v-card-title>Vermögen & Währung</v-card-title>
+          <v-card-text>
+            <v-text-field
+              v-model.number="vermoegenStartkapital"
+              label="Startkapital"
+              type="number"
+              min="0"
+            />
+            <v-text-field v-model="vermoegenWaehrung" label="Währung" placeholder="z. B. Gold" />
+            <div class="text-caption text-medium-emphasis">
+              Das Startkapital ersetzt das Setting-Startgeld; Talente wie Reich und eingelöste
+              Handicap-Punkte rechnen weiter darauf auf. Leere Währung = Setting-Währung.
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="vermoegenSichtbar = false">Abbrechen</v-btn>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              :disabled="startkapitalWert === null"
+              @click="bestaetigeVermoegen"
+            >
+              Übernehmen
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
 
@@ -256,6 +295,36 @@ const besitzPreis = reactive<Record<string, number>>({})
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const werte = computed(() => store.abgeleiteteWerte)
+const waehrungSuffix = computed(() => (werte.value?.waehrung ? ` ${werte.value.waehrung}` : ''))
+
+const vermoegenSichtbar = ref(false)
+const vermoegenStartkapital = ref<number | string>(500)
+const vermoegenWaehrung = ref('')
+
+const startkapitalWert = computed(() => {
+  const n = Number(vermoegenStartkapital.value)
+  return vermoegenStartkapital.value !== '' && Number.isFinite(n) && n >= 0 ? n : null
+})
+
+function oeffneVermoegen() {
+  vermoegenStartkapital.value = werte.value?.startkapital_basis ?? 500
+  vermoegenWaehrung.value = daten.value.waehrungseinheit ?? ''
+  vermoegenSichtbar.value = true
+}
+
+async function bestaetigeVermoegen() {
+  if (startkapitalWert.value === null) return
+  const result = await store.spiellogikAktion('startkapital/setzen', undefined, false, {
+    startkapital: startkapitalWert.value,
+    waehrung: vermoegenWaehrung.value,
+  })
+  if (result.success) {
+    vermoegenSichtbar.value = false
+  } else if (result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
 const erschaffungAbgeschlossen = computed(() => daten.value.char_gen_completed === true)
 const ueberladen = computed(
   () => (werte.value?.gesamtgewicht ?? 0) > (werte.value?.traglast ?? Infinity),

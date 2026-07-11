@@ -1,6 +1,19 @@
 <template>
   <v-card flat>
     <v-card-text>
+      <!-- Start-Punkte anpassen (Original: Punkte-Popup der Charakterverwaltung) -->
+      <div v-if="!daten.char_gen_completed" class="mb-4">
+        <v-btn
+          size="small"
+          variant="tonal"
+          prepend-icon="mdi-pencil"
+          @click="oeffnePunkte"
+        >
+          Start-Punkte: {{ daten.maximale_attributsteigerungen ?? 5 }} Attribute /
+          {{ daten.maximale_fertigkeitssteigerungen ?? 12 }} Fertigkeiten
+        </v-btn>
+      </div>
+
       <v-row>
         <!-- Attribute -->
         <v-col cols="12" md="5">
@@ -141,6 +154,43 @@
         </v-card>
       </v-dialog>
 
+      <!-- Start-Punkte anpassen (Original: Punkte-Popup) -->
+      <v-dialog v-model="punkteSichtbar" max-width="420">
+        <v-card>
+          <v-card-title>Start-Punkte</v-card-title>
+          <v-card-text>
+            <v-text-field
+              v-model.number="punkteAttribute"
+              label="Attributs-Punkte"
+              type="number"
+              min="0"
+            />
+            <v-text-field
+              v-model.number="punkteFertigkeiten"
+              label="Fertigkeits-Punkte"
+              type="number"
+              min="0"
+            />
+            <div class="text-caption text-medium-emphasis">
+              Bereits ausgegebene Punkte bleiben erhalten; die Differenz wird auf die
+              verbleibenden Punkte angerechnet.
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn variant="text" @click="punkteSichtbar = false">Abbrechen</v-btn>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              :disabled="!punkteGueltig"
+              @click="bestaetigePunkte"
+            >
+              Übernehmen
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+
       <!-- Warnung bei doppelten Kosten (Fertigkeit über Attribut) -->
       <v-dialog v-model="bestaetigungSichtbar" max-width="480">
         <v-card>
@@ -178,6 +228,39 @@ const hinzufuegenSichtbar = ref(false)
 const neuerName = ref('')
 const neuesAttribut = ref('')
 const attributNamen = computed(() => Object.keys(daten.value.attribute || {}))
+
+const punkteSichtbar = ref(false)
+const punkteAttribute = ref<number | string>(5)
+const punkteFertigkeiten = ref<number | string>(12)
+
+// Leeres Feld / ungültige Eingabe -> null (Dialog lässt Übernehmen dann nicht zu)
+function ganzeZahl(wert: number | string): number | null {
+  const n = Math.floor(Number(wert))
+  return wert !== '' && Number.isFinite(n) && n >= 0 ? n : null
+}
+
+const punkteGueltig = computed(
+  () => ganzeZahl(punkteAttribute.value) !== null && ganzeZahl(punkteFertigkeiten.value) !== null,
+)
+
+function oeffnePunkte() {
+  punkteAttribute.value = daten.value.maximale_attributsteigerungen ?? 5
+  punkteFertigkeiten.value = daten.value.maximale_fertigkeitssteigerungen ?? 12
+  punkteSichtbar.value = true
+}
+
+async function bestaetigePunkte() {
+  if (!punkteGueltig.value) return
+  const result = await store.spiellogikAktion('startpunkte/setzen', undefined, false, {
+    attributspunkte: ganzeZahl(punkteAttribute.value),
+    fertigkeitspunkte: ganzeZahl(punkteFertigkeiten.value),
+  })
+  if (result.success) {
+    punkteSichtbar.value = false
+  } else if (result.message) {
+    zeigeMeldung(result.message)
+  }
+}
 
 function zeigeMeldung(text: string) {
   meldung.value = text

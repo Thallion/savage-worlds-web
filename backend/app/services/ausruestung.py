@@ -28,7 +28,11 @@ ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
 _VERMOEGEN_TALENTE = {"Stinkreich": 5, "Reich": 3}
 
 
-def startkapital_basis(setting: dict) -> float:
+def startkapital_basis(setting: dict, daten: dict | None = None) -> float:
+    """Setting-Startgeld, überschreibbar pro Charakter (daten["startkapital"],
+    Original: Vermögens-Popup der Charakterverwaltung)."""
+    if daten is not None and isinstance(daten.get("startkapital"), (int, float)):
+        return daten["startkapital"]
     return setting.get("startgeld") or STANDARD_STARTKAPITAL
 
 
@@ -47,7 +51,7 @@ def verfuegbares_geld(daten: dict, setting: dict) -> tuple[float, float]:
     """(aktuell verfügbar, Gesamtbudget ohne Ausgaben)."""
     from app.services.cyberware import geld_belastung
 
-    basis = startkapital_basis(setting)
+    basis = startkapital_basis(setting, daten)
     gesamt = basis * vermoegen_multiplikator(daten) + basis * daten.get("startgeld_bonus_punkte", 0)
     # Cyberware-Installationen über dem Cyborg-Budget belasten das Geld mit
     return gesamt - daten.get("ausruestung_ausgegeben", 0) - geld_belastung(daten, setting), gesamt

@@ -44,6 +44,9 @@ export interface CharakterDaten {
   ausruestung_selected?: Record<string, { anzahl: number; angelegt?: boolean }>
   ausruestung_ausgegeben?: number
   startgeld_bonus_punkte?: number
+  // Overrides aus dem Vermögens-Dialog (Original: Vermögens-Popup)
+  startkapital?: number
+  waehrungseinheit?: string
   // Cyberware (SciFi-Kompendium)
   cyberware_installationen?: Record<string, number>
   cyberware_inaktiv?: string[]
@@ -106,6 +109,8 @@ export interface AbgeleiteteWerte {
   panzerung: number
   vermoegen: number
   startkapital_gesamt: number
+  startkapital_basis: number
+  waehrung: string
   traglast: number
   gesamtgewicht: number
   // nur in Cyberware-Settings (SciFi-Kompendium)

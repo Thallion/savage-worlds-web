@@ -250,3 +250,23 @@ def test_migration_laesst_web_format_unangetastet():
     neu, geaendert = ergaenze_fehlende_eigenschaften(daten)
     assert not geaendert
     assert neu == daten
+
+
+def test_entpacke_charakter_export():
+    from app.services.charakter_init import entpacke_charakter_export
+
+    nackt = initialisiere_charakter_daten("Testheld", "SWAE")
+    # nackte charakter_daten bleiben unverändert
+    assert entpacke_charakter_export(nackt) is nackt
+
+    # Voll-Export (DB-Zeile) wird auf die inneren charakter_daten ausgepackt
+    wrapper = {
+        "id": 7,
+        "char_name": "Mrs. Winchester",
+        "active_setting_name": "Deadlands",
+        "char_gen_completed": 1,
+        "charakter_daten": nackt,
+        "benutzername": "JezzB",
+        "email": "test@test.de",
+    }
+    assert entpacke_charakter_export(wrapper) is nackt

@@ -15,6 +15,12 @@ class SpiellogikRequest(BaseModel):
     preis: float | None = None
     # Eigene Fertigkeit hinzufügen: verknüpftes Attribut (Original: add_fertigkeit)
     attribut: str | None = None
+    # Start-Punkte anpassen (Original: Punkte-Popup der Charakterverwaltung)
+    attributspunkte: int | None = None
+    fertigkeitspunkte: int | None = None
+    # Startkapital/Währung anpassen (Original: Vermögens-Popup)
+    startkapital: float | None = None
+    waehrung: str | None = None
 
 
 class CharakterbogenRequest(SpiellogikRequest):

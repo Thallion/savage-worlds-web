@@ -11,3 +11,7 @@ frontend/dist/
 
 # Lokale Secrets / Deployment
 .env
+
+# Lokale Charakter-Exporte (enthalten echte User-E-Mails) + Export-Skript
+exports/
+scripts/export_chars.sh

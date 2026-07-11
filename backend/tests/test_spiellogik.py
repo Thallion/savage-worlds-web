@@ -591,6 +591,8 @@ def test_berechne_basiswerte(daten):
         "panzerung": 0,
         "vermoegen": 500,
         "startkapital_gesamt": 500,
+        "startkapital_basis": 500,
+        "waehrung": "",
         "traglast": 40,
         "gesamtgewicht": 0,
         "machtpunkte": 0,
@@ -1948,3 +1950,71 @@ def test_volkseigenarten_endpoint():
     cfg = resp.json()
     assert any(e["id"] == "attributserhoehung" for e in cfg["positive"])
     assert any(e["id"] == "langsam" for e in cfg["negative"])
+
+
+# --- Start-Punkte & Startkapital anpassen (Original: Punkte-/Vermögens-Popup) ---
+
+def test_startpunkte_setzen_erhoeht_maximum_und_verbleibend(daten):
+    r = aktion("startpunkte/setzen", daten, attributspunkte=7, fertigkeitspunkte=15)
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["maximale_attributsteigerungen"] == 7
+    assert d["verbleibende_attributsteigerungen"] == 7
+    assert d["maximale_fertigkeitssteigerungen"] == 15
+    assert d["verbleibende_fertigkeitssteigerungen"] == 15
+
+
+def test_startpunkte_setzen_erhaelt_ausgegebene_punkte(daten):
+    # 2 Attributspunkte ausgeben, dann Maximum auf 3 senken: verbleibend 3-2=1
+    d = aktion("attribut/steigern", daten, "Stärke")["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Verstand")["charakter_daten"]
+    d = aktion("startpunkte/setzen", d, attributspunkte=3)["charakter_daten"]
+    assert d["maximale_attributsteigerungen"] == 3
+    assert d["verbleibende_attributsteigerungen"] == 1
+    # Fertigkeiten blieben unverändert
+    assert d["maximale_fertigkeitssteigerungen"] == 12
+
+
+def test_startpunkte_setzen_verbleibend_nie_negativ(daten):
+    d = aktion("attribut/steigern", daten, "Stärke")["charakter_daten"]
+    d = aktion("startpunkte/setzen", d, attributspunkte=0)["charakter_daten"]
+    assert d["maximale_attributsteigerungen"] == 0
+    assert d["verbleibende_attributsteigerungen"] == 0
+
+
+def test_startpunkte_setzen_ohne_angabe_abgelehnt(daten):
+    r = aktion("startpunkte/setzen", daten)
+    assert not r["success"]
+
+
+def test_startpunkte_setzen_negativ_abgelehnt(daten):
+    r = aktion("startpunkte/setzen", daten, attributspunkte=-1)
+    assert not r["success"]
+
+
+def test_startkapital_setzen_ueberschreibt_setting(daten):
+    d = aktion("startkapital/setzen", daten, startkapital=1000)["charakter_daten"]
+    assert d["startkapital"] == 1000
+    w = berechne(d)
+    assert w["vermoegen"] == 1000
+    assert w["startkapital_basis"] == 1000
+
+
+def test_startkapital_multiplikator_rechnet_auf_override(daten):
+    d = aktion("startkapital/setzen", daten, startkapital=1000)["charakter_daten"]
+    d["selected_talente"] = ["Reich"]
+    assert berechne(d)["vermoegen"] == 3000
+
+
+def test_startkapital_negativ_abgelehnt(daten):
+    r = aktion("startkapital/setzen", daten, startkapital=-1)
+    assert not r["success"]
+
+
+def test_waehrung_setzen_und_zuruecksetzen(daten):
+    d = aktion("startkapital/setzen", daten, waehrung="Dublonen")["charakter_daten"]
+    assert d["waehrungseinheit"] == "Dublonen"
+    assert berechne(d)["waehrung"] == "Dublonen"
+    # leere Eingabe entfernt den Override -> Setting-Währung (SWAE: keine)
+    d = aktion("startkapital/setzen", d, waehrung="")["charakter_daten"]
+    assert "waehrungseinheit" not in d

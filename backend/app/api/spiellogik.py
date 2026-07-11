@@ -6,7 +6,13 @@ from app.schemas.spiellogik import (
     SpiellogikRequest,
     SpiellogikResponse,
 )
-from app.services.charakter_init import initialisiere_charakter_daten, load_config, load_setting
+from app.services.charakter_init import (
+    START_ATTRIBUTSTEIGERUNGEN,
+    START_FERTIGKEITSSTEIGERUNGEN,
+    initialisiere_charakter_daten,
+    load_config,
+    load_setting,
+)
 from app.services.handicap_effekte import wende_handicap_punkte_effekte_an
 from app.services.kompatibilitaet import handicap_konflikt, talent_konflikt
 from app.services.aufstiege import (
@@ -33,6 +39,7 @@ from app.services.ausruestung import (
     panzerung_torso,
     schild_parade,
     setze_angelegt,
+    startkapital_basis,
     traegt_ruestung,
     traglast_kg,
     verfuegbares_geld,
@@ -890,6 +897,60 @@ def erschaffung_oeffnen(req: SpiellogikRequest):
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
+def _setze_startpunkte(daten: dict, feld: str, standard: int, wert: int) -> None:
+    """Setzt das Maximum und rechnet die Differenz wie im Original auf die
+    verbleibenden Punkte an (nie unter 0), sodass bereits ausgegebene Punkte
+    erhalten bleiben."""
+    alt = daten.get(f"maximale_{feld}", standard)
+    daten[f"maximale_{feld}"] = wert
+    daten[f"verbleibende_{feld}"] = max(0, daten.get(f"verbleibende_{feld}", alt) + wert - alt)
+
+
+@router.post("/startpunkte/setzen", response_model=SpiellogikResponse)
+def startpunkte_setzen(req: SpiellogikRequest):
+    """Passt die Start-Attributs-/Fertigkeitspunkte an (Original: Punkte-Popup
+    der Charakterverwaltung). Nicht gesetzte Felder bleiben unverändert."""
+    daten = req.charakter_daten
+    if req.attributspunkte is None and req.fertigkeitspunkte is None:
+        return SpiellogikResponse(
+            success=False, message="Keine Punkte angegeben", charakter_daten=daten
+        )
+    if (req.attributspunkte or 0) < 0 or (req.fertigkeitspunkte or 0) < 0:
+        return SpiellogikResponse(
+            success=False, message="Punkte dürfen nicht negativ sein", charakter_daten=daten
+        )
+    if req.attributspunkte is not None:
+        _setze_startpunkte(
+            daten, "attributsteigerungen", START_ATTRIBUTSTEIGERUNGEN, req.attributspunkte
+        )
+    if req.fertigkeitspunkte is not None:
+        _setze_startpunkte(
+            daten, "fertigkeitssteigerungen", START_FERTIGKEITSSTEIGERUNGEN, req.fertigkeitspunkte
+        )
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/startkapital/setzen", response_model=SpiellogikResponse)
+def startkapital_setzen(req: SpiellogikRequest):
+    """Passt Startkapital und Währung an (Original: Vermögens-Popup). Das
+    Startkapital überschreibt das Setting-Startgeld; Multiplikatoren (Arm,
+    Reich) und eingelöste Handicap-Punkte rechnen weiter darauf auf."""
+    daten = req.charakter_daten
+    if req.startkapital is not None:
+        if req.startkapital < 0:
+            return SpiellogikResponse(
+                success=False, message="Startkapital darf nicht negativ sein", charakter_daten=daten
+            )
+        daten["startkapital"] = req.startkapital
+    if req.waehrung is not None:
+        # leere Eingabe = zurück zur Setting-Währung
+        if req.waehrung.strip():
+            daten["waehrungseinheit"] = req.waehrung.strip()
+        else:
+            daten.pop("waehrungseinheit", None)
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
 @router.post("/aufstieg/hinzufuegen", response_model=SpiellogikResponse)
 def aufstieg_hinzufuegen(req: SpiellogikRequest):
     daten = req.charakter_daten
@@ -1238,6 +1299,11 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
     bewegungsweite = 6 + boni["bewegungsweite"] + cyber_boni["bewegungsweite"]
     bennys = 3 + boni["bennys"]
     geld_verfuegbar, geld_gesamt = verfuegbares_geld(daten, setting)
+    # Währung: Charakter-Override, sonst Setting (nicht jedes Setting pflegt sie)
+    setting_waehrung = setting.get("waehrung")
+    waehrung = daten.get("waehrungseinheit") or (
+        setting_waehrung if isinstance(setting_waehrung, str) else ""
+    )
 
     extra: dict = {}
     if cyber_aktiv:
@@ -1271,6 +1337,8 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
         "panzerung": panzerung,
         "vermoegen": geld_verfuegbar,
         "startkapital_gesamt": geld_gesamt,
+        "startkapital_basis": startkapital_basis(setting, daten),
+        "waehrung": waehrung,
         "traglast": traglast_kg(daten, boni["traglast_kg"]),
         "gesamtgewicht": gesamtgewicht(daten, setting),
         "machtpunkte": machtpunkte,

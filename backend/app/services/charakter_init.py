@@ -99,6 +99,16 @@ def initialisiere_charakter_daten(char_name: str, setting_name: str) -> dict:
     }
 
 
+def entpacke_charakter_export(daten: dict) -> dict:
+    """Packt Voll-Exporte aus, die die eigentlichen charakter_daten in einem
+    Wrapper tragen (z. B. DB-Zeilen-Dumps mit id/char_name/benutzername).
+    Nackte charakter_daten werden unverändert zurückgegeben."""
+    inner = daten.get("charakter_daten")
+    if isinstance(inner, dict) and inner:
+        return inner
+    return daten
+
+
 def _als_liste(wert) -> list:
     """Kivy-Auswahlen sind je nach Save-Version Skalar oder Liste."""
     if wert is None:
@@ -298,7 +308,7 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
             # Kivy speichert das Rest-Vermögen; Web speichert die Ausgaben
             from app.services.ausruestung import startkapital_basis, vermoegen_multiplikator
 
-            basis = startkapital_basis(setting)
+            basis = startkapital_basis(setting, daten)
             gesamt = basis * vermoegen_multiplikator(daten) + basis * daten.get(
                 "startgeld_bonus_punkte", 0
             )

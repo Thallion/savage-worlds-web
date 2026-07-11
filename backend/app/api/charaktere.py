@@ -16,6 +16,7 @@ from app.schemas.charakter import (
     CharakterVerschieben,
 )
 from app.services.charakter_init import (
+    entpacke_charakter_export,
     ergaenze_fehlende_eigenschaften,
     initialisiere_charakter_daten,
 )
@@ -67,14 +68,17 @@ def import_charakter(
     db: Session = Depends(get_db),
     current_user: db_models.User = Depends(get_current_user),
 ):
-    """Importiert einen Charakter aus einem Export-JSON (nackte charakter_daten,
-    wie /{id}/export sie liefert). Fehlende Felder — auch bei Alt-Exporten aus
-    der Kivy-App — werden über die Lazy-Init-Normalisierung nachgefüllt."""
+    """Importiert einen Charakter aus einem Export-JSON — nackte charakter_daten
+    (wie /{id}/export sie liefert) oder ein Voll-Export mit Wrapper (DB-Zeile).
+    Fehlende Felder — auch bei Alt-Exporten aus der Kivy-App — werden über die
+    Lazy-Init-Normalisierung nachgefüllt."""
     if not isinstance(charakter_daten, dict) or not charakter_daten:
         raise HTTPException(status_code=422, detail="Kein gültiges Charakter-JSON")
 
-    daten, _ = ergaenze_fehlende_eigenschaften(charakter_daten)
-    char_name = daten.get("profil_daten", {}).get("Name") or "Importierter Charakter"
+    daten, _ = ergaenze_fehlende_eigenschaften(entpacke_charakter_export(charakter_daten))
+    char_name = (
+        daten.get("profil_daten", {}).get("Name") or ""
+    ).strip() or "Importierter Charakter"
 
     # char_name ist pro User eindeutig — bei Kollision nummerieren
     vorhandene = {

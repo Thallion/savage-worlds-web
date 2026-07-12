@@ -14,7 +14,7 @@
           <v-card variant="outlined" class="mb-2 pa-3">
             <div class="d-flex justify-space-between">
               <span>Robustheit</span>
-              <strong>{{ abgeleiteteWerte.robustheit }}</strong>
+              <strong>{{ robustheitAnzeige }}</strong>
             </div>
           </v-card>
           <v-card variant="outlined" class="mb-2 pa-3">
@@ -329,9 +329,17 @@ const abgeleiteteWerte = computed(
       bewegungsweite: 6,
       groesse: 0,
       bennys: 3,
+      panzerung: 0,
       machtpunkte: 0,
     },
 )
+
+// Robustheit inkl. Rüstungsschutz wie im Original: "9 (2)" — der Klammerwert
+// ist der Torso-Panzerungsanteil, der bereits in der Robustheit steckt.
+const robustheitAnzeige = computed(() => {
+  const { robustheit, panzerung } = abgeleiteteWerte.value
+  return panzerung ? `${robustheit} (${panzerung})` : `${robustheit}`
+})
 
 // Alt-Format aus der Kivy-App: {volk_name: bool} — nur truthy Einträge sind gewählt
 const gewaehlteVoelker = computed(() =>

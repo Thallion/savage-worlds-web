@@ -10,7 +10,14 @@ from app.config import settings
 from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.db import models as db_models
-from app.schemas.auth import UserCreate, UserLogin, UserResponse, Token
+from app.schemas.auth import (
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    Token,
+    PasswortAendern,
+    AccountLoeschen,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -69,3 +76,29 @@ def login(user_in: UserLogin, db: Session = Depends(get_db)):
 @router.get("/me", response_model=UserResponse)
 def me(current_user: db_models.User = Depends(get_current_user)):
     return current_user
+
+
+@router.put("/passwort", status_code=status.HTTP_204_NO_CONTENT)
+def passwort_aendern(
+    data: PasswortAendern,
+    current_user: db_models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not _verify_password(data.aktuelles_passwort, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Aktuelles Passwort falsch")
+    if not data.neues_passwort:
+        raise HTTPException(status_code=400, detail="Neues Passwort darf nicht leer sein")
+    current_user.hashed_password = _hash_password(data.neues_passwort)
+    db.commit()
+
+
+@router.delete("/account", status_code=status.HTTP_204_NO_CONTENT)
+def account_loeschen(
+    data: AccountLoeschen,
+    current_user: db_models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not _verify_password(data.passwort, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Passwort falsch")
+    db.delete(current_user)
+    db.commit()

@@ -23,3 +23,12 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+class PasswortAendern(BaseModel):
+    aktuelles_passwort: str
+    neues_passwort: str
+
+
+class AccountLoeschen(BaseModel):
+    passwort: str

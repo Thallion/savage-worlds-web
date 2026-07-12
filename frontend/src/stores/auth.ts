@@ -40,9 +40,31 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
   }
 
+  async function passwortAendern(aktuellesPasswort: string, neuesPasswort: string) {
+    await api.put('/auth/passwort', {
+      aktuelles_passwort: aktuellesPasswort,
+      neues_passwort: neuesPasswort,
+    })
+  }
+
+  async function accountLoeschen(passwort: string) {
+    await api.delete('/auth/account', { passwort })
+    logout()
+  }
+
   if (token.value) {
     fetchUser()
   }
 
-  return { token, user, isLoggedIn, login, register, fetchUser, logout }
+  return {
+    token,
+    user,
+    isLoggedIn,
+    login,
+    register,
+    fetchUser,
+    logout,
+    passwortAendern,
+    accountLoeschen,
+  }
 })

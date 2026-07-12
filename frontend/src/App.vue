@@ -9,9 +9,11 @@
       <v-list nav>
         <v-list-item
           v-if="authStore.isLoggedIn"
+          to="/konto"
           prepend-icon="mdi-account"
           :title="authStore.user?.benutzername"
-          subtitle="Angemeldet"
+          subtitle="Konto verwalten"
+          @click="drawer = false"
         />
         <v-divider v-if="authStore.isLoggedIn" class="mb-2" />
         <template v-if="authStore.isLoggedIn">
@@ -34,7 +36,15 @@
         <template v-if="authStore.isLoggedIn">
           <v-btn to="/" variant="text" prepend-icon="mdi-account-group">Charaktere</v-btn>
           <v-btn to="/settings" variant="text" prepend-icon="mdi-book-cog">Settings</v-btn>
-          <v-chip class="mr-2 ml-2" variant="outlined">{{ authStore.user?.benutzername }}</v-chip>
+          <v-chip
+            class="mr-2 ml-2"
+            variant="outlined"
+            to="/konto"
+            link
+            prepend-icon="mdi-account"
+          >
+            {{ authStore.user?.benutzername }}
+          </v-chip>
         </template>
         <v-btn to="/info" variant="text" icon="mdi-information-outline" title="Info" />
       </template>

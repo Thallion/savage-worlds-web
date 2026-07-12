@@ -1,9 +1,14 @@
 """HTML-Charakterbogen (Original: utils/html_utils.py).
 
 Erzeugt den kompletten Charakterbogen als eigenständiges HTML5-Dokument mit
-Inline-CSS — Layout, Farben und Sektionen wie im Kivy-Original: Profil,
-Attribute/Fertigkeiten neben Abstammung/abgeleiteten Werten, Handicaps,
-Talente, Mächte, Superkräfte, Ausrüstung, Waffen, Rüstungen, Schilde.
+Inline-CSS. Sektionen wie im Kivy-Original: Profil, Attribute/Fertigkeiten
+neben Abstammung/abgeleiteten Werten, Handicaps, Talente, Mächte,
+Superkräfte, Ausrüstung, Waffen, Rüstungen, Schilde.
+
+Das Layout ist an klassische Pen-&-Paper-Bögen angelehnt: Pergament-Papier,
+Serifenschrift, Sektionsbänder in dunklem Braun mit hellen Kapitälchen und
+Werte in eigenen Kästchen. `printer_friendly` rendert dieselbe Struktur in
+Schwarz-Weiß ohne Flächenfarben.
 
 Abweichungen vom Original:
 - Wunden, Erschöpfung und Entschlossenheit fehlen (Spielzustand, den die
@@ -30,18 +35,36 @@ def _wuerfel(wert: int, modifier: int = 0) -> str:
     return f"W{wert}"
 
 
-def _tabelle(kopf: list[str], zeilen: str) -> str:
-    kopf_html = "".join(f"<th>{_esc(k)}</th>" for k in kopf)
-    return f"<table>\n<tr>{kopf_html}</tr>\n{zeilen}</table>"
+def _tabelle(kopf: list[str] | None, zeilen: str) -> str:
+    if not zeilen:
+        return '<p class="hinweis">Keine Einträge.</p>'
+    kopf_html = ""
+    if kopf:
+        kopf_html = "<tr>" + "".join(f"<th>{_esc(k)}</th>" for k in kopf) + "</tr>\n"
+    return f"<table>\n{kopf_html}{zeilen}</table>"
 
 
-def _erzeuge_html_dokument(title: str, body_content: str, printer_friendly: bool) -> str:
+def _erzeuge_html_dokument(
+    title: str, kopf_html: str, body_content: str, printer_friendly: bool
+) -> str:
     if printer_friendly:
-        header_bg = row_bg = body_bg = "#ffffff"
+        # Schwarz-Weiß: keine Flächenfarben, nur Linien.
+        seite = papier = zeile = hervor = band_bg = "#ffffff"
+        tinte = band_fg = band_rand = "#111111"
+        gedeckt = "#444444"
+        linie = "#999999"
+        schatten = "none"
     else:
-        header_bg = "#ffb961"
-        row_bg = "#FFE4B5"
-        body_bg = "#FFF8DC"
+        seite = "#e9e2cf"       # Tisch hinter dem Bogen
+        papier = "#f6f1e3"      # Pergament
+        zeile = "#faf6ea"       # Tabellenzeilen
+        hervor = "#e8dfc8"      # Tabellenköpfe, Gesamt-Zellen
+        tinte = "#2f2a22"
+        gedeckt = "#6a5f4b"     # Beschriftungen, Beschreibungen
+        band_bg = band_rand = "#6b5138"  # Sektionsbänder
+        band_fg = "#f6f1e3"
+        linie = "#c4b596"
+        schatten = "0 2px 14px rgba(64, 48, 24, 0.25)"
 
     return f"""<!DOCTYPE html>
 <html lang="de">
@@ -51,91 +74,193 @@ def _erzeuge_html_dokument(title: str, body_content: str, printer_friendly: bool
 <title>{title}</title>
 <style>
 body {{
-    font-family: Helvetica, Arial, sans-serif;
+    font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', 'Times New Roman', serif;
     font-size: 10pt;
-    color: #000;
-    background-color: {body_bg};
-    margin: 10px;
-    padding: 0;
+    line-height: 1.45;
+    color: {tinte};
+    background-color: {seite};
+    margin: 0;
+    padding: 24px 12px;
+}}
+.bogen {{
+    max-width: 860px;
+    margin: 0 auto;
+    background-color: {papier};
+    border: 1px solid {linie};
+    box-shadow: {schatten};
+    padding: 28px 34px 34px;
+}}
+.kopf {{
+    text-align: center;
+    border-bottom: 3px double {band_rand};
+    padding-bottom: 14px;
+    margin-bottom: 4px;
+}}
+.kopf .ornament {{
+    color: {band_rand};
+    font-size: 11pt;
+    letter-spacing: 0.6em;
+    margin-bottom: 4px;
 }}
 h1 {{
-    font-size: 16pt;
-    margin: 0 0 8px 0;
+    font-size: 20pt;
+    font-weight: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    margin: 0;
+}}
+.kopf .untertitel {{
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.4em;
+    color: {gedeckt};
+    margin-top: 6px;
 }}
 h2 {{
-    font-size: 12pt;
-    margin: 12px 0 4px 0;
+    font-size: 9.5pt;
+    font-weight: normal;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: {band_fg};
+    background-color: {band_bg};
+    border: 1px solid {band_rand};
+    padding: 5px 12px;
+    margin: 18px 0 0 0;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
 }}
 table {{
+    width: 100%;
     border-collapse: collapse;
-    margin-bottom: 8px;
-}}
-th, td {{
-    border: 1px solid #000;
-    padding: 3px 6px;
-    text-align: left;
-    vertical-align: top;
+    background-color: {zeile};
+    border: 1px solid {linie};
+    border-top: none;
+    margin: 0 0 4px 0;
 }}
 th {{
-    background-color: {header_bg};
-    font-weight: bold;
+    font-weight: normal;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: {gedeckt};
+    background-color: {hervor};
+    border-bottom: 1px solid {linie};
+    padding: 4px 10px;
+    text-align: left;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
 }}
 td {{
-    background-color: {row_bg};
+    padding: 4px 10px;
+    text-align: left;
+    vertical-align: top;
+    border-top: 1px solid {linie};
+}}
+table tr:first-child > td {{
+    border-top: none;
+}}
+td.wert {{
+    width: 72px;
+    text-align: center;
+    font-weight: bold;
+    white-space: nowrap;
+    border-left: 1px solid {linie};
+}}
+td.feld {{
+    width: 34%;
+    font-size: 8.5pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: {gedeckt};
+    padding-top: 6px;
 }}
 td.gesamt {{
-    background-color: {header_bg};
+    background-color: {hervor};
     font-weight: bold;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}}
+td.beschreibung {{
+    font-size: 8.5pt;
+    font-style: italic;
+    color: {gedeckt};
+    border-top: none;
+    padding-top: 0;
 }}
 .two-column {{
     display: flex;
-    gap: 20px;
+    gap: 26px;
     flex-wrap: wrap;
     align-items: flex-start;
 }}
 .two-column > div {{
-    flex: 0 1 auto;
+    flex: 1 1 300px;
+    min-width: 260px;
 }}
-.beschreibung {{
-    font-style: normal;
-    font-size: 9pt;
+.hinweis {{
+    font-style: italic;
+    color: {gedeckt};
+    margin: 6px 2px 10px;
 }}
 @media print {{
     body {{
         background-color: #fff;
+        padding: 0;
     }}
-    th {{
-        background-color: {header_bg if not printer_friendly else '#fff'};
+    .bogen {{
+        max-width: none;
+        border: none;
+        box-shadow: none;
+        padding: 0;
     }}
-    td {{
-        background-color: {row_bg if not printer_friendly else '#fff'};
+    h2 {{
+        break-after: avoid;
     }}
-    td.gesamt {{
-        background-color: {header_bg if not printer_friendly else '#fff'};
+    tr {{
+        break-inside: avoid;
     }}
 }}
 @media (max-width: 600px) {{
+    body {{
+        padding: 0;
+    }}
+    .bogen {{
+        border: none;
+        padding: 16px 14px 24px;
+    }}
     .two-column {{
         flex-direction: column;
-    }}
-    table {{
-        width: 100%;
     }}
 }}
 </style>
 </head>
 <body>
-<h1>Charakterbogen:</h1>
+<div class="bogen">
+{kopf_html}
 {body_content}
+</div>
 </body>
 </html>"""
+
+
+def _kopf_sektion(daten: dict) -> str:
+    name = daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter"
+    untertitel = "Charakterbogen"
+    setting_name = daten.get("active_setting_name")
+    if setting_name:
+        untertitel += f" · {setting_name}"
+    return f"""<header class="kopf">
+<div class="ornament">❦ ❦ ❦</div>
+<h1>{_esc(name)}</h1>
+<div class="untertitel">{_esc(untertitel)}</div>
+</header>"""
 
 
 def _profil_sektion(daten: dict) -> str:
     rows = ""
     for key, value in daten.get("profil_daten", {}).items():
-        rows += f"<tr><td><b>{_esc(key)}</b></td><td>{_esc(value)}</td></tr>\n"
-    return "<h2>Profil</h2>\n" + _tabelle(["Attribut", "Beschreibung"], rows)
+        rows += f'<tr><td class="feld">{_esc(key)}</td><td>{_esc(value)}</td></tr>\n'
+    return "<h2>Profil</h2>\n" + _tabelle(None, rows)
 
 
 def _attribute_fertigkeiten_sektion(daten: dict, setting: dict, werte: dict) -> str:
@@ -147,9 +272,9 @@ def _attribute_fertigkeiten_sektion(daten: dict, setting: dict, werte: dict) -> 
     for name in reihenfolge:
         attr = attribute[name]
         kombi = _wuerfel(attr.get("wert", 4), attr.get("modifier", 0))
-        attr_rows += f"<tr><td>{_esc(name)}</td><td>{_esc(kombi)}</td></tr>\n"
+        attr_rows += f'<tr><td>{_esc(name)}</td><td class="wert">{_esc(kombi)}</td></tr>\n'
 
-    left_html = "<h2>Attribute</h2>\n" + _tabelle(["Attribut", "Wert"], attr_rows)
+    left_html = "<h2>Attribute</h2>\n" + _tabelle(None, attr_rows)
 
     fert_rows = ""
     for name, fert in sorted(daten.get("fertigkeiten", {}).items()):
@@ -157,9 +282,9 @@ def _attribute_fertigkeiten_sektion(daten: dict, setting: dict, werte: dict) -> 
         if wuerfel.get("modifier", 0) == -2:  # ungelernt
             continue
         kombi = _wuerfel(wuerfel.get("value", 4), wuerfel.get("modifier", 0))
-        fert_rows += f"<tr><td>{_esc(name)}</td><td>{_esc(kombi)}</td></tr>\n"
+        fert_rows += f'<tr><td>{_esc(name)}</td><td class="wert">{_esc(kombi)}</td></tr>\n'
 
-    left_html += "\n<h2>Fertigkeiten</h2>\n" + _tabelle(["Fertigkeit", "Wert"], fert_rows)
+    left_html += "\n<h2>Fertigkeiten</h2>\n" + _tabelle(None, fert_rows)
 
     right_html = _volk_sektion(daten, setting) + _abgeleitete_werte_sektion(daten, werte)
 
@@ -180,14 +305,14 @@ def _volk_sektion(daten: dict, setting: dict) -> str:
             break
 
     if not selected_volk:
-        return "<p>Keine Abstammung ausgewählt.</p>"
+        return '<p class="hinweis">Keine Abstammung ausgewählt.</p>'
 
     if volk_data is None:
         volk_data = setting.get("voelker", {}).get(selected_volk)
 
     result = f"<h2>Abstammung: {_esc(selected_volk)}</h2>"
     if not volk_data:
-        return result + "<p>Keine Daten für die ausgewählte Abstammung vorhanden.</p>"
+        return result + '<p class="hinweis">Keine Daten für die ausgewählte Abstammung vorhanden.</p>'
 
     for feld, spalte in (("talente", "Talent"), ("handicaps", "Handicap"), ("besonderheiten", "Besonderheit")):
         eintraege = volk_data.get(feld) or []
@@ -218,19 +343,19 @@ def _abgeleitete_werte_sektion(daten: dict, werte: dict) -> str:
 
     rows = ""
     for key, value in anzeige.items():
-        rows += f"<tr><td>{_esc(key)}</td><td>{_esc(value)}</td></tr>\n"
+        rows += f'<tr><td>{_esc(key)}</td><td class="wert">{_esc(value)}</td></tr>\n'
 
     cyber = werte.get("cyberware")
     if cyber:
         rows += (
-            f"<tr><td>Cyberware Stress</td><td>{_esc(cyber.get('stress'))} / "
-            f"{_esc(cyber.get('stresslimit'))} (Max: {_esc(cyber.get('stress_maximum'))})</td></tr>\n"
+            f'<tr><td>Cyberware Stress</td><td class="wert">{_esc(cyber.get("stress"))} / '
+            f'{_esc(cyber.get("stresslimit"))} (Max: {_esc(cyber.get("stress_maximum"))})</td></tr>\n'
         )
         installationen = len(daten.get("cyberware_installationen", {}))
         if installationen:
-            rows += f"<tr><td>Installationen</td><td>{_esc(installationen)}</td></tr>\n"
+            rows += f'<tr><td>Installationen</td><td class="wert">{_esc(installationen)}</td></tr>\n'
 
-    return "<h2>Abgeleitete Werte</h2>\n" + _tabelle(["Beschreibung", "Wert"], rows)
+    return "<h2>Abgeleitete Werte</h2>\n" + _tabelle(None, rows)
 
 
 def _handicaps_sektion(daten: dict, setting: dict) -> str:
@@ -425,4 +550,6 @@ def generiere_charakterbogen(
             sections.append(optional)
 
     name = daten.get("profil_daten", {}).get("Name") or "Charakterbogen"
-    return _erzeuge_html_dokument(_esc(name), "\n".join(sections), printer_friendly)
+    return _erzeuge_html_dokument(
+        _esc(name), _kopf_sektion(daten), "\n".join(sections), printer_friendly
+    )

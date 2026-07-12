@@ -24,9 +24,9 @@
             variant="outlined"
             class="mb-2 pa-2"
           >
-            <div class="d-flex align-center justify-space-between">
-              <span class="text-body-1 font-weight-medium">{{ name }}</span>
-              <div class="d-flex align-center ga-2">
+            <div class="d-flex align-center justify-space-between ga-2">
+              <span class="text-body-1 font-weight-medium text-truncate">{{ name }}</span>
+              <div class="d-flex align-center ga-2 flex-shrink-0">
                 <v-btn
                   icon="mdi-minus"
                   size="small"
@@ -68,14 +68,14 @@
             class="mb-1 pa-2"
             density="compact"
           >
-            <div class="d-flex align-center justify-space-between">
-              <div>
+            <div class="d-flex align-center justify-space-between ga-2">
+              <div style="min-width: 0">
                 <span class="text-body-2 font-weight-medium">{{ name }}</span>
                 <span class="text-caption text-grey ml-1">({{ fert.attribut }})</span>
                 <v-chip v-if="fert.grundfertigkeit" size="x-small" class="ml-1">Grund</v-chip>
                 <v-chip v-if="fert.custom" size="x-small" color="primary" class="ml-1">Eigen</v-chip>
               </div>
-              <div class="d-flex align-center ga-1">
+              <div class="d-flex align-center ga-1 flex-shrink-0">
                 <v-btn
                   v-if="fert.custom"
                   icon="mdi-delete-outline"

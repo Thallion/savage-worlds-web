@@ -1768,14 +1768,15 @@ def test_charakterbogen_basis(daten):
     assert "<td>Alt</td><td>schwer</td>" in html
     # ungelernte Fertigkeiten tauchen nicht auf
     assert "<td>Kämpfen</td>" not in html
-    # Farbige Version enthält die Original-Hintergrundfarbe
-    assert "#FFF8DC" in html
+    # Farbige Version enthält Pergament-Papier und braune Sektionsbänder
+    assert "#f6f1e3" in html
+    assert "#6b5138" in html
 
 
 def test_charakterbogen_druckerfreundlich(daten):
     html = charakterbogen(daten, printer_friendly=True)
-    assert "#FFF8DC" not in html
-    assert "#ffb961" not in html
+    assert "#f6f1e3" not in html
+    assert "#6b5138" not in html
 
 
 def test_charakterbogen_ausruestung(daten):

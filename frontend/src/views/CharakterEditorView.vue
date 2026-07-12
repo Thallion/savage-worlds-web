@@ -8,7 +8,7 @@
         <h2 class="text-h5">{{ daten.profil_daten?.Name || 'Neuer Charakter' }}</h2>
         <span class="text-caption">{{ store.aktuellerCharakter.active_setting_name }}</span>
       </v-col>
-      <v-col cols="auto" class="d-flex ga-2 align-center">
+      <v-col cols="12" sm="auto" class="d-flex ga-2 align-center flex-wrap justify-end">
         <v-btn
           icon="mdi-undo"
           variant="text"

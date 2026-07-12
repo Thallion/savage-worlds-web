@@ -59,6 +59,7 @@
       <!-- Installationen -->
       <div v-if="installationen.length" class="mb-6">
         <h3 class="text-subtitle-1 mb-2">Installierte Cyberware</h3>
+        <div class="overflow-x-auto">
         <v-table density="compact">
           <thead>
             <tr>
@@ -130,6 +131,7 @@
             </tr>
           </tbody>
         </v-table>
+        </div>
         <div v-if="erschaffungAbgeschlossen" class="text-caption mt-1">
           Nach der Erschaffung gibt es keine Erstattung, und der Eingriff kostet 25 % des Kaufpreises.
         </div>
@@ -146,6 +148,7 @@
         class="mb-2"
         style="max-width: 320px"
       />
+      <div class="overflow-x-auto">
       <v-table density="compact">
         <thead>
           <tr>
@@ -191,6 +194,7 @@
           </tr>
         </tbody>
       </v-table>
+      </div>
     </v-card-text>
   </v-card>
 </template>

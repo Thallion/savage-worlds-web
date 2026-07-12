@@ -361,7 +361,14 @@ const aktiveFertigkeiten = computed(() => {
   const result: Record<string, any> = {}
   for (const [key, val] of Object.entries(all)) {
     const f = val as any
-    if (f.ausgewaehlt || f.grundfertigkeit) {
+    // Eine Fertigkeit ist gelernt, wenn sie eine Grundfertigkeit ist, explizit
+    // ausgewählt wurde oder über den ungelernten Grundzustand (W4-2) hinaus
+    // gesteigert wurde. Letzteres deckt importierte Archetypen ab, bei denen
+    // gesteigerte Fertigkeiten teils mit ausgewaehlt=false gespeichert sind.
+    const wert = f.wuerfel?.value ?? 4
+    const modifier = f.wuerfel?.modifier ?? -2
+    const gelernt = wert > 4 || modifier > -2
+    if (f.ausgewaehlt || f.grundfertigkeit || gelernt) {
       result[key] = val
     }
   }

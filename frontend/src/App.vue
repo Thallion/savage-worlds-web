@@ -30,6 +30,16 @@
 
     <v-app-bar color="primary" density="compact">
       <v-app-bar-nav-icon v-if="mobile" @click="drawer = !drawer" />
+      <router-link to="/info" class="sw-fanlogo-link" title="Savage Worlds Fanprodukt – Info">
+        <v-img
+          src="/assets/savage-worlds-fanprodukt-logo.png"
+          alt="Savage Worlds Fanprodukt"
+          width="40"
+          height="27"
+          contain
+          class="sw-fanlogo-bar ml-2 mr-1"
+        />
+      </router-link>
       <v-app-bar-title>Savage Worlds Charakter-Generator</v-app-bar-title>
       <v-spacer />
       <template v-if="!mobile">
@@ -115,3 +125,15 @@ async function logout() {
   router.push('/login')
 }
 </script>
+
+<style scoped>
+.sw-fanlogo-link {
+  display: inline-flex;
+  align-items: center;
+}
+.sw-fanlogo-bar {
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.85);
+  padding: 2px 4px;
+}
+</style>

@@ -18,11 +18,36 @@ Abweichungen vom Original:
   Rüstungen und Schilde).
 """
 
+import base64
+import functools
 import html
+from pathlib import Path
 
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 
 ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
+
+# Vier Genre-Icons (Schwert, Totenkopf, Ray-Gun, Zeppelin), direkt aus den
+# Roundels des offiziellen Savage-Worlds-Logos ausgeschnitten und als flache
+# Silhouette in Tinten- bzw. Sektionsband-Farbe eingefärbt (statt Nachbau als
+# SVG). Zwei Farbvarianten liegen als PNG bereit ("brown" fürs Pergament-
+# Layout, "black" für printer_friendly), damit der Bogen ein eigenständiges
+# HTML-Dokument ohne Bild-Referenzen nach außen bleibt.
+_ICON_NAMES = ("sword", "skull", "raygun", "airship")
+_ICON_DIR = Path(__file__).parent / "assets" / "charakterbogen_icons"
+
+
+@functools.lru_cache(maxsize=None)
+def _icon_data_uri(name: str, variante: str) -> str:
+    daten = (_ICON_DIR / f"{name}_{variante}.png").read_bytes()
+    return "data:image/png;base64," + base64.b64encode(daten).decode("ascii")
+
+
+def _genre_icons(printer_friendly: bool) -> tuple[str, ...]:
+    variante = "black" if printer_friendly else "brown"
+    return tuple(
+        f'<img src="{_icon_data_uri(name, variante)}" alt="">' for name in _ICON_NAMES
+    )
 
 
 def _esc(text) -> str:
@@ -44,27 +69,37 @@ def _tabelle(kopf: list[str] | None, zeilen: str) -> str:
     return f"<table>\n{kopf_html}{zeilen}</table>"
 
 
+def _farbschema(printer_friendly: bool) -> dict[str, str]:
+    if printer_friendly:
+        # Schwarz-Weiß: keine Flächenfarben, nur Linien.
+        return {
+            "seite": "#ffffff", "papier": "#ffffff", "zeile": "#ffffff",
+            "hervor": "#ffffff", "band_bg": "#ffffff",
+            "tinte": "#111111", "band_fg": "#111111", "band_rand": "#111111",
+            "gedeckt": "#444444", "linie": "#999999", "schatten": "none",
+        }
+    return {
+        "seite": "#e9e2cf",     # Tisch hinter dem Bogen
+        "papier": "#f6f1e3",    # Pergament
+        "zeile": "#faf6ea",     # Tabellenzeilen
+        "hervor": "#e8dfc8",    # Tabellenköpfe, Gesamt-Zellen
+        "tinte": "#2f2a22",
+        "gedeckt": "#6a5f4b",   # Beschriftungen, Beschreibungen
+        "band_bg": "#6b5138", "band_rand": "#6b5138",  # Sektionsbänder
+        "band_fg": "#f6f1e3",
+        "linie": "#c4b596",
+        "schatten": "0 2px 14px rgba(64, 48, 24, 0.25)",
+    }
+
+
 def _erzeuge_html_dokument(
     title: str, kopf_html: str, body_content: str, printer_friendly: bool
 ) -> str:
-    if printer_friendly:
-        # Schwarz-Weiß: keine Flächenfarben, nur Linien.
-        seite = papier = zeile = hervor = band_bg = "#ffffff"
-        tinte = band_fg = band_rand = "#111111"
-        gedeckt = "#444444"
-        linie = "#999999"
-        schatten = "none"
-    else:
-        seite = "#e9e2cf"       # Tisch hinter dem Bogen
-        papier = "#f6f1e3"      # Pergament
-        zeile = "#faf6ea"       # Tabellenzeilen
-        hervor = "#e8dfc8"      # Tabellenköpfe, Gesamt-Zellen
-        tinte = "#2f2a22"
-        gedeckt = "#6a5f4b"     # Beschriftungen, Beschreibungen
-        band_bg = band_rand = "#6b5138"  # Sektionsbänder
-        band_fg = "#f6f1e3"
-        linie = "#c4b596"
-        schatten = "0 2px 14px rgba(64, 48, 24, 0.25)"
+    farben = _farbschema(printer_friendly)
+    seite = farben["seite"]; papier = farben["papier"]; zeile = farben["zeile"]
+    hervor = farben["hervor"]; band_bg = farben["band_bg"]
+    tinte = farben["tinte"]; band_fg = farben["band_fg"]; band_rand = farben["band_rand"]
+    gedeckt = farben["gedeckt"]; linie = farben["linie"]; schatten = farben["schatten"]
 
     return f"""<!DOCTYPE html>
 <html lang="de">
@@ -96,11 +131,29 @@ body {{
     padding-bottom: 14px;
     margin-bottom: 4px;
 }}
-.kopf .ornament {{
+.kopf .icon-row {{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}}
+.kopf .icon-badge {{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid {band_rand};
+    background-color: {hervor};
     color: {band_rand};
-    font-size: 11pt;
-    letter-spacing: 0.6em;
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}}
+.kopf .icon-badge img {{
+    width: 20px;
+    height: 20px;
+    display: block;
 }}
 h1 {{
     font-size: 20pt;
@@ -243,14 +296,16 @@ td.beschreibung {{
 </html>"""
 
 
-def _kopf_sektion(daten: dict) -> str:
+def _kopf_sektion(daten: dict, printer_friendly: bool) -> str:
     name = daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter"
     untertitel = "Charakterbogen"
     setting_name = daten.get("active_setting_name")
     if setting_name:
         untertitel += f" · {setting_name}"
+    icons = _genre_icons(printer_friendly)
+    icon_row = "".join(f'<span class="icon-badge">{svg}</span>' for svg in icons)
     return f"""<header class="kopf">
-<div class="ornament">❦ ❦ ❦</div>
+<div class="icon-row">{icon_row}</div>
 <h1>{_esc(name)}</h1>
 <div class="untertitel">{_esc(untertitel)}</div>
 </header>"""
@@ -551,5 +606,5 @@ def generiere_charakterbogen(
 
     name = daten.get("profil_daten", {}).get("Name") or "Charakterbogen"
     return _erzeuge_html_dokument(
-        _esc(name), _kopf_sektion(daten), "\n".join(sections), printer_friendly
+        _esc(name), _kopf_sektion(daten, printer_friendly), "\n".join(sections), printer_friendly
     )

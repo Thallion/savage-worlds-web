@@ -223,6 +223,31 @@
           </div>
         </v-col>
       </v-row>
+
+      <!-- Steigerungen (Journal-Sektion wie im Original-Charakterbogen) -->
+      <v-row v-if="steigerungen.length" class="mt-4">
+        <v-col cols="12">
+          <h3 class="text-h6 mb-3">Steigerungen</h3>
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th>Rang</th>
+                <th>Typ</th>
+                <th>Name</th>
+                <th>Kosten</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(zeile, i) in steigerungen" :key="i">
+                <td>{{ zeile.rang }}</td>
+                <td>{{ zeile.typ }}</td>
+                <td>{{ zeile.name }}</td>
+                <td>{{ zeile.kosten }}</td>
+              </tr>
+            </tbody>
+          </v-table>
+        </v-col>
+      </v-row>
     </v-card-text>
   </v-card>
 </template>
@@ -388,4 +413,82 @@ function formatWuerfel(wert: number, modifier: number): string {
   if (modifier < 0) return `W${wert}${modifier}`
   return `W${wert}`
 }
+
+// Steigerungs-Journal wie die Sektion "Steigerungen" im Original-Charakterbogen
+// (utils/html_utils.py der Kivy-App): Historie-Einträge bevorzugt, sonst das
+// Erschaffungs-Kauf-Journal aus Kivy-Importen/Archetypen mit dem aktuellen Rang.
+const STEIGERUNGS_TYPEN: Record<string, string> = {
+  attribut_steigerung: 'Attribut',
+  fertigkeit_steigerung: 'Fertigkeit',
+  talent_hinzugefuegt: 'Talent',
+  talent_entfernt: 'Talent',
+  handicap_hinzugefuegt: 'Handicap',
+  handicap_entfernt: 'Handicap',
+  handicap_reduziert: 'Handicap',
+  macht_hinzugefuegt: 'Macht',
+  macht_entfernt: 'Macht',
+}
+
+const COST_ENTRY_TYPEN: Record<string, string> = {
+  attribut: 'Attribut',
+  fertigkeit: 'Fertigkeit',
+  talent: 'Talent',
+  handicap: 'Handicap',
+  macht: 'Macht',
+}
+
+function formatKosten(kosten: number | string | undefined, einheit: string | undefined): string {
+  if (kosten === undefined || kosten === null || kosten === '') return ''
+  return `${kosten} ${einheit ?? ''}`.trim()
+}
+
+interface SteigerungsZeile {
+  rang: string
+  typ: string
+  name: string
+  kosten: string
+}
+
+const steigerungen = computed<SteigerungsZeile[]>(() => {
+  const journal = daten.value.steigerungs_journal
+  if (!journal) return []
+
+  if (journal.entries?.length) {
+    return journal.entries
+      .filter((e) => e.type in STEIGERUNGS_TYPEN)
+      .map((e) => {
+        const details = e.details ?? {}
+        let name = details.name ?? ''
+        if (e.type === 'attribut_steigerung' || e.type === 'fertigkeit_steigerung') {
+          name = `${name}: W${details.von ?? ''} → W${details.nach ?? ''}`
+        } else if (e.type.includes('entfernt')) {
+          name = `${name} (entfernt)`
+        } else if (e.type === 'handicap_reduziert') {
+          name = `${name} (reduziert)`
+        }
+        return {
+          rang: e.rang ?? '',
+          typ: STEIGERUNGS_TYPEN[e.type],
+          name,
+          kosten: formatKosten(details.kosten ?? details.punkte, details.kosten_typ),
+        }
+      })
+  }
+
+  const rang = abgeleiteteWerteRang.value
+  return (journal.cost_entries ?? []).map((e) => {
+    let name = e.name ?? ''
+    if (e.wert && (e.typ === 'attribut' || e.typ === 'fertigkeit')) {
+      name = `${name}: W${e.wert}`
+    }
+    return {
+      rang,
+      typ: COST_ENTRY_TYPEN[e.typ ?? ''] ?? e.typ ?? '',
+      name,
+      kosten: formatKosten(e.kosten, e.zahlungsquelle),
+    }
+  })
+})
+
+const abgeleiteteWerteRang = computed(() => store.abgeleiteteWerte?.rang ?? '')
 </script>

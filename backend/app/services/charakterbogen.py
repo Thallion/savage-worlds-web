@@ -13,7 +13,6 @@ Schwarz-Weiß ohne Flächenfarben.
 Abweichungen vom Original:
 - Wunden, Erschöpfung und Entschlossenheit fehlen (Spielzustand, den die
   Web-App nicht verwaltet).
-- Die Steigerungen-Sektion fehlt (kein Steigerungs-Journal in der Web-App).
 - Waffen werden alle gekauften gelistet ("angelegt" gibt es hier nur für
   Rüstungen und Schilde).
 """
@@ -23,6 +22,7 @@ import functools
 import html
 from pathlib import Path
 
+from app.services.aufstiege import charakter_rang
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 
 ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
@@ -583,6 +583,85 @@ def _schilde_sektion(daten: dict, setting: dict) -> str | None:
     return "<h2>Schilde</h2>\n" + _tabelle(["Name", "Parade", "Deckung", "Mindeststärke"], rows)
 
 
+_STEIGERUNGS_TYPEN = {
+    "attribut_steigerung": "Attribut",
+    "fertigkeit_steigerung": "Fertigkeit",
+    "talent_hinzugefuegt": "Talent",
+    "talent_entfernt": "Talent",
+    "handicap_hinzugefuegt": "Handicap",
+    "handicap_entfernt": "Handicap",
+    "handicap_reduziert": "Handicap",
+    "macht_hinzugefuegt": "Macht",
+    "macht_entfernt": "Macht",
+}
+
+_COST_ENTRY_TYPEN = {
+    "attribut": "Attribut",
+    "fertigkeit": "Fertigkeit",
+    "talent": "Talent",
+    "handicap": "Handicap",
+    "macht": "Macht",
+}
+
+
+def _kosten_text(kosten, einheit: str) -> str:
+    if kosten in ("", None):
+        return ""
+    if isinstance(kosten, (int, float)):
+        kosten = f"{kosten:g}"
+    return f"{kosten} {einheit}".strip()
+
+
+def _steigerungen_sektion(daten: dict) -> str | None:
+    """Steigerungs-Journal (Original: _erzeuge_steigerungen_sektion in
+    utils/html_utils.py). Bevorzugt die Historie-Einträge (entries, von der
+    Web-App nach Abschluss der Erschaffung geschrieben); Kivy-Importe und
+    Archetypen ohne Historie bringen stattdessen das Erschaffungs-Journal
+    cost_entries mit — dort gilt der aktuelle Charakterrang für alle Zeilen."""
+    journal = daten.get("steigerungs_journal")
+    if not journal or not isinstance(journal, dict):
+        return None
+
+    rows = ""
+    if journal.get("entries"):
+        for entry in journal["entries"]:
+            entry_type = entry.get("type")
+            if entry_type not in _STEIGERUNGS_TYPEN:
+                continue
+            details = entry.get("details") or {}
+            name = details.get("name", "")
+            if entry_type in ("attribut_steigerung", "fertigkeit_steigerung"):
+                name = f"{name}: W{details.get('von', '')} → W{details.get('nach', '')}"
+            elif "entfernt" in entry_type:
+                name = f"{name} (entfernt)"
+            elif entry_type == "handicap_reduziert":
+                name = f"{name} (reduziert)"
+            kosten = _kosten_text(
+                details.get("kosten", details.get("punkte", "")), details.get("kosten_typ", "")
+            )
+            rows += (
+                f"<tr><td>{_esc(entry.get('rang', ''))}</td><td>{_esc(_STEIGERUNGS_TYPEN[entry_type])}</td>"
+                f"<td>{_esc(name)}</td><td>{_esc(kosten)}</td></tr>\n"
+            )
+    elif journal.get("cost_entries"):
+        char_rang = charakter_rang(daten)
+        for eintrag in journal["cost_entries"]:
+            typ = _COST_ENTRY_TYPEN.get(eintrag.get("typ", ""), eintrag.get("typ", ""))
+            name = eintrag.get("name", "")
+            if eintrag.get("wert") and eintrag.get("typ") in ("attribut", "fertigkeit"):
+                name = f"{name}: W{eintrag['wert']}"
+            kosten = _kosten_text(eintrag.get("kosten", ""), eintrag.get("zahlungsquelle", ""))
+            rows += (
+                f"<tr><td>{_esc(char_rang)}</td><td>{_esc(typ)}</td>"
+                f"<td>{_esc(name)}</td><td>{_esc(kosten)}</td></tr>\n"
+            )
+
+    if not rows:
+        return None
+
+    return "<h2>Steigerungen</h2>\n" + _tabelle(["Rang", "Typ", "Name", "Kosten"], rows)
+
+
 def generiere_charakterbogen(
     daten: dict, setting: dict, werte: dict, printer_friendly: bool = False
 ) -> str:
@@ -600,6 +679,7 @@ def generiere_charakterbogen(
         _waffen_sektion(daten, setting),
         _ruestungen_sektion(daten, setting),
         _schilde_sektion(daten, setting),
+        _steigerungen_sektion(daten),
     ):
         if optional:
             sections.append(optional)

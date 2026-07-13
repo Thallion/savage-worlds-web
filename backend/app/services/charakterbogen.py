@@ -18,48 +18,35 @@ Abweichungen vom Original:
   Rüstungen und Schilde).
 """
 
+import base64
+import functools
 import html
+from pathlib import Path
 
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 
 ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
 
-def _genre_icons(fg: str, bg: str) -> tuple[str, ...]:
-    """Vier Genre-Icons, angelehnt an die Symbole im offiziellen Savage-Worlds-Logo
-    (Schwert, Totenkopf, Ray-Gun, Zeppelin) – als flächige SVG-Silhouetten mit
-    "ausgestanzten" Details in der Untergrundfarbe, damit sie auch klein (~17px)
-    gut lesbar bleiben. Der Bogen bleibt so ein eigenständiges HTML-Dokument
-    ohne externe Bilder.
-    """
-    return (
-        # Schwert (Fantasy)
-        f'<svg viewBox="0 0 24 24"><g fill="{fg}">'
-        '<path d="M11.25 2h1.5v10.8h-1.5z"/>'
-        '<path d="M7.6 12h8.8v1.6H7.6z"/>'
-        '<path d="M10.6 13.8h2.8v6.3a1.4 1.4 0 0 1-2.8 0z"/>'
-        '<rect x="9.2" y="20.6" width="5.6" height="1.3" rx="0.4"/>'
-        "</g></svg>",
-        # Totenkopf (Horror)
-        f'<svg viewBox="0 0 24 24"><path fill="{fg}" d="M12 2.2C7.6 2.2 4.6 5.3 4.6 9.1c0 2.4 1.2 4.2 2.5 5.4v2.4h9.8v-2.4c1.3-1.2 2.5-3 2.5-5.4C19.4 5.3 16.4 2.2 12 2.2z"/>'
-        f'<g fill="{bg}">'
-        '<ellipse cx="9" cy="9.4" rx="1.5" ry="1.9"/>'
-        '<ellipse cx="15" cy="9.4" rx="1.5" ry="1.9"/>'
-        '<path d="M12 10.2l-1.2 2.4h2.4z"/>'
-        '<rect x="8.5" y="15.6" width="1.2" height="1.6"/>'
-        '<rect x="10.6" y="15.6" width="1.2" height="2.1"/>'
-        '<rect x="12.7" y="15.6" width="1.2" height="2.1"/>'
-        '<rect x="14.8" y="15.6" width="1.2" height="1.6"/>'
-        "</g></svg>",
-        # Ray-Gun (Science-Fiction)
-        f'<svg viewBox="0 0 24 24"><path fill="{fg}" d="M2.5 14.6h9l2.1-3.1h6.9v3.3h-3.2l-3.1 4.2h-4V23H7.3v-4H2.5z"/>'
-        f'<circle cx="18.3" cy="13.1" r="1.05" fill="{bg}"/></svg>',
-        # Zeppelin (Pulp)
-        f'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="9" rx="9.4" ry="3.3" fill="{fg}"/>'
-        f'<path fill="{fg}" d="M9.2 12h5.6l1.2 2.6H8z"/>'
-        f'<path stroke="{fg}" stroke-width="1" stroke-linecap="round" d="M2.4 8.4L0.8 7M21.6 8.4L23.2 7"/>'
-        f'<ellipse cx="7" cy="8.4" rx="1" ry="0.55" fill="{bg}"/>'
-        f'<ellipse cx="12" cy="8.4" rx="1" ry="0.55" fill="{bg}"/>'
-        f'<ellipse cx="17" cy="8.4" rx="1" ry="0.55" fill="{bg}"/></svg>',
+# Vier Genre-Icons (Schwert, Totenkopf, Ray-Gun, Zeppelin), direkt aus den
+# Roundels des offiziellen Savage-Worlds-Logos ausgeschnitten und als flache
+# Silhouette in Tinten- bzw. Sektionsband-Farbe eingefärbt (statt Nachbau als
+# SVG). Zwei Farbvarianten liegen als PNG bereit ("brown" fürs Pergament-
+# Layout, "black" für printer_friendly), damit der Bogen ein eigenständiges
+# HTML-Dokument ohne Bild-Referenzen nach außen bleibt.
+_ICON_NAMES = ("sword", "skull", "raygun", "airship")
+_ICON_DIR = Path(__file__).parent / "assets" / "charakterbogen_icons"
+
+
+@functools.lru_cache(maxsize=None)
+def _icon_data_uri(name: str, variante: str) -> str:
+    daten = (_ICON_DIR / f"{name}_{variante}.png").read_bytes()
+    return "data:image/png;base64," + base64.b64encode(daten).decode("ascii")
+
+
+def _genre_icons(printer_friendly: bool) -> tuple[str, ...]:
+    variante = "black" if printer_friendly else "brown"
+    return tuple(
+        f'<img src="{_icon_data_uri(name, variante)}" alt="">' for name in _ICON_NAMES
     )
 
 
@@ -163,9 +150,10 @@ body {{
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
 }}
-.kopf .icon-badge svg {{
-    width: 17px;
-    height: 17px;
+.kopf .icon-badge img {{
+    width: 20px;
+    height: 20px;
+    display: block;
 }}
 h1 {{
     font-size: 20pt;
@@ -308,13 +296,13 @@ td.beschreibung {{
 </html>"""
 
 
-def _kopf_sektion(daten: dict, farben: dict[str, str]) -> str:
+def _kopf_sektion(daten: dict, printer_friendly: bool) -> str:
     name = daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter"
     untertitel = "Charakterbogen"
     setting_name = daten.get("active_setting_name")
     if setting_name:
         untertitel += f" · {setting_name}"
-    icons = _genre_icons(farben["band_rand"], farben["hervor"])
+    icons = _genre_icons(printer_friendly)
     icon_row = "".join(f'<span class="icon-badge">{svg}</span>' for svg in icons)
     return f"""<header class="kopf">
 <div class="icon-row">{icon_row}</div>
@@ -617,7 +605,6 @@ def generiere_charakterbogen(
             sections.append(optional)
 
     name = daten.get("profil_daten", {}).get("Name") or "Charakterbogen"
-    farben = _farbschema(printer_friendly)
     return _erzeuge_html_dokument(
-        _esc(name), _kopf_sektion(daten, farben), "\n".join(sections), printer_friendly
+        _esc(name), _kopf_sektion(daten, printer_friendly), "\n".join(sections), printer_friendly
     )

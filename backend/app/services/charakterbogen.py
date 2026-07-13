@@ -24,6 +24,44 @@ from app.services.statblock import ATTRIBUT_REIHENFOLGE
 
 ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
 
+def _genre_icons(fg: str, bg: str) -> tuple[str, ...]:
+    """Vier Genre-Icons, angelehnt an die Symbole im offiziellen Savage-Worlds-Logo
+    (Schwert, Totenkopf, Ray-Gun, Zeppelin) – als flächige SVG-Silhouetten mit
+    "ausgestanzten" Details in der Untergrundfarbe, damit sie auch klein (~17px)
+    gut lesbar bleiben. Der Bogen bleibt so ein eigenständiges HTML-Dokument
+    ohne externe Bilder.
+    """
+    return (
+        # Schwert (Fantasy)
+        f'<svg viewBox="0 0 24 24"><g fill="{fg}">'
+        '<path d="M11.25 2h1.5v10.8h-1.5z"/>'
+        '<path d="M7.6 12h8.8v1.6H7.6z"/>'
+        '<path d="M10.6 13.8h2.8v6.3a1.4 1.4 0 0 1-2.8 0z"/>'
+        '<rect x="9.2" y="20.6" width="5.6" height="1.3" rx="0.4"/>'
+        "</g></svg>",
+        # Totenkopf (Horror)
+        f'<svg viewBox="0 0 24 24"><path fill="{fg}" d="M12 2.2C7.6 2.2 4.6 5.3 4.6 9.1c0 2.4 1.2 4.2 2.5 5.4v2.4h9.8v-2.4c1.3-1.2 2.5-3 2.5-5.4C19.4 5.3 16.4 2.2 12 2.2z"/>'
+        f'<g fill="{bg}">'
+        '<ellipse cx="9" cy="9.4" rx="1.5" ry="1.9"/>'
+        '<ellipse cx="15" cy="9.4" rx="1.5" ry="1.9"/>'
+        '<path d="M12 10.2l-1.2 2.4h2.4z"/>'
+        '<rect x="8.5" y="15.6" width="1.2" height="1.6"/>'
+        '<rect x="10.6" y="15.6" width="1.2" height="2.1"/>'
+        '<rect x="12.7" y="15.6" width="1.2" height="2.1"/>'
+        '<rect x="14.8" y="15.6" width="1.2" height="1.6"/>'
+        "</g></svg>",
+        # Ray-Gun (Science-Fiction)
+        f'<svg viewBox="0 0 24 24"><path fill="{fg}" d="M2.5 14.6h9l2.1-3.1h6.9v3.3h-3.2l-3.1 4.2h-4V23H7.3v-4H2.5z"/>'
+        f'<circle cx="18.3" cy="13.1" r="1.05" fill="{bg}"/></svg>',
+        # Zeppelin (Pulp)
+        f'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="9" rx="9.4" ry="3.3" fill="{fg}"/>'
+        f'<path fill="{fg}" d="M9.2 12h5.6l1.2 2.6H8z"/>'
+        f'<path stroke="{fg}" stroke-width="1" stroke-linecap="round" d="M2.4 8.4L0.8 7M21.6 8.4L23.2 7"/>'
+        f'<ellipse cx="7" cy="8.4" rx="1" ry="0.55" fill="{bg}"/>'
+        f'<ellipse cx="12" cy="8.4" rx="1" ry="0.55" fill="{bg}"/>'
+        f'<ellipse cx="17" cy="8.4" rx="1" ry="0.55" fill="{bg}"/></svg>',
+    )
+
 
 def _esc(text) -> str:
     return html.escape(str(text)) if text is not None else ""
@@ -44,27 +82,37 @@ def _tabelle(kopf: list[str] | None, zeilen: str) -> str:
     return f"<table>\n{kopf_html}{zeilen}</table>"
 
 
+def _farbschema(printer_friendly: bool) -> dict[str, str]:
+    if printer_friendly:
+        # Schwarz-Weiß: keine Flächenfarben, nur Linien.
+        return {
+            "seite": "#ffffff", "papier": "#ffffff", "zeile": "#ffffff",
+            "hervor": "#ffffff", "band_bg": "#ffffff",
+            "tinte": "#111111", "band_fg": "#111111", "band_rand": "#111111",
+            "gedeckt": "#444444", "linie": "#999999", "schatten": "none",
+        }
+    return {
+        "seite": "#e9e2cf",     # Tisch hinter dem Bogen
+        "papier": "#f6f1e3",    # Pergament
+        "zeile": "#faf6ea",     # Tabellenzeilen
+        "hervor": "#e8dfc8",    # Tabellenköpfe, Gesamt-Zellen
+        "tinte": "#2f2a22",
+        "gedeckt": "#6a5f4b",   # Beschriftungen, Beschreibungen
+        "band_bg": "#6b5138", "band_rand": "#6b5138",  # Sektionsbänder
+        "band_fg": "#f6f1e3",
+        "linie": "#c4b596",
+        "schatten": "0 2px 14px rgba(64, 48, 24, 0.25)",
+    }
+
+
 def _erzeuge_html_dokument(
     title: str, kopf_html: str, body_content: str, printer_friendly: bool
 ) -> str:
-    if printer_friendly:
-        # Schwarz-Weiß: keine Flächenfarben, nur Linien.
-        seite = papier = zeile = hervor = band_bg = "#ffffff"
-        tinte = band_fg = band_rand = "#111111"
-        gedeckt = "#444444"
-        linie = "#999999"
-        schatten = "none"
-    else:
-        seite = "#e9e2cf"       # Tisch hinter dem Bogen
-        papier = "#f6f1e3"      # Pergament
-        zeile = "#faf6ea"       # Tabellenzeilen
-        hervor = "#e8dfc8"      # Tabellenköpfe, Gesamt-Zellen
-        tinte = "#2f2a22"
-        gedeckt = "#6a5f4b"     # Beschriftungen, Beschreibungen
-        band_bg = band_rand = "#6b5138"  # Sektionsbänder
-        band_fg = "#f6f1e3"
-        linie = "#c4b596"
-        schatten = "0 2px 14px rgba(64, 48, 24, 0.25)"
+    farben = _farbschema(printer_friendly)
+    seite = farben["seite"]; papier = farben["papier"]; zeile = farben["zeile"]
+    hervor = farben["hervor"]; band_bg = farben["band_bg"]
+    tinte = farben["tinte"]; band_fg = farben["band_fg"]; band_rand = farben["band_rand"]
+    gedeckt = farben["gedeckt"]; linie = farben["linie"]; schatten = farben["schatten"]
 
     return f"""<!DOCTYPE html>
 <html lang="de">
@@ -96,11 +144,28 @@ body {{
     padding-bottom: 14px;
     margin-bottom: 4px;
 }}
-.kopf .ornament {{
+.kopf .icon-row {{
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}}
+.kopf .icon-badge {{
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid {band_rand};
+    background-color: {hervor};
     color: {band_rand};
-    font-size: 11pt;
-    letter-spacing: 0.6em;
-    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}}
+.kopf .icon-badge svg {{
+    width: 17px;
+    height: 17px;
 }}
 h1 {{
     font-size: 20pt;
@@ -243,14 +308,16 @@ td.beschreibung {{
 </html>"""
 
 
-def _kopf_sektion(daten: dict) -> str:
+def _kopf_sektion(daten: dict, farben: dict[str, str]) -> str:
     name = daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter"
     untertitel = "Charakterbogen"
     setting_name = daten.get("active_setting_name")
     if setting_name:
         untertitel += f" · {setting_name}"
+    icons = _genre_icons(farben["band_rand"], farben["hervor"])
+    icon_row = "".join(f'<span class="icon-badge">{svg}</span>' for svg in icons)
     return f"""<header class="kopf">
-<div class="ornament">❦ ❦ ❦</div>
+<div class="icon-row">{icon_row}</div>
 <h1>{_esc(name)}</h1>
 <div class="untertitel">{_esc(untertitel)}</div>
 </header>"""
@@ -550,6 +617,7 @@ def generiere_charakterbogen(
             sections.append(optional)
 
     name = daten.get("profil_daten", {}).get("Name") or "Charakterbogen"
+    farben = _farbschema(printer_friendly)
     return _erzeuge_html_dokument(
-        _esc(name), _kopf_sektion(daten), "\n".join(sections), printer_friendly
+        _esc(name), _kopf_sektion(daten, farben), "\n".join(sections), printer_friendly
     )

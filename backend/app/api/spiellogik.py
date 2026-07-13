@@ -53,6 +53,11 @@ from app.services.setting_elemente import (
     wende_setting_overrides_an,
 )
 from app.services.statblock import generiere_statblock
+from app.services.steigerungs_journal import (
+    journal_eintrag,
+    journal_eintrag_entfernen,
+    wuerfel_anzeige,
+)
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 from app.services.volk_wahlen import wende_volk_spezialwahl_an
 
@@ -113,6 +118,17 @@ def attribut_steigern(req: SpiellogikRequest):
 
     if abgeschlossen:
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_ATTRIBUT
+        journal_eintrag(
+            daten,
+            "attribut_steigerung",
+            {
+                "name": attr_name,
+                "von": wuerfel_anzeige(wert, modifier),
+                "nach": wuerfel_anzeige(attr.get("wert", 4), attr.get("modifier", 0)),
+                "kosten": AUFSTIEG_KOSTEN_ATTRIBUT,
+                "kosten_typ": "Aufstieg",
+            },
+        )
     else:
         daten["verbleibende_attributsteigerungen"] = daten.get("verbleibende_attributsteigerungen", 0) - 1
     daten["attribute"][attr_name] = attr
@@ -156,6 +172,7 @@ def attribut_senken(req: SpiellogikRequest):
 
     if abgeschlossen:
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + AUFSTIEG_KOSTEN_ATTRIBUT
+        journal_eintrag_entfernen(daten, "attribut_steigerung", attr_name)
     else:
         daten["verbleibende_attributsteigerungen"] = verbleibend + 1
     daten["attribute"][attr_name] = attr
@@ -227,6 +244,17 @@ def fertigkeit_steigern(req: SpiellogikRequest):
     daten["fertigkeiten"][fert_name] = fert
     if abgeschlossen:
         daten["verbleibende_aufstiege"] = verbleibend - kosten
+        journal_eintrag(
+            daten,
+            "fertigkeit_steigerung",
+            {
+                "name": fert_name,
+                "von": wuerfel_anzeige(wert, modifier),
+                "nach": wuerfel_anzeige(wuerfel.get("value", 4), wuerfel.get("modifier", 0)),
+                "kosten": kosten,
+                "kosten_typ": "Aufstieg",
+            },
+        )
     else:
         daten["verbleibende_fertigkeitssteigerungen"] = verbleibend - kosten
     return SpiellogikResponse(success=True, charakter_daten=daten)
@@ -275,6 +303,7 @@ def fertigkeit_senken(req: SpiellogikRequest):
     daten["fertigkeiten"][fert_name] = fert
     if abgeschlossen:
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + refund
+        journal_eintrag_entfernen(daten, "fertigkeit_steigerung", fert_name)
     else:
         daten["verbleibende_fertigkeitssteigerungen"] = daten.get("verbleibende_fertigkeitssteigerungen", 0) + refund
     return SpiellogikResponse(success=True, charakter_daten=daten)
@@ -367,6 +396,8 @@ def fertigkeit_entfernen(req: SpiellogikRequest):
     refund = _fertigkeit_investierte_punkte(fert.get("wuerfel", {}), attr_wert, basis)
 
     del daten["fertigkeiten"][name]
+    if abgeschlossen:
+        journal_eintrag_entfernen(daten, "fertigkeit_steigerung", name, alle=True)
     if refund:
         if abgeschlossen:
             daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + refund
@@ -414,6 +445,9 @@ def handicap_waehlen(req: SpiellogikRequest):
     daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + punkte
     # Spezialeffekte wie "Alt" (+5 Fertigkeitspunkte) oder "Jung" (weniger Steigerungen)
     wende_handicap_punkte_effekte_an(daten, handicap_name, stufe)
+    journal_eintrag(
+        daten, "handicap_hinzugefuegt", {"name": handicap_name, "stufe": stufe, "punkte": punkte}
+    )
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -468,6 +502,11 @@ def handicap_entfernen(req: SpiellogikRequest):
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_HANDICAP
         selected.remove(handicap_name)
         daten["selected_handicaps"] = selected
+        journal_eintrag(
+            daten,
+            "handicap_entfernt",
+            {"name": handicap_name, "kosten": AUFSTIEG_KOSTEN_HANDICAP, "kosten_typ": "Aufstieg"},
+        )
         return SpiellogikResponse(success=True, charakter_daten=daten)
 
     if daten.get("verbleibende_handicap_punkte", 0) < punkte:
@@ -576,6 +615,11 @@ def handicap_reduzieren(req: SpiellogikRequest):
     selected.remove(handicap_name)
     selected.append(leicht_key)
     daten["selected_handicaps"] = selected
+    journal_eintrag(
+        daten,
+        "handicap_reduziert",
+        {"name": handicap_name, "kosten": AUFSTIEG_KOSTEN_HANDICAP, "kosten_typ": "Aufstieg"},
+    )
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -727,6 +771,11 @@ def talent_waehlen(req: SpiellogikRequest):
     zahlungen[talent_name] = bisherige + [zahlungsquelle]
     # Auto-Handicaps/-Talente/-Mächte und Attribut-Effekte (z. B. Berserker)
     wende_talent_effekte_an(daten, talent_name, talent_data)
+    journal_details = {"name": talent_name}
+    if zahlungsquelle == "aufstieg":
+        journal_details["kosten"] = AUFSTIEG_KOSTEN_TALENT
+        journal_details["kosten_typ"] = "Aufstieg"
+    journal_eintrag(daten, "talent_hinzugefuegt", journal_details)
     return SpiellogikResponse(success=True, message=erfolgsmeldung, charakter_daten=daten)
 
 
@@ -797,6 +846,8 @@ def talent_entfernen(req: SpiellogikRequest):
     else:
         daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
     entferne_talent_effekte(daten, talent_name)
+    if daten.get("char_gen_completed"):
+        journal_eintrag_entfernen(daten, "talent_hinzugefuegt", talent_name)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -843,6 +894,7 @@ def macht_waehlen(req: SpiellogikRequest):
 
     selected.append(macht_name)
     daten["selected_maechte"] = selected
+    journal_eintrag(daten, "macht_hinzugefuegt", {"name": macht_name})
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -864,6 +916,8 @@ def macht_entfernen(req: SpiellogikRequest):
 
     selected.remove(macht_name)
     daten["selected_maechte"] = selected
+    if daten.get("char_gen_completed"):
+        journal_eintrag_entfernen(daten, "macht_hinzugefuegt", macht_name)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 

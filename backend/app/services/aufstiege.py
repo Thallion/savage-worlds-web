@@ -29,15 +29,19 @@ def ausgegebene_aufstiege(daten: dict) -> float:
     return max(0, daten.get("aufstiege_gesamt", 0) - daten.get("verbleibende_aufstiege", 0))
 
 
-def charakter_rang(daten: dict) -> str:
-    """Voller Rang-Name; während der Erschaffung immer Anfänger."""
-    if not daten.get("char_gen_completed"):
-        return "Anfänger"
-    ausgegeben = ausgegebene_aufstiege(daten)
+def rang_fuer_aufstiege(ausgegeben: float) -> str:
+    """Rang-Name zu einer Anzahl ausgegebener Aufstiege."""
     for min_val, max_val, name in RANG_MAPPING:
         if min_val <= ausgegeben < max_val:
             return name
     return "Anfänger"
+
+
+def charakter_rang(daten: dict) -> str:
+    """Voller Rang-Name; während der Erschaffung immer Anfänger."""
+    if not daten.get("char_gen_completed"):
+        return "Anfänger"
+    return rang_fuer_aufstiege(ausgegebene_aufstiege(daten))
 
 
 def rang_erlaubt(element_rang: str, daten: dict) -> bool:

@@ -22,7 +22,7 @@ import functools
 import html
 from pathlib import Path
 
-from app.services.aufstiege import charakter_rang
+from app.services.aufstiege import rang_fuer_aufstiege
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 
 ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
@@ -616,8 +616,11 @@ def _steigerungen_sektion(daten: dict) -> str | None:
     """Steigerungs-Journal (Original: _erzeuge_steigerungen_sektion in
     utils/html_utils.py). Bevorzugt die Historie-Einträge (entries, von der
     Web-App nach Abschluss der Erschaffung geschrieben); Kivy-Importe und
-    Archetypen ohne Historie bringen stattdessen das Erschaffungs-Journal
-    cost_entries mit — dort gilt der aktuelle Charakterrang für alle Zeilen."""
+    Archetypen ohne Historie bringen stattdessen das Kauf-Journal cost_entries
+    mit. Dessen Zeilen tragen keinen Rang — Erschaffungs-Käufe werden als
+    "Start" ausgewiesen, mit Aufstiegen bezahlte über die laufende Summe der
+    ausgegebenen Aufstiege dem damaligen Rang zugeordnet (die Liste ist
+    chronologisch)."""
     journal = daten.get("steigerungs_journal")
     if not journal or not isinstance(journal, dict):
         return None
@@ -644,15 +647,23 @@ def _steigerungen_sektion(daten: dict) -> str | None:
                 f"<td>{_esc(name)}</td><td>{_esc(kosten)}</td></tr>\n"
             )
     elif journal.get("cost_entries"):
-        char_rang = charakter_rang(daten)
+        ausgegebene_aufstiege = 0.0
         for eintrag in journal["cost_entries"]:
+            quelle = str(eintrag.get("zahlungsquelle", ""))
+            if "aufstieg" in quelle.lower():
+                kosten_wert = eintrag.get("kosten")
+                if isinstance(kosten_wert, (int, float)):
+                    ausgegebene_aufstiege += kosten_wert
+                rang = rang_fuer_aufstiege(ausgegebene_aufstiege)
+            else:
+                rang = "Start"
             typ = _COST_ENTRY_TYPEN.get(eintrag.get("typ", ""), eintrag.get("typ", ""))
             name = eintrag.get("name", "")
             if eintrag.get("wert") and eintrag.get("typ") in ("attribut", "fertigkeit"):
                 name = f"{name}: W{eintrag['wert']}"
-            kosten = _kosten_text(eintrag.get("kosten", ""), eintrag.get("zahlungsquelle", ""))
+            kosten = _kosten_text(eintrag.get("kosten", ""), quelle)
             rows += (
-                f"<tr><td>{_esc(char_rang)}</td><td>{_esc(typ)}</td>"
+                f"<tr><td>{_esc(rang)}</td><td>{_esc(typ)}</td>"
                 f"<td>{_esc(name)}</td><td>{_esc(kosten)}</td></tr>\n"
             )
 

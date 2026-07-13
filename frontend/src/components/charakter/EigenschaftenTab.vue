@@ -61,8 +61,33 @@
             clearable
             class="mb-2"
           />
+          <div class="d-flex align-center flex-wrap ga-2 mb-2">
+            <v-btn-toggle
+              v-model="sortierung"
+              density="compact"
+              variant="outlined"
+              divided
+              mandatory
+            >
+              <v-btn value="name" size="small" prepend-icon="mdi-sort-alphabetical-ascending">
+                Name
+              </v-btn>
+              <v-btn value="wert" size="small" prepend-icon="mdi-sort-numeric-descending">
+                Wert
+              </v-btn>
+            </v-btn-toggle>
+            <v-spacer />
+            <v-switch
+              v-model="nurAktivierte"
+              label="Nur aktivierte"
+              density="compact"
+              hide-details
+              color="primary"
+              class="flex-shrink-0"
+            />
+          </div>
           <v-card
-            v-for="(fert, name) in gefilterteFertigkeiten"
+            v-for="{ name, fert } in gefilterteFertigkeiten"
             :key="name"
             variant="outlined"
             class="mb-1 pa-2"
@@ -215,6 +240,8 @@ import { useCharakterStore } from '@/stores/charakter'
 
 const store = useCharakterStore()
 const sucheFertigkeit = ref('')
+const sortierung = ref<'name' | 'wert'>('name')
+const nurAktivierte = ref(false)
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 
@@ -319,13 +346,26 @@ async function trotzdemSteigern() {
 
 const gefilterteFertigkeiten = computed(() => {
   const all = daten.value.fertigkeiten || {}
-  if (!sucheFertigkeit.value) return all
-  const s = sucheFertigkeit.value.toLowerCase()
-  const result: Record<string, any> = {}
-  for (const [key, val] of Object.entries(all)) {
-    if (key.toLowerCase().includes(s)) result[key] = val
+  const s = sucheFertigkeit.value?.toLowerCase() ?? ''
+  const eintraege = Object.entries(all)
+    .filter(([name, fert]) => {
+      if (s && !name.toLowerCase().includes(s)) return false
+      if (nurAktivierte.value && !fert.ausgewaehlt) return false
+      return true
+    })
+    .map(([name, fert]) => ({ name, fert }))
+
+  if (sortierung.value === 'wert') {
+    // Höchster Würfel zuerst; bei Gleichstand alphabetisch
+    eintraege.sort((a, b) => {
+      const av = (a.fert.wuerfel?.value ?? 4) * 10 + (a.fert.wuerfel?.modifier ?? 0)
+      const bv = (b.fert.wuerfel?.value ?? 4) * 10 + (b.fert.wuerfel?.modifier ?? 0)
+      return bv - av || a.name.localeCompare(b.name, 'de')
+    })
+  } else {
+    eintraege.sort((a, b) => a.name.localeCompare(b.name, 'de'))
   }
-  return result
+  return eintraege
 })
 
 function formatWuerfel(wert: number, modifier: number): string {

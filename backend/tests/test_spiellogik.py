@@ -1801,6 +1801,48 @@ def test_charakterbogen_altformat_voelker(daten):
     assert "Zwerg" not in html
 
 
+# --- Charakterbogen als PDF (charakterbogen_pdf.py) ---
+
+def charakterbogen_pdf(daten: dict, printer_friendly: bool = False):
+    return client.post(
+        "/api/spiellogik/charakterbogen/pdf",
+        json={"charakter_daten": daten, "printer_friendly": printer_friendly},
+    )
+
+
+def test_charakterbogen_pdf_basis(daten):
+    daten["profil_daten"]["Name"] = "Grimnir Ölträne"
+    d = aktion("volk/waehlen", daten, "Zwerg")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Alt")["charakter_daten"]
+    resp = charakterbogen_pdf(d)
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert resp.content.startswith(b"%PDF")
+    # Umlaut-Name landet RFC-5987-kodiert im Dateinamen
+    disposition = resp.headers["content-disposition"]
+    assert "filename*=UTF-8''" in disposition
+    assert "%C3%96" in disposition  # Ö
+
+
+def test_charakterbogen_pdf_druckerfreundlich(daten):
+    resp = charakterbogen_pdf(daten, printer_friendly=True)
+    assert resp.status_code == 200
+    assert resp.content.startswith(b"%PDF")
+
+
+def test_charakterbogen_pdf_ausruestung(daten):
+    d = aktion("ausruestung/kaufen", daten, "Jacke (dünn)")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Jacke (dünn)")["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Axt, Handbeil")["charakter_daten"]
+    d = aktion("ausruestung/kaufen", d, "Kleiner Schild")["charakter_daten"]
+    d = aktion("ausruestung/anlegen", d, "Kleiner Schild")["charakter_daten"]
+    resp = charakterbogen_pdf(d)
+    assert resp.status_code == 200
+    assert resp.content.startswith(b"%PDF")
+    # Mit Waffen, Rüstung und Schild wächst der Bogen über die leere Basis hinaus
+    assert len(resp.content) > len(charakterbogen_pdf(daten).content)
+
+
 # --- Eigene Abstammungen aus Volkseigenarten (volk_erstellung.py) ---
 
 VOLK_EIGENARTEN = [

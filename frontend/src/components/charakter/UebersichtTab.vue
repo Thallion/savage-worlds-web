@@ -213,6 +213,15 @@
             >
               Als .html speichern
             </v-btn>
+            <v-btn
+              size="small"
+              variant="tonal"
+              prepend-icon="mdi-file-pdf-box"
+              :loading="pdfLaedt"
+              @click="downloadCharakterbogenPdf"
+            >
+              Als .pdf speichern
+            </v-btn>
             <v-checkbox
               v-model="druckerfreundlich"
               label="Druckerfreundliche Version (ohne Farben)"
@@ -322,16 +331,39 @@ async function downloadCharakterbogen() {
   try {
     const html = await ladeBogenHtml()
     const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${daten.value.profil_daten?.Name || 'charakter'}.html`
-    a.click()
-    URL.revokeObjectURL(url)
+    speichereBlob(blob, `${daten.value.profil_daten?.Name || 'charakter'}.html`)
   } catch (e) {
     bogenMeldung.value =
       e instanceof Error ? `Fehler: ${e.message}` : 'Charakterbogen konnte nicht erzeugt werden.'
   }
+}
+
+const pdfLaedt = ref(false)
+
+async function downloadCharakterbogenPdf() {
+  bogenMeldung.value = ''
+  pdfLaedt.value = true
+  try {
+    const blob = await api.postBlob('/spiellogik/charakterbogen/pdf', {
+      charakter_daten: daten.value,
+      printer_friendly: druckerfreundlich.value,
+    })
+    speichereBlob(blob, `${daten.value.profil_daten?.Name || 'charakter'}.pdf`)
+  } catch (e) {
+    bogenMeldung.value =
+      e instanceof Error ? `Fehler: ${e.message}` : 'Charakterbogen konnte nicht erzeugt werden.'
+  } finally {
+    pdfLaedt.value = false
+  }
+}
+
+function speichereBlob(blob: Blob, dateiname: string) {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = dateiname
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 function downloadStatblock() {

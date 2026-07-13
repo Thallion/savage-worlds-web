@@ -142,7 +142,9 @@ def test_bogen_zeigt_journal_entries(daten):
 
 
 def test_bogen_faellt_auf_cost_entries_zurueck(daten):
-    # Kivy-Import/Archetyp: nur das Erschaffungs-Kauf-Journal ist vorhanden
+    # Kivy-Import/Archetyp: nur das Kauf-Journal ist vorhanden.
+    # Erschaffungs-Käufe zählen als "Start", mit Aufstiegen bezahlte bekommen
+    # den Rang aus der laufenden Summe der ausgegebenen Aufstiege.
     daten["steigerungs_journal"] = {
         "cost_entries": [
             {"typ": "attribut", "name": "Geschicklichkeit", "wert": 6,
@@ -153,6 +155,32 @@ def test_bogen_faellt_auf_cost_entries_zurueck(daten):
     }
     html = bogen_html(daten)
     assert "<h2>Steigerungen</h2>" in html
+    assert "<td>Start</td>" in html
     assert "Geschicklichkeit: W6" in html
     assert "1 Attributspunkte" in html
     assert "2 Handicap-Punkte" in html
+
+
+def test_bogen_cost_entries_rang_zum_zeitpunkt_der_steigerung(daten):
+    daten["char_gen_completed"] = True
+    daten["aufstiege_gesamt"] = 5
+    daten["verbleibende_aufstiege"] = 0  # Charakter ist aktuell Fortgeschritten
+    daten["steigerungs_journal"] = {
+        "cost_entries": [
+            {"typ": "fertigkeit", "name": "Kämpfen", "wert": 6,
+             "zahlungsquelle": "Fertigkeitspunkte", "kosten": 1},
+            {"typ": "attribut", "name": "Stärke", "wert": 6,
+             "zahlungsquelle": "Aufstiege", "kosten": 1},  # 1. Aufstieg -> Anfänger
+            {"typ": "attribut", "name": "Stärke", "wert": 8,
+             "zahlungsquelle": "Aufstiege", "kosten": 1},  # 2. Aufstieg -> Anfänger
+            {"typ": "fertigkeit", "name": "Kämpfen", "wert": 8,
+             "zahlungsquelle": "Aufstiege", "kosten": 1},  # 3. Aufstieg -> Anfänger
+            {"typ": "talent", "name": "Kampfreflexe",
+             "zahlungsquelle": "Aufstiege", "kosten": 1},  # 4. Aufstieg -> Fortgeschritten
+        ]
+    }
+    html = bogen_html(daten)
+    import re
+
+    raenge = re.findall(r"<tr><td>([^<]*)</td>", html.split("<h2>Steigerungen</h2>")[1])
+    assert raenge == ["Start", "Anfänger", "Anfänger", "Anfänger", "Fortgeschritten"]

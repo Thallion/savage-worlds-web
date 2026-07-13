@@ -448,7 +448,9 @@ function formatWuerfel(wert: number, modifier: number): string {
 
 // Steigerungs-Journal wie die Sektion "Steigerungen" im Original-Charakterbogen
 // (utils/html_utils.py der Kivy-App): Historie-Einträge bevorzugt, sonst das
-// Erschaffungs-Kauf-Journal aus Kivy-Importen/Archetypen mit dem aktuellen Rang.
+// Kauf-Journal aus Kivy-Importen/Archetypen. Dessen Zeilen tragen keinen Rang —
+// Erschaffungs-Käufe erscheinen als "Start", mit Aufstiegen bezahlte werden über
+// die laufende Summe der ausgegebenen Aufstiege dem damaligen Rang zugeordnet.
 const STEIGERUNGS_TYPEN: Record<string, string> = {
   attribut_steigerung: 'Attribut',
   fertigkeit_steigerung: 'Fertigkeit',
@@ -507,8 +509,13 @@ const steigerungen = computed<SteigerungsZeile[]>(() => {
       })
   }
 
-  const rang = abgeleiteteWerteRang.value
+  let ausgegebeneAufstiege = 0
   return (journal.cost_entries ?? []).map((e) => {
+    let rang = 'Start'
+    if ((e.zahlungsquelle ?? '').toLowerCase().includes('aufstieg')) {
+      if (typeof e.kosten === 'number') ausgegebeneAufstiege += e.kosten
+      rang = rangFuerAufstiege(ausgegebeneAufstiege)
+    }
     let name = e.name ?? ''
     if (e.wert && (e.typ === 'attribut' || e.typ === 'fertigkeit')) {
       name = `${name}: W${e.wert}`
@@ -522,5 +529,17 @@ const steigerungen = computed<SteigerungsZeile[]>(() => {
   })
 })
 
-const abgeleiteteWerteRang = computed(() => store.abgeleiteteWerte?.rang ?? '')
+// Rang-Grenzen wie backend/app/services/aufstiege.py (RANG_MAPPING)
+const RANG_GRENZEN: [number, string][] = [
+  [16, 'Legendär'],
+  [12, 'Heroisch'],
+  [8, 'Veteran'],
+  [4, 'Fortgeschritten'],
+  [0, 'Anfänger'],
+]
+
+function rangFuerAufstiege(ausgegeben: number): string {
+  const treffer = RANG_GRENZEN.find(([min]) => ausgegeben >= min)
+  return treffer ? treffer[1] : 'Anfänger'
+}
 </script>

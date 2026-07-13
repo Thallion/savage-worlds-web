@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from urllib.parse import quote
+
+from fastapi import APIRouter, HTTPException, Response
 
 from app.schemas.spiellogik import (
     CharakterbogenRequest,
@@ -47,6 +49,7 @@ from app.services.ausruestung import (
 )
 from app.services import cyberware, superkraefte
 from app.services.charakterbogen import generiere_charakterbogen
+from app.services.charakterbogen_pdf import generiere_charakterbogen_pdf
 from app.services.setting_elemente import (
     loesche_element,
     speichere_element,
@@ -1446,6 +1449,33 @@ def charakterbogen(req: CharakterbogenRequest):
     setting = wende_setting_overrides_an(setting, daten)
     werte = berechne_abgeleitete_werte(req)
     return {"html": generiere_charakterbogen(daten, setting, werte, req.printer_friendly)}
+
+
+@router.post("/charakterbogen/pdf")
+def charakterbogen_pdf(req: CharakterbogenRequest):
+    """Kompletter Charakterbogen als PDF-Dokument (DIN A4, reportlab)."""
+    daten = req.charakter_daten
+    try:
+        setting = load_setting(daten.get("active_setting_name", ""))
+    except FileNotFoundError:
+        setting = {}
+    setting = wende_setting_overrides_an(setting, daten)
+    werte = berechne_abgeleitete_werte(req)
+    pdf = generiere_charakterbogen_pdf(daten, setting, werte, req.printer_friendly)
+
+    name = daten.get("profil_daten", {}).get("Name") or "charakter"
+    dateiname = f"{name}.pdf"
+    ascii_name = dateiname.encode("ascii", "ignore").decode("ascii") or "charakter.pdf"
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": (
+                f"attachment; filename=\"{ascii_name}\"; "
+                f"filename*=UTF-8''{quote(dateiname)}"
+            )
+        },
+    )
 
 
 @router.post("/talente/verfuegbar")

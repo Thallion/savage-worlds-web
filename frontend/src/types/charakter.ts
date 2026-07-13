@@ -30,6 +30,37 @@ export interface TalentEffektSnapshot {
   fertigkeit_links?: Record<string, string | null>
 }
 
+// Steigerungs-Journal (Original: historie_view.py). entries schreibt die
+// Web-App für Steigerungen nach Abschluss der Erschaffung; cost_entries ist
+// das Erschaffungs-Kauf-Journal aus Kivy-Exporten/Archetypen (nur Anzeige).
+export interface SteigerungsJournalEintrag {
+  timestamp?: string
+  type: string
+  rang?: string
+  details?: {
+    name?: string
+    von?: string | number
+    nach?: string | number
+    kosten?: number | string
+    kosten_typ?: string
+    stufe?: string
+    punkte?: number
+  }
+}
+
+export interface SteigerungsKostenEintrag {
+  typ?: string
+  name?: string
+  wert?: number
+  zahlungsquelle?: string
+  kosten?: number | string
+}
+
+export interface SteigerungsJournal {
+  entries?: SteigerungsJournalEintrag[]
+  cost_entries?: SteigerungsKostenEintrag[]
+}
+
 export interface CharakterDaten {
   profil_daten: Record<string, string>
   active_setting_name: string
@@ -77,6 +108,7 @@ export interface CharakterDaten {
   aufstiege_gesamt?: number
   verbleibende_aufstiege?: number
   verbleibende_talente?: number
+  steigerungs_journal?: SteigerungsJournal
   settingregeln?: Record<string, boolean>
   volk_effekte?: {
     attribute: Record<string, number>

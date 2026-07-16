@@ -252,6 +252,37 @@ def test_migration_laesst_web_format_unangetastet():
     assert neu == daten
 
 
+def test_migration_superkraefte_liste_zu_dict():
+    """Kivy-Superkräfte-Archetypen speichern selected_superkraefte als reine
+    Namensliste. Ohne Migration bricht /berechne ab und der Superkräfte-Tab
+    fehlt in der Kopie — die Liste muss in das {name: {punkte, modifikatoren}}
+    -Format überführt und die Machtstufe aus dem Gesamtbudget abgeleitet werden.
+    """
+    alt = {
+        "active_setting_name": "Superkräfte Kompendium",
+        "char_gen_completed": False,
+        "profil_daten": {"Name": "Held"},
+        "selected_talente": ["Superkräfte"],
+        "selected_superkraefte": ["Ausweichen", "Nahkampfangriff", "Schieben"],
+        "superkraft_punkte_gesamt": 45,
+    }
+    neu, geaendert = ergaenze_fehlende_eigenschaften(alt)
+    assert geaendert
+    sk = neu["selected_superkraefte"]
+    assert isinstance(sk, dict)
+    assert set(sk) == {"Ausweichen", "Nahkampfangriff", "Schieben"}
+    for eintrag in sk.values():
+        assert isinstance(eintrag["punkte"], int) and eintrag["punkte"] >= 1
+        assert eintrag["modifikatoren"] == {}
+    # 45 SKP -> Machtstufe III
+    assert neu["superkraft_stufe"] == "III"
+
+    # /berechne (skp_ausgegeben) darf jetzt nicht mehr abbrechen
+    from app.services import superkraefte
+
+    assert isinstance(superkraefte.skp_ausgegeben(neu), int)
+
+
 def test_entpacke_charakter_export():
     from app.services.charakter_init import entpacke_charakter_export
 

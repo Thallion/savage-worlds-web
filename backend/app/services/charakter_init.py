@@ -321,6 +321,40 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
             cyber_namen = set(installationen)
             geaendert = True
 
+    # Superkräfte: Kivy-Export (u. a. die Superkräfte-Archetypen) legt
+    # selected_superkraefte als reine Namensliste ab und hält die Machtstufe nur
+    # implizit über superkraft_punkte_gesamt. Das Web erwartet dagegen
+    # {name: {"punkte": int, "modifikatoren": {}}} plus superkraft_stufe. Ohne
+    # diese Migration bricht /spiellogik/berechne ab (Liste statt Dict), sodass
+    # die abgeleiteten Werte fehlen und der Superkräfte-Tab in der Kopie
+    # unsichtbar bleibt.
+    if isinstance(daten.get("selected_superkraefte"), list):
+        from app.services.superkraefte import basis_kosten
+
+        krafte = setting.get("krafte", {})
+        daten["selected_superkraefte"] = {
+            name: {
+                "punkte": basis_kosten((krafte.get(name) or {}).get("kosten")),
+                "modifikatoren": {},
+            }
+            for name in daten["selected_superkraefte"]
+            if isinstance(name, str) and name
+        }
+        # Machtstufe aus dem Gesamtbudget des Archetyps ableiten (45 SKP -> III)
+        if not daten.get("superkraft_stufe"):
+            budget = daten.get("superkraft_punkte_gesamt")
+            stufe = next(
+                (
+                    s
+                    for s, w in (setting.get("machtstufen") or {}).items()
+                    if w.get("superkraftpunkte") == budget
+                ),
+                None,
+            )
+            if stufe:
+                daten["superkraft_stufe"] = stufe
+        geaendert = True
+
     alt = (daten.get("selected_elements") or {}).get("ausruestung") or {}
     if not alt:
         mengen = daten.get("ausruestung_mengen") or {}

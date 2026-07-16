@@ -133,8 +133,24 @@
           </p>
         </v-col>
 
+        <!-- Superkräfte -->
+        <v-col v-if="gewaehlteSuperkraefte.length" cols="12" md="4">
+          <h3 class="text-h6 mb-3">Superkräfte</h3>
+          <v-chip
+            v-for="kraft in gewaehlteSuperkraefte"
+            :key="kraft.name"
+            class="mr-1 mb-1"
+            color="primary"
+          >
+            {{ kraft.name }} ({{ kraft.gesamt }} SKP)
+          </v-chip>
+          <p v-if="superkraftWerte" class="text-caption mt-1">
+            {{ superkraftWerte.verbleibend }} von {{ superkraftWerte.budget }} SKP frei
+          </p>
+        </v-col>
+
         <!-- Ausrüstung -->
-        <v-col cols="12" md="8">
+        <v-col cols="12" :md="gewaehlteSuperkraefte.length ? 4 : 8">
           <h3 class="text-h6 mb-3">Ausrüstung</h3>
           <v-table v-if="besitz.length" density="compact">
             <tbody>
@@ -414,6 +430,22 @@ const besitz = computed(() =>
       anzahl: e.anzahl ?? 1,
       angelegt: e.angelegt ?? false,
     }))
+    .sort((a, b) => a.name.localeCompare(b.name)),
+)
+
+const superkraftWerte = computed(() => store.abgeleiteteWerte?.superkraefte ?? null)
+
+// Gewählte Superkräfte inkl. Gesamtkosten (Punkte + gewählte Modifikatoren),
+// analog zur Berechnung im Superkräfte-Tab.
+const gewaehlteSuperkraefte = computed(() =>
+  Object.entries(daten.value.selected_superkraefte ?? {})
+    .map(([name, eintrag]: [string, any]) => {
+      const modSumme = Object.values<number>(eintrag.modifikatoren ?? {}).reduce(
+        (a, b) => a + b,
+        0,
+      )
+      return { name, gesamt: (eintrag.punkte ?? 0) + modSumme }
+    })
     .sort((a, b) => a.name.localeCompare(b.name)),
 )
 

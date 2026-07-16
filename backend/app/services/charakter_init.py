@@ -321,25 +321,47 @@ def _migriere_kivy_altformat(daten: dict, setting: dict) -> bool:
             cyber_namen = set(installationen)
             geaendert = True
 
-    # Superkräfte: Kivy-Export (u. a. die Superkräfte-Archetypen) legt
-    # selected_superkraefte als reine Namensliste ab und hält die Machtstufe nur
-    # implizit über superkraft_punkte_gesamt. Das Web erwartet dagegen
-    # {name: {"punkte": int, "modifikatoren": {}}} plus superkraft_stufe. Ohne
-    # diese Migration bricht /spiellogik/berechne ab (Liste statt Dict), sodass
-    # die abgeleiteten Werte fehlen und der Superkräfte-Tab in der Kopie
-    # unsichtbar bleibt.
+    # Superkräfte: Kivy hält die gewählten Kräfte samt Punkten und
+    # Modifikatoren unter selected_elements.superkraefte
+    # ({name: {"gewaehlte_kosten": Basis-SKP,
+    #          "gewaehlte_modifikatoren": [{"name", "kosten"}]}}),
+    # während selected_superkraefte nur die Namensliste trägt. Das Web erwartet
+    # selected_superkraefte als {name: {"punkte", "modifikatoren": {mod: kosten}}}
+    # und die Machtstufe in superkraft_stufe (im Kivy-Export nur implizit über
+    # superkraft_punkte_gesamt). Ohne diese Migration bricht /spiellogik/berechne
+    # ab (Liste statt Dict), der Superkräfte-Tab fehlt in der Kopie und die
+    # Punkte/Modifikatoren, die den Archetyp definieren, gehen verloren. Wie im
+    # Original (models/superkraft.py) sind gewaehlte_kosten die reinen Basis-SKP;
+    # die Gesamtkosten ergeben sich aus Basis + Modifikatoren.
     if isinstance(daten.get("selected_superkraefte"), list):
-        from app.services.superkraefte import basis_kosten
+        from app.services.superkraefte import _ZAHL_RE, basis_kosten
 
+        kivy_kraefte = (daten.get("selected_elements") or {}).get("superkraefte") or {}
         krafte = setting.get("krafte", {})
-        daten["selected_superkraefte"] = {
-            name: {
-                "punkte": basis_kosten((krafte.get(name) or {}).get("kosten")),
-                "modifikatoren": {},
+
+        def _mod_kosten(kosten) -> int:
+            if isinstance(kosten, (int, float)):
+                return int(kosten)
+            treffer = _ZAHL_RE.search(str(kosten or ""))
+            return int(treffer.group()) if treffer else 0
+
+        migrierte_kraefte: dict = {}
+        for name in daten["selected_superkraefte"]:
+            if not isinstance(name, str) or not name:
+                continue
+            info = kivy_kraefte.get(name) or {}
+            modifikatoren = {
+                mod["name"]: _mod_kosten(mod.get("kosten"))
+                for mod in info.get("gewaehlte_modifikatoren") or []
+                if isinstance(mod, dict) and mod.get("name")
             }
-            for name in daten["selected_superkraefte"]
-            if isinstance(name, str) and name
-        }
+            punkte = info.get("gewaehlte_kosten")
+            if not isinstance(punkte, int):
+                # kein Detail-Eintrag: auf die Basiskosten der Kraft zurückfallen
+                punkte = basis_kosten((krafte.get(name) or {}).get("kosten"))
+            migrierte_kraefte[name] = {"punkte": punkte, "modifikatoren": modifikatoren}
+        daten["selected_superkraefte"] = migrierte_kraefte
+
         # Machtstufe aus dem Gesamtbudget des Archetyps ableiten (45 SKP -> III)
         if not daten.get("superkraft_stufe"):
             budget = daten.get("superkraft_punkte_gesamt")

@@ -143,6 +143,69 @@ def test_elemente_hinzufuegen_und_entfernen():
     assert ergebnis is None and "mitgeliefert" in fehler
 
 
+def test_element_setzen_neu_und_bearbeiten():
+    sv.speichere_custom_setting("Editierbar", sv.leeres_setting())
+    setting, fehler = sv.element_setzen(
+        "Editierbar", "talente", "Hausregel", {"rang": "F", "voraussetzungen": "Attraktiv, Adel"}
+    )
+    assert not fehler
+    talent = setting["talente"]["Hausregel"]
+    assert talent["custom"] and talent["rang"] == "F"
+    assert talent["voraussetzungen"] == ["Attraktiv", "Adel"]
+
+    # Duplikat abgelehnt
+    ergebnis, fehler = sv.element_setzen("Editierbar", "talente", "Hausregel", {})
+    assert ergebnis is None and "existiert bereits" in fehler
+
+    # Bearbeiten mit Umbenennung; nicht übergebene Felder bleiben erhalten
+    setting, fehler = sv.element_setzen(
+        "Editierbar", "talente", "Hausregel 2", {"rang": "V"}, alter_name="Hausregel"
+    )
+    assert not fehler and "Hausregel" not in setting["talente"]
+    assert setting["talente"]["Hausregel 2"]["rang"] == "V"
+    assert setting["talente"]["Hausregel 2"]["voraussetzungen"] == ["Attraktiv", "Adel"]
+    assert load_setting("Editierbar")["talente"]["Hausregel 2"]["rang"] == "V"
+
+    # übernommene native Elemente sind bearbeitbar und bleiben custom=False
+    sv.elemente_hinzufuegen("Editierbar", "SWAE", {"talente": ["Attraktiv"]})
+    setting, fehler = sv.element_setzen(
+        "Editierbar", "talente", "Attraktiv", {"beschreibung": "Hausregel-Text"}, alter_name="Attraktiv"
+    )
+    assert not fehler
+    assert setting["talente"]["Attraktiv"]["beschreibung"] == "Hausregel-Text"
+    assert not setting["talente"]["Attraktiv"]["custom"]
+
+    # native Settings und unbekannte Typen abgelehnt
+    ergebnis, fehler = sv.element_setzen("SWAE", "talente", "X", {})
+    assert ergebnis is None and "mitgeliefert" in fehler
+    ergebnis, fehler = sv.element_setzen("Editierbar", "krafte", "X", {})
+    assert ergebnis is None and "Element-Typ" in fehler
+
+
+def test_element_setzen_volk_aus_eigenarten():
+    sv.speichere_custom_setting("Editierbar", sv.leeres_setting())
+    setting, fehler = sv.element_setzen(
+        "Editierbar",
+        "voelker",
+        "Waldgeist",
+        {
+            "beschreibung": "Test",
+            "eigenarten": [{"id": "attributserhoehung", "auswahl": "Stärke"}],
+        },
+    )
+    assert not fehler
+    assert setting["voelker"]["Waldgeist"]["custom"]
+    # voelker_selected wächst mit (speichere_custom_setting)
+    assert load_setting("Editierbar")["voelker_selected"] == {"Waldgeist": False}
+
+    # übernommene native Abstammungen ohne Eigenarten-Rohdaten sind nicht bearbeitbar
+    sv.elemente_hinzufuegen("Editierbar", "SWAE", {"voelker": ["Mensch"]})
+    ergebnis, fehler = sv.element_setzen(
+        "Editierbar", "voelker", "Mensch", {"eigenarten": []}, alter_name="Mensch"
+    )
+    assert ergebnis is None and "Volkseigenarten" in fehler
+
+
 def test_metadaten_und_umbenennen():
     sv.speichere_custom_setting("Alt", sv.leeres_setting("Erste Fassung"))
     setting, name, fehler = sv.aktualisiere_metadaten("Alt", "Neue Beschreibung", "Neu")

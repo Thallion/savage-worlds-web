@@ -51,7 +51,8 @@
       "Bash(chmod +x scripts/export_chars.sh)",
       "Bash(./scripts/export_chars.sh)",
       "Bash(git check-ignore *)",
-      "Bash(git clone *)"
+      "Bash(git clone *)",
+      "Bash(python3 *)"
     ]
   }
 }

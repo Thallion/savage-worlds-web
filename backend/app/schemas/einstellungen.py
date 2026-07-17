@@ -33,6 +33,15 @@ class ElementEntfernenRequest(BaseModel):
     element_name: str
 
 
+class ElementSetzenRequest(BaseModel):
+    """Element direkt im eigenen Setting anlegen/bearbeiten (alter_name = Edit)."""
+
+    typ: str
+    element_name: str
+    element_daten: dict = {}
+    alter_name: str | None = None
+
+
 class SettingVerwaltungResponse(BaseModel):
     """Antwort der Verwaltungs-Endpoints: Kennzahlen statt komplettem Setting."""
 

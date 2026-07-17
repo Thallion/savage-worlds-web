@@ -19,6 +19,7 @@ from app.db import models as db_models
 from app.schemas.einstellungen import (
     ElementeHinzufuegenRequest,
     ElementEntfernenRequest,
+    ElementSetzenRequest,
     SettingErstellenRequest,
     SettingUpdateRequest,
     SettingVerwaltungResponse,
@@ -207,6 +208,22 @@ def elemente_hinzufuegen(
     if setting is None:
         raise HTTPException(status_code=404 if "nicht gefunden" in fehler else 422, detail=fehler)
     return _antwort(setting_name, setting, warnungen=[f"Nicht gefunden: {e}" for e in fehlend])
+
+
+@router.put("/{setting_name}/elemente", response_model=SettingVerwaltungResponse)
+def element_setzen(
+    setting_name: str,
+    req: ElementSetzenRequest,
+    current_user: db_models.User = Depends(get_current_user),
+):
+    """Legt ein ganz neues Element im eigenen Setting an oder bearbeitet ein
+    vorhandenes (alter_name gesetzt = Bearbeiten/Umbenennen)."""
+    setting, fehler = sv.element_setzen(
+        setting_name, req.typ, req.element_name, req.element_daten, req.alter_name
+    )
+    if setting is None:
+        raise HTTPException(status_code=404 if "nicht gefunden" in fehler else 422, detail=fehler)
+    return _antwort(setting_name, setting)
 
 
 @router.post("/{setting_name}/elemente/entfernen", response_model=SettingVerwaltungResponse)

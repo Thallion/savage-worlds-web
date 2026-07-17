@@ -134,6 +134,23 @@ export const useEinstellungenStore = defineStore('einstellungen', () => {
     return antwort
   }
 
+  // Element direkt im eigenen Setting anlegen/bearbeiten (alterName = Edit)
+  async function elementSetzen(
+    name: string,
+    typ: string,
+    elementName: string,
+    elementDaten: Record<string, any>,
+    alterName?: string,
+  ) {
+    const antwort = await api.put<SettingVerwaltungAntwort>(
+      `/settings/${encodeURIComponent(name)}/elemente`,
+      { typ, element_name: elementName, element_daten: elementDaten, alter_name: alterName ?? null },
+    )
+    invalidiere(name)
+    await ladeSettings()
+    return antwort
+  }
+
   async function elementEntfernen(name: string, typ: string, elementName: string) {
     const antwort = await api.post<SettingVerwaltungAntwort>(
       `/settings/${encodeURIComponent(name)}/elemente/entfernen`,
@@ -158,6 +175,7 @@ export const useEinstellungenStore = defineStore('einstellungen', () => {
     aktualisiereSetting,
     loescheSetting,
     elementeHinzufuegen,
+    elementSetzen,
     elementEntfernen,
     exportiereSetting,
     importiereSetting,

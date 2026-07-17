@@ -115,7 +115,7 @@ def _ist_gewaehlt(daten: dict, typ: str, name: str) -> bool:
     return False
 
 
-def _normalisiere(typ: str, name: str, element_daten: dict, custom: bool) -> tuple[dict | None, str]:
+def normalisiere_element(typ: str, name: str, element_daten: dict, custom: bool) -> tuple[dict | None, str]:
     """Defaults auffüllen und typspezifisch validieren."""
     element = {**_DEFAULTS[typ], **(element_daten or {}), "name": name, "custom": custom}
 
@@ -221,7 +221,7 @@ def speichere_element(
             return False, "Native Abstammungen können nicht bearbeitet werden — nur eigene"
         element, fehler = baue_volk(name, element_daten or {}, merged_setting)
     else:
-        element, fehler = _normalisiere(typ, name, {**(vorlage or {}), **(element_daten or {})}, custom)
+        element, fehler = normalisiere_element(typ, name, {**(vorlage or {}), **(element_daten or {})}, custom)
     if element is None:
         return False, fehler
 

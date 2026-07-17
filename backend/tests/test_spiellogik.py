@@ -1706,6 +1706,43 @@ def test_element_loeschen_nativ_und_gewaehlt(daten):
     assert not r["success"]
 
 
+def test_element_eigene_superkraft(superheld):
+    r = element_aktion("speichern", superheld, "krafte", "Laserblick",
+                       {"kosten": "2", "beschreibung": "Augenlaser.",
+                        "modifikatoren": {"Gebündelt": {"kosten": 1, "beschreibung": "+2 Schaden"}}})
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    eintrag = d["setting_overrides"]["krafte"]["Laserblick"]
+    assert eintrag["custom"] is True
+    assert eintrag["kosten"] == 2  # Zahl-Text wird int
+    assert eintrag["modifikatoren"]["Gebündelt"]["kosten"] == 1
+
+    # sofort wählbar (Overrides fließen in den Katalog ein)
+    r = aktion("superkraft/waehlen", d, "Laserblick")
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["selected_superkraefte"]["Laserblick"]["punkte"] == 2
+
+    # Umbenennung zieht die Auswahl mit
+    r = element_aktion("speichern", d, "krafte", "Röntgenblick", {}, alter_name="Laserblick")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert "Röntgenblick" in d["selected_superkraefte"]
+    assert "Laserblick" not in d["selected_superkraefte"]
+
+    # gewählte Kraft kann nicht gelöscht werden
+    r = element_aktion("loeschen", d, "krafte", "Röntgenblick")
+    assert not r["success"] and "gewählt" in r["message"]
+
+    # native Kraft bearbeiten: bleibt custom=False, Änderung überlagert das Original
+    r = element_aktion("speichern", d, "krafte", "Fliegen",
+                       {"beschreibung": "Angepasst."}, alter_name="Fliegen")
+    assert r["success"]
+    eintrag = r["charakter_daten"]["setting_overrides"]["krafte"]["Fliegen"]
+    assert eintrag["custom"] is False
+    assert eintrag["beschreibung"] == "Angepasst."
+
+
 def test_element_eigene_ausruestung_kaufbar(daten):
     r = element_aktion("speichern", daten, "ausruestung", "Plasmalanze",
                        {"kategorie": "Waffe", "kosten": 100, "gewicht": 1,

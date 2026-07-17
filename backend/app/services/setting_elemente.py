@@ -10,6 +10,7 @@ charakter_daten["setting_overrides"]:
     {
         "talente": {name: element_daten, ...},      # neue + bearbeitete
         "handicaps": {...}, "maechte": {...}, "ausruestung": {...},
+        "krafte": {...},                             # eigene Superkräfte
         "voelker": {...},                            # eigene Abstammungen (volk_erstellung.py)
         "geloescht": {"talente": [name, ...], ...}  # entfernte native Elemente
     }
@@ -21,7 +22,7 @@ gelöschte verschwinden. Die Overrides wandern mit Export/Import mit.
 
 from app.services.volk_erstellung import baue_volk
 
-ELEMENT_TYPEN = ("talente", "handicaps", "maechte", "ausruestung", "voelker")
+ELEMENT_TYPEN = ("talente", "handicaps", "maechte", "ausruestung", "krafte", "voelker")
 
 # Anzeige-Name pro Typ für Meldungen (voelker heißt in der Anzeige "Abstammung")
 _TYP_LABEL = {
@@ -29,6 +30,7 @@ _TYP_LABEL = {
     "handicaps": "Handicap",
     "maechte": "Macht",
     "ausruestung": "Ausrüstung",
+    "krafte": "Superkraft",
     "voelker": "Abstammung",
 }
 
@@ -70,10 +72,32 @@ _DEFAULTS: dict[str, dict] = {
         "beschreibung": "",
         "aktiv": True,
     },
+    "krafte": {
+        "kosten": 1,
+        "beschreibung": "",
+        "modifikatoren": {},
+        "ausgewaehlt": False,
+        "aktiv": True,
+    },
 }
 
 _HANDICAP_STUFEN = ("leicht", "schwer")
 _AUSRUESTUNG_KATEGORIEN = ("Allgemein", "Waffe", "Rüstung", "Schild")
+
+
+def _normalisiere_kraft_kosten(wert, standard):
+    """Kraft-Kosten sind heterogen ("2", "1/2", "1-5", "speziell") — ganze
+    Zahlen werden int, alles andere bleibt Text (superkraefte.basis_kosten
+    zieht daraus den ersten Zahlenwert)."""
+    if wert is None or wert == "":
+        return standard
+    if isinstance(wert, (int, float)):
+        return int(wert)
+    text = str(wert).strip()
+    try:
+        return int(text)
+    except ValueError:
+        return text
 
 
 def wende_setting_overrides_an(setting: dict, daten: dict) -> dict:
@@ -110,6 +134,8 @@ def _ist_gewaehlt(daten: dict, typ: str, name: str) -> bool:
     if typ == "ausruestung":
         eintrag = daten.get("ausruestung_selected", {}).get(name)
         return bool(eintrag and eintrag.get("anzahl", 0) > 0)
+    if typ == "krafte":
+        return name in (daten.get("selected_superkraefte") or {})
     if typ == "voelker":
         return name in (daten.get("voelker_selected") or {})
     return False
@@ -148,6 +174,22 @@ def normalisiere_element(typ: str, name: str, element_daten: dict, custom: bool)
             element["parade"] = int(element.get("parade") or 0)
             element["deckung"] = int(element.get("deckung") or 0)
 
+    if typ == "krafte":
+        element["kosten"] = _normalisiere_kraft_kosten(element.get("kosten"), 1)
+        modifikatoren = element.get("modifikatoren") or {}
+        if not isinstance(modifikatoren, dict):
+            return None, "modifikatoren muss ein Objekt {Name: {kosten, beschreibung}} sein"
+        element["modifikatoren"] = {
+            str(mod_name).strip(): {
+                "kosten": _normalisiere_kraft_kosten(
+                    (mod if isinstance(mod, dict) else {}).get("kosten"), 0
+                ),
+                "beschreibung": str((mod if isinstance(mod, dict) else {}).get("beschreibung") or ""),
+            }
+            for mod_name, mod in modifikatoren.items()
+            if str(mod_name).strip()
+        }
+
     if typ in ("talente", "maechte") and isinstance(element.get("voraussetzungen"), str):
         element["voraussetzungen"] = [
             v.strip() for v in element["voraussetzungen"].split(",") if v.strip()
@@ -175,6 +217,10 @@ def _entferne_aus_auswahl(daten: dict, typ: str, alter_name: str, neuer_name: st
                 liste[i] = f"{neuer_name}{eintrag[len(alter_name):]}"
     elif typ == "ausruestung":
         auswahl = daten.get("ausruestung_selected", {})
+        if alter_name in auswahl:
+            auswahl[neuer_name] = auswahl.pop(alter_name)
+    elif typ == "krafte":
+        auswahl = daten.get("selected_superkraefte", {})
         if alter_name in auswahl:
             auswahl[neuer_name] = auswahl.pop(alter_name)
 

@@ -17,7 +17,12 @@ from pathlib import Path
 
 from app.config import settings
 from app.services.charakter_init import load_setting
-from app.services.setting_elemente import wende_setting_overrides_an
+from app.services.setting_elemente import (
+    ELEMENT_TYPEN as EDITIERBARE_TYPEN,
+    normalisiere_element,
+    wende_setting_overrides_an,
+)
+from app.services.volk_erstellung import baue_volk
 
 # Kollektionen, die pro Element (Name -> Daten) zusammengeführt und in der
 # Elementauswahl einzeln gewählt werden können
@@ -345,6 +350,61 @@ def elemente_hinzufuegen(
 
     speichere_custom_setting(name, setting)
     return setting, "", fehlend
+
+
+def element_setzen(
+    name: str,
+    typ: str,
+    element_name: str,
+    element_daten: dict,
+    alter_name: str | None = None,
+) -> tuple[dict | None, str]:
+    """Legt ein Element direkt im eigenen Setting an oder bearbeitet es
+    (alter_name gesetzt = Bearbeiten, ggf. mit Umbenennung). Nutzt dieselbe
+    Normalisierung wie die Element-Editoren der Charakter-Tabs
+    (setting_elemente/volk_erstellung), damit die Daten identisch aussehen."""
+    setting, fehler = _lade_custom(name)
+    if setting is None:
+        return None, fehler
+    if typ not in EDITIERBARE_TYPEN:
+        return None, f"Element-Typ '{typ}' kann hier nicht bearbeitet werden"
+    element_name = (element_name or "").strip()
+    if not element_name:
+        return None, "Der Name darf nicht leer sein"
+
+    katalog = setting.setdefault(typ, {})
+    vorlage = None
+    if alter_name:
+        vorlage = katalog.get(alter_name)
+        if vorlage is None:
+            return None, f"'{alter_name}' nicht in '{typ}' von '{name}' gefunden"
+        if element_name != alter_name and element_name in katalog:
+            return None, f"'{element_name}' existiert bereits in '{typ}'"
+    elif element_name in katalog:
+        return None, f"'{element_name}' existiert bereits in '{typ}'"
+
+    if typ == "voelker":
+        # Abstammungen werden aus Volkseigenarten kompiliert — übernommene
+        # native Völker tragen keine Eigenarten-Rohdaten und sind hier tabu
+        if vorlage is not None and not isinstance(vorlage.get("eigenarten"), list):
+            return None, (
+                "Diese Abstammung wurde nicht aus Volkseigenarten erstellt "
+                "und kann hier nicht bearbeitet werden"
+            )
+        element, fehler = baue_volk(element_name, element_daten or {}, setting)
+    else:
+        custom = True if vorlage is None else bool(vorlage.get("custom", False))
+        element, fehler = normalisiere_element(
+            typ, element_name, {**(vorlage or {}), **(element_daten or {})}, custom
+        )
+    if element is None:
+        return None, fehler
+
+    if alter_name and alter_name != element_name:
+        del katalog[alter_name]
+    katalog[element_name] = element
+    speichere_custom_setting(name, setting)
+    return setting, ""
 
 
 def element_entfernen(name: str, typ: str, element_name: str) -> tuple[dict | None, str]:

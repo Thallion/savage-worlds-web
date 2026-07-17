@@ -42,6 +42,9 @@
           </template>
           <p v-else class="text-body-2 text-grey mb-4">{{ setting.description }}</p>
 
+          <p v-if="custom" class="text-caption text-grey mb-2">
+            Elemente anklicken, um sie zu bearbeiten; das × entfernt sie aus dem Setting.
+          </p>
           <v-expansion-panels variant="accordion">
             <v-expansion-panel v-for="typ in typenMitElementen" :key="typ">
               <v-expansion-panel-title>
@@ -63,6 +66,8 @@
                   size="small"
                   class="mr-1 mb-1"
                   :closable="custom"
+                  :link="istEditierbar(typ, elementName)"
+                  @click="bearbeiteElement(typ, elementName)"
                   @click:close="entferneElement(typ, elementName)"
                 >
                   {{ elementName }}
@@ -71,10 +76,27 @@
             </v-expansion-panel>
           </v-expansion-panels>
 
-          <!-- Elemente aus anderen Settings übernehmen -->
           <template v-if="custom">
+            <!-- Ganz neue Elemente anlegen (gleiche Formulare wie im Charakter-Editor) -->
             <v-divider class="my-4" />
-            <div class="text-subtitle-1 mb-2">Elemente hinzufügen</div>
+            <div class="text-subtitle-1 mb-2">Neues Element erstellen</div>
+            <div class="d-flex align-center ga-2">
+              <v-select
+                v-model="neuerTyp"
+                :items="neuTypItems"
+                label="Typ"
+                density="compact"
+                hide-details
+                style="max-width: 200px"
+              />
+              <v-btn color="primary" variant="tonal" prepend-icon="mdi-plus" @click="starteNeu">
+                Erstellen
+              </v-btn>
+            </div>
+
+            <!-- Elemente aus anderen Settings übernehmen -->
+            <v-divider class="my-4" />
+            <div class="text-subtitle-1 mb-2">Elemente aus anderen Settings übernehmen</div>
             <ElementAuswahl v-model="hinzufuegenAuswahl" />
             <v-btn
               color="primary"
@@ -91,14 +113,33 @@
         </template>
       </v-card-text>
     </v-card>
+
+    <ElementFormDialog
+      ref="elementDialog"
+      :typ="dialogTyp"
+      :katalog="setting?.[dialogTyp] ?? {}"
+      @speichern="(payload) => speichereElement(dialogTyp, payload, elementDialog)"
+    />
+    <VolkFormDialog
+      ref="volkDialog"
+      :setting="setting ?? {}"
+      :fertigkeiten="fertigkeitenNamen"
+      :katalog="setting?.voelker ?? {}"
+      :eigene-namen="eigeneVoelker"
+      @speichern="(payload) => speichereElement('voelker', payload, volkDialog)"
+    />
+    <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
   </v-dialog>
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import { TYP_LABELS } from '@/utils/settingVerwaltung'
+import { TYP_LABEL, type ElementTyp } from '@/utils/settingElemente'
 import ElementAuswahl from './ElementAuswahl.vue'
+import ElementFormDialog from '@/components/elemente/ElementFormDialog.vue'
+import VolkFormDialog from '@/components/elemente/VolkFormDialog.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -119,6 +160,70 @@ const neuerName = ref('')
 const neueBeschreibung = ref('')
 const hinzufuegenAuswahl = ref<Record<string, Record<string, string[]>>>({})
 const hinzufuegenLaeuft = ref(false)
+const meldung = ref('')
+const meldungSichtbar = ref(false)
+
+// Anlegen/Bearbeiten eigener Elemente — gleiche Formulare wie die Charakter-Tabs
+const elementDialog = ref<InstanceType<typeof ElementFormDialog>>()
+const volkDialog = ref<InstanceType<typeof VolkFormDialog>>()
+const neuerTyp = ref<ElementTyp>('talente')
+const dialogTyp = ref<Exclude<ElementTyp, 'voelker'>>('talente')
+
+const neuTypItems = Object.entries(TYP_LABEL).map(([value, title]) => ({ title, value }))
+
+const fertigkeitenNamen = computed(() =>
+  Object.keys(setting.value?.fertigkeiten_daten ?? {}).sort(),
+)
+// Nur aus Volkseigenarten erstellte Abstammungen sind im Formular bearbeitbar
+function volkEditierbar(name: string): boolean {
+  return Array.isArray(setting.value?.voelker?.[name]?.eigenarten)
+}
+const eigeneVoelker = computed(() =>
+  Object.keys(setting.value?.voelker ?? {}).filter(volkEditierbar).sort(),
+)
+
+function istEditierbar(typ: string, elementName: string): boolean {
+  if (!props.custom) return false
+  if (typ === 'voelker') return volkEditierbar(elementName)
+  return typ in TYP_LABEL
+}
+
+async function starteNeu() {
+  if (neuerTyp.value === 'voelker') {
+    volkDialog.value?.oeffneNeu()
+    return
+  }
+  dialogTyp.value = neuerTyp.value
+  // dialogTyp muss als Prop ankommen, bevor der Dialog seine Defaults befüllt
+  await nextTick()
+  elementDialog.value?.oeffneNeu()
+}
+
+async function bearbeiteElement(typ: string, elementName: string) {
+  if (!istEditierbar(typ, elementName)) return
+  if (typ === 'voelker') {
+    volkDialog.value?.oeffneBearbeiten(elementName)
+    return
+  }
+  dialogTyp.value = typ as Exclude<ElementTyp, 'voelker'>
+  await nextTick()
+  elementDialog.value?.oeffneBearbeiten(elementName)
+}
+
+async function speichereElement(
+  typ: string,
+  payload: { name: string; daten: Record<string, any>; alterName?: string },
+  dialog?: { schliesse: () => void },
+) {
+  try {
+    await store.elementSetzen(props.settingName, typ, payload.name, payload.daten, payload.alterName)
+    dialog?.schliesse()
+    await ladeSetting()
+  } catch (e: any) {
+    meldung.value = e?.message || 'Speichern fehlgeschlagen'
+    meldungSichtbar.value = true
+  }
+}
 
 watch(
   () => [props.modelValue, props.settingName],

@@ -125,6 +125,12 @@
       :katalog="setting?.krafte ?? {}"
       @speichern="(payload) => speichereElement('krafte', payload, kraftDialog)"
     />
+    <FertigkeitFormDialog
+      ref="fertigkeitDialog"
+      :katalog="setting?.fertigkeiten_daten ?? {}"
+      :attribute="attributNamen"
+      @speichern="(payload) => speichereElement('fertigkeiten_daten', payload, fertigkeitDialog)"
+    />
     <VolkFormDialog
       ref="volkDialog"
       :setting="setting ?? {}"
@@ -144,6 +150,7 @@ import { TYP_LABELS } from '@/utils/settingVerwaltung'
 import { TYP_LABEL, type ElementTyp } from '@/utils/settingElemente'
 import ElementAuswahl from './ElementAuswahl.vue'
 import ElementFormDialog from '@/components/elemente/ElementFormDialog.vue'
+import FertigkeitFormDialog from '@/components/elemente/FertigkeitFormDialog.vue'
 import KraftFormDialog from '@/components/elemente/KraftFormDialog.vue'
 import VolkFormDialog from '@/components/elemente/VolkFormDialog.vue'
 
@@ -173,10 +180,22 @@ const meldungSichtbar = ref(false)
 const elementDialog = ref<InstanceType<typeof ElementFormDialog>>()
 const kraftDialog = ref<InstanceType<typeof KraftFormDialog>>()
 const volkDialog = ref<InstanceType<typeof VolkFormDialog>>()
-const neuerTyp = ref<ElementTyp>('talente')
+const fertigkeitDialog = ref<InstanceType<typeof FertigkeitFormDialog>>()
+const neuerTyp = ref<string>('talente')
 const dialogTyp = ref<Exclude<ElementTyp, 'voelker' | 'krafte'>>('talente')
 
-const neuTypItems = Object.entries(TYP_LABEL).map(([value, title]) => ({ title, value }))
+const neuTypItems = [
+  ...Object.entries(TYP_LABEL).map(([value, title]) => ({ title, value })),
+  { title: 'Fertigkeit', value: 'fertigkeiten_daten' },
+]
+
+// Standard-Attribute als Fallback für Settings ohne eigene Attribut-Definition
+// (Spiegel von eigenschaften_config.json)
+const STANDARD_ATTRIBUTE = ['Geschicklichkeit', 'Verstand', 'Stärke', 'Konstitution', 'Willenskraft']
+const attributNamen = computed(() => {
+  const eigene = Object.keys(setting.value?.attribute ?? {})
+  return eigene.length ? eigene : STANDARD_ATTRIBUTE
+})
 
 const fertigkeitenNamen = computed(() =>
   Object.keys(setting.value?.fertigkeiten_daten ?? {}).sort(),
@@ -192,7 +211,7 @@ const eigeneVoelker = computed(() =>
 function istEditierbar(typ: string, elementName: string): boolean {
   if (!props.custom) return false
   if (typ === 'voelker') return volkEditierbar(elementName)
-  return typ in TYP_LABEL
+  return typ === 'fertigkeiten_daten' || typ in TYP_LABEL
 }
 
 async function starteNeu() {
@@ -204,7 +223,11 @@ async function starteNeu() {
     kraftDialog.value?.oeffneNeu()
     return
   }
-  dialogTyp.value = neuerTyp.value
+  if (neuerTyp.value === 'fertigkeiten_daten') {
+    fertigkeitDialog.value?.oeffneNeu()
+    return
+  }
+  dialogTyp.value = neuerTyp.value as Exclude<ElementTyp, 'voelker' | 'krafte'>
   // dialogTyp muss als Prop ankommen, bevor der Dialog seine Defaults befüllt
   await nextTick()
   elementDialog.value?.oeffneNeu()
@@ -218,6 +241,10 @@ async function bearbeiteElement(typ: string, elementName: string) {
   }
   if (typ === 'krafte') {
     kraftDialog.value?.oeffneBearbeiten(elementName)
+    return
+  }
+  if (typ === 'fertigkeiten_daten') {
+    fertigkeitDialog.value?.oeffneBearbeiten(elementName)
     return
   }
   dialogTyp.value = typ as Exclude<ElementTyp, 'voelker' | 'krafte'>

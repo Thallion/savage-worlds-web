@@ -21,6 +21,8 @@
         </v-alert>
       </div>
 
+      <ElementEditor ref="elementEditor" typ="krafte" />
+
       <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
 
       <!-- Gewählte Kräfte -->
@@ -95,7 +97,7 @@
               <div class="text-caption text-medium-emphasis">{{ (kraft.beschreibung || '').slice(0, 120) }}</div>
             </td>
             <td class="text-right">{{ kraft.kosten }}</td>
-            <td class="text-right">
+            <td class="text-right text-no-wrap">
               <v-btn
                 size="small"
                 variant="tonal"
@@ -105,6 +107,20 @@
               >
                 Wählen
               </v-btn>
+              <v-btn
+                icon="mdi-pencil"
+                size="small"
+                variant="text"
+                title="Superkraft bearbeiten"
+                @click="elementEditor?.bearbeiteElement(kraft.name)"
+              />
+              <v-btn
+                icon="mdi-delete"
+                size="small"
+                variant="text"
+                title="Superkraft löschen"
+                @click="elementEditor?.loescheElement(kraft.name)"
+              />
             </td>
           </tr>
         </tbody>
@@ -117,6 +133,8 @@
 import { computed, ref } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
+import { mergeKatalog } from '@/utils/settingElemente'
+import ElementEditor from '@/components/charakter/ElementEditor.vue'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
@@ -124,12 +142,16 @@ const einstellungenStore = useEinstellungenStore()
 const suche = ref('')
 const meldung = ref('')
 const meldungSichtbar = ref(false)
+const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
 
 const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const skp = computed(() => store.abgeleiteteWerte?.superkraefte ?? null)
 
 const setting = computed<any>(() => einstellungenStore.aktuellesSetting ?? {})
-const krafte = computed<Record<string, any>>(() => setting.value.krafte ?? {})
+// inkl. Charakter-Overrides, damit eigene/bearbeitete Kräfte erscheinen
+const krafte = computed<Record<string, any>>(() =>
+  mergeKatalog(setting.value.krafte, daten.value, 'krafte'),
+)
 
 const stufenItems = computed(() =>
   Object.entries(setting.value.machtstufen ?? {}).map(([id, s]: [string, any]) => ({

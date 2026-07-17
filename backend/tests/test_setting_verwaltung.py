@@ -175,10 +175,19 @@ def test_element_setzen_neu_und_bearbeiten():
     assert setting["talente"]["Attraktiv"]["beschreibung"] == "Hausregel-Text"
     assert not setting["talente"]["Attraktiv"]["custom"]
 
-    # native Settings und unbekannte Typen abgelehnt
+    # Superkräfte: gemischte Kosten-Formate bleiben erhalten
+    setting, fehler = sv.element_setzen(
+        "Editierbar", "krafte", "Laserblick",
+        {"kosten": "1/2", "modifikatoren": {"Gebündelt": {"kosten": "1", "beschreibung": "+2"}}},
+    )
+    assert not fehler
+    assert setting["krafte"]["Laserblick"]["kosten"] == "1/2"
+    assert setting["krafte"]["Laserblick"]["modifikatoren"]["Gebündelt"]["kosten"] == 1
+
+    # native Settings und nicht editierbare Typen abgelehnt
     ergebnis, fehler = sv.element_setzen("SWAE", "talente", "X", {})
     assert ergebnis is None and "mitgeliefert" in fehler
-    ergebnis, fehler = sv.element_setzen("Editierbar", "krafte", "X", {})
+    ergebnis, fehler = sv.element_setzen("Editierbar", "fertigkeiten_daten", "X", {})
     assert ergebnis is None and "Element-Typ" in fehler
 
 

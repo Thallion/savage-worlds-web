@@ -120,6 +120,11 @@
       :katalog="setting?.[dialogTyp] ?? {}"
       @speichern="(payload) => speichereElement(dialogTyp, payload, elementDialog)"
     />
+    <KraftFormDialog
+      ref="kraftDialog"
+      :katalog="setting?.krafte ?? {}"
+      @speichern="(payload) => speichereElement('krafte', payload, kraftDialog)"
+    />
     <VolkFormDialog
       ref="volkDialog"
       :setting="setting ?? {}"
@@ -139,6 +144,7 @@ import { TYP_LABELS } from '@/utils/settingVerwaltung'
 import { TYP_LABEL, type ElementTyp } from '@/utils/settingElemente'
 import ElementAuswahl from './ElementAuswahl.vue'
 import ElementFormDialog from '@/components/elemente/ElementFormDialog.vue'
+import KraftFormDialog from '@/components/elemente/KraftFormDialog.vue'
 import VolkFormDialog from '@/components/elemente/VolkFormDialog.vue'
 
 const props = defineProps<{
@@ -165,9 +171,10 @@ const meldungSichtbar = ref(false)
 
 // Anlegen/Bearbeiten eigener Elemente — gleiche Formulare wie die Charakter-Tabs
 const elementDialog = ref<InstanceType<typeof ElementFormDialog>>()
+const kraftDialog = ref<InstanceType<typeof KraftFormDialog>>()
 const volkDialog = ref<InstanceType<typeof VolkFormDialog>>()
 const neuerTyp = ref<ElementTyp>('talente')
-const dialogTyp = ref<Exclude<ElementTyp, 'voelker'>>('talente')
+const dialogTyp = ref<Exclude<ElementTyp, 'voelker' | 'krafte'>>('talente')
 
 const neuTypItems = Object.entries(TYP_LABEL).map(([value, title]) => ({ title, value }))
 
@@ -193,6 +200,10 @@ async function starteNeu() {
     volkDialog.value?.oeffneNeu()
     return
   }
+  if (neuerTyp.value === 'krafte') {
+    kraftDialog.value?.oeffneNeu()
+    return
+  }
   dialogTyp.value = neuerTyp.value
   // dialogTyp muss als Prop ankommen, bevor der Dialog seine Defaults befüllt
   await nextTick()
@@ -205,7 +216,11 @@ async function bearbeiteElement(typ: string, elementName: string) {
     volkDialog.value?.oeffneBearbeiten(elementName)
     return
   }
-  dialogTyp.value = typ as Exclude<ElementTyp, 'voelker'>
+  if (typ === 'krafte') {
+    kraftDialog.value?.oeffneBearbeiten(elementName)
+    return
+  }
+  dialogTyp.value = typ as Exclude<ElementTyp, 'voelker' | 'krafte'>
   await nextTick()
   elementDialog.value?.oeffneBearbeiten(elementName)
 }

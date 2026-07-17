@@ -18,8 +18,9 @@
 
   <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
 
-  <!-- Hinzufügen / Bearbeiten -->
-  <ElementFormDialog ref="formDialog" :typ="typ" :katalog="katalog" @speichern="speichern" />
+  <!-- Hinzufügen / Bearbeiten (Superkräfte haben ein eigenes Formular mit Modifikatoren) -->
+  <KraftFormDialog v-if="typ === 'krafte'" ref="formDialog" :katalog="katalog" @speichern="speichern" />
+  <ElementFormDialog v-else ref="formDialog" :typ="typ" :katalog="katalog" @speichern="speichern" />
 
   <!-- Löschen -->
   <v-dialog v-model="loeschenSichtbar" max-width="480">
@@ -54,6 +55,7 @@ import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import { TYP_LABEL, mergeKatalog, type ElementTyp } from '@/utils/settingElemente'
 import ElementFormDialog from '@/components/elemente/ElementFormDialog.vue'
+import KraftFormDialog from '@/components/elemente/KraftFormDialog.vue'
 
 const props = defineProps<{ typ: ElementTyp }>()
 
@@ -65,7 +67,7 @@ const label = TYP_LABEL[props.typ]
 const meldung = ref('')
 const meldungSichtbar = ref(false)
 
-const formDialog = ref<InstanceType<typeof ElementFormDialog>>()
+const formDialog = ref<InstanceType<typeof ElementFormDialog> | InstanceType<typeof KraftFormDialog>>()
 const loeschenSichtbar = ref(false)
 const loeschName = ref('')
 

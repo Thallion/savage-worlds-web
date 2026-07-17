@@ -187,8 +187,31 @@ def test_element_setzen_neu_und_bearbeiten():
     # native Settings und nicht editierbare Typen abgelehnt
     ergebnis, fehler = sv.element_setzen("SWAE", "talente", "X", {})
     assert ergebnis is None and "mitgeliefert" in fehler
-    ergebnis, fehler = sv.element_setzen("Editierbar", "fertigkeiten_daten", "X", {})
+    ergebnis, fehler = sv.element_setzen("Editierbar", "attribute", "X", {})
     assert ergebnis is None and "Element-Typ" in fehler
+
+
+def test_element_setzen_fertigkeit():
+    sv.speichere_custom_setting("Editierbar", sv.leeres_setting())
+    setting, fehler = sv.element_setzen(
+        "Editierbar", "fertigkeiten_daten", "Reiten", {"attribut": "Geschicklichkeit"}
+    )
+    assert not fehler
+    assert setting["fertigkeiten_daten"]["Reiten"] == ["Geschicklichkeit"]
+
+    # ungültiges Attribut abgelehnt (leeres Setting -> Standard-Attribute)
+    ergebnis, fehler = sv.element_setzen(
+        "Editierbar", "fertigkeiten_daten", "X", {"attribut": "Foo"}
+    )
+    assert ergebnis is None and "Attribut" in fehler
+
+    # Umbenennen ohne Attribut-Angabe behält die Verknüpfung
+    setting, fehler = sv.element_setzen(
+        "Editierbar", "fertigkeiten_daten", "Reiten & Fahren", {}, alter_name="Reiten"
+    )
+    assert not fehler
+    assert "Reiten" not in setting["fertigkeiten_daten"]
+    assert setting["fertigkeiten_daten"]["Reiten & Fahren"] == ["Geschicklichkeit"]
 
 
 def test_element_setzen_volk_aus_eigenarten():

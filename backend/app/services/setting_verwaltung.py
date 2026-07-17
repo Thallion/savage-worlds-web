@@ -16,13 +16,17 @@ import json
 from pathlib import Path
 
 from app.config import settings
-from app.services.charakter_init import load_setting
+from app.services.charakter_init import load_config, load_setting
 from app.services.setting_elemente import (
-    ELEMENT_TYPEN as EDITIERBARE_TYPEN,
+    ELEMENT_TYPEN,
     normalisiere_element,
     wende_setting_overrides_an,
 )
 from app.services.volk_erstellung import baue_volk
+
+# Direkt bearbeitbare Typen: die Element-Editoren der Charakter-Tabs plus
+# Fertigkeiten (im Setting nur Name -> [verknüpftes Attribut])
+EDITIERBARE_TYPEN = ELEMENT_TYPEN + ("fertigkeiten_daten",)
 
 # Kollektionen, die pro Element (Name -> Daten) zusammengeführt und in der
 # Elementauswahl einzeln gewählt werden können
@@ -383,7 +387,17 @@ def element_setzen(
     elif element_name in katalog:
         return None, f"'{element_name}' existiert bereits in '{typ}'"
 
-    if typ == "voelker":
+    if typ == "fertigkeiten_daten":
+        attribut = str((element_daten or {}).get("attribut") or "").strip()
+        if not attribut and isinstance(vorlage, list) and vorlage:
+            attribut = vorlage[0]  # Umbenennung ohne Attribut-Änderung
+        gueltige = setting.get("attribute") or load_config("eigenschaften_config.json").get(
+            "standard_attribute", {}
+        )
+        if attribut not in gueltige:
+            return None, "Bitte ein gültiges verknüpftes Attribut wählen"
+        element = [attribut]
+    elif typ == "voelker":
         # Abstammungen werden aus Volkseigenarten kompiliert — übernommene
         # native Völker tragen keine Eigenarten-Rohdaten und sind hier tabu
         if vorlage is not None and not isinstance(vorlage.get("eigenarten"), list):

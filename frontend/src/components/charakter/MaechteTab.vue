@@ -100,6 +100,13 @@
           </v-list-item-subtitle>
           <template #append>
             <v-btn
+              icon="mdi-information-outline"
+              size="x-small"
+              variant="text"
+              title="Beschreibung"
+              @click.stop="beschreibungDialog?.oeffne(macht, String(name))"
+            />
+            <v-btn
               icon="mdi-pencil"
               size="x-small"
               variant="text"
@@ -116,6 +123,8 @@
           </template>
         </v-list-item>
       </v-list>
+
+      <BeschreibungDialog ref="beschreibungDialog" />
     </v-card-text>
   </v-card>
 </template>
@@ -125,12 +134,14 @@ import { ref, computed } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import ElementEditor from '@/components/charakter/ElementEditor.vue'
+import BeschreibungDialog from '@/components/charakter/BeschreibungDialog.vue'
 import { mergeKatalog } from '@/utils/settingElemente'
 import { RANG_ORDNUNG, sortiertesObjekt } from '@/utils/sortierung'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
 const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
+const beschreibungDialog = ref<InstanceType<typeof BeschreibungDialog> | null>(null)
 const suche = ref('')
 const sortOption = ref('Name')
 const sortAbsteigend = ref(false)

@@ -461,7 +461,7 @@
     "Seefahrt": [
       "Geschicklichkeit"
     ],
-    "Pilot": [
+    "Fliegen": [
       "Geschicklichkeit"
     ],
     "Darbietung": [
@@ -482,52 +482,34 @@
     "Reparieren": [
       "Verstand"
     ],
-    "Glücksspiel": [
-      "Verstand"
-    ],
     "Kriegskunst": [
       "Verstand"
     ],
-    "Zaubern": [
+    "Zaubern (VER)": [
       "Verstand"
     ],
-    "Zaubern (Zauberer)": {
-      "original": [
-        "Willenskraft"
-      ],
-      "aktiv": true
-    },
+    "Zaubern (WIL)": [
+      "Willenskraft"
+    ],
     "Alchemie": [
       "Verstand"
     ],
-    "Fokus": {
-      "original": [
-        "Willenskraft"
-      ],
-      "aktiv": false
-    },
     "Recherche": [
       "Verstand"
     ],
     "Sprache": [
       "Verstand"
     ],
-    "Magie": [
-      "Willenskraft"
-    ],
-    "Wissen (Geschichtswissen)": [
+    "Geschichtswissen & Geographie": [
       "Verstand"
     ],
-    "Wissen (Götter & Kulte)": [
+    "Götter & Kulte": [
       "Verstand"
     ],
-    "Wissen (Sagen & Legenden)": [
+    "Sagen & Legenden": [
       "Verstand"
     ],
-    "Wissen (Magie & Sphärenkunde)": [
-      "Verstand"
-    ],
-    "Wissen (Rechtskunde)": [
+    "Magie & Sphärenkunde": [
       "Verstand"
     ]
   },
@@ -666,7 +648,7 @@
         "WIL W6",
         "Überleben W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Glaube (Willenskraft)",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL)",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -819,9 +801,9 @@
       "rang": "A",
       "voraussetzungen": [
         "VER W6",
-        "Wissen (Magie & Sphärenkunde) W6"
+        "Magie & Sphärenkunde W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand)",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER)",
       "neue_maechte": 6,
       "machtpunkte": 15,
       "ausgewaehlt": false,
@@ -1164,7 +1146,7 @@
       "rang": "A",
       "voraussetzungen": [
         "Athletik W6 oder Kämpfen W6 oder Schießen W6",
-        "Wissen (Magie & Sphärenkunde) W4"
+        "Magie & Sphärenkunde W4"
       ],
       "beschreibung": "Diener der Heiligen Inquisition der Praioskirche (Bannstrahler-Laienorden): jagt mit Feuer und Schwert Ketzer, Schwarzmagier, Dämonen und Untote. Rüstungsbeschränkung (mittelschwer), Urteil (einmal pro Begegnung: +1 auf Angriffs- oder Schadenswürfe, oder +2 auf Eigenschaftswürfe – Wahl bei Einsatz), Monsterkunde (+2 auf Allgemeinwissen-Proben über Dämonen, Untote und unheilige Kreaturen).",
       "neue_maechte": 0,
@@ -1296,9 +1278,9 @@
       "rang": "A",
       "voraussetzungen": [
         "WIL W6",
-        "Wissen (Magie & Sphärenkunde) W4"
+        "Magie & Sphärenkunde W4"
       ],
-      "beschreibung": "AH (Hexe) [Arkane Fertigkeit: Magie (Willenskraft)], Behindernde Rüstung (jede), Vertrauter (magisch verbundenes Tier, das Patron-Zauber speichert; tägliche Kommunikation erforderlich), Hex (wählt einen Hex aus der Hexen-Liste, z.B. Böser Blick, Schlaf, Heilung, Verfluchung).",
+      "beschreibung": "AH (Hexe) [Arkane Fertigkeit: Zaubern (WIL)], Behindernde Rüstung (jede), Vertrauter (magisch verbundenes Tier, das Patron-Zauber speichert; tägliche Kommunikation erforderlich), Hex (wählt einen Hex aus der Hexen-Liste, z.B. Böser Blick, Schlaf, Heilung, Verfluchung).",
       "neue_maechte": 3,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -1388,7 +1370,7 @@
       "voraussetzungen": [
         "WIL W8",
         "Barbar",
-        "Wissen (Magie & Sphärenkunde) W6"
+        "Magie & Sphärenkunde W6"
       ],
       "beschreibung": "Befindet sich der Barbar im Kampfrausch und wirkt ein Ziel in Nahkampfreichweite (2'') eine Macht, kann der Barbar als freie Aktion sofort einen einzelnen Nahkampfangriff gegen dieses Ziel ausführen.",
       "neue_maechte": 0,
@@ -1742,7 +1724,7 @@
       "rang": "F",
       "voraussetzungen": [
         "Überleben W6",
-        "Allgemeinwissen oder Wissen (Magie & Sphärenkunde) W8"
+        "Allgemeinwissen oder Magie & Sphärenkunde W8"
       ],
       "beschreibung": "Finden des Weges: Erhöht Reisegeschwindigkeit um 10 %, kann feindliche Begegnung umgehen.",
       "neue_maechte": 0,
@@ -1915,7 +1897,7 @@
       "voraussetzungen": [
         "VER W8"
       ],
-      "beschreibung": "Legendenkunde: freie Wiederholung bei Allgemeinwissen, Wissen (Geschichtswissen), Wissen (Sagen & Legenden) oder Wissen (Götter & Kulte)",
+      "beschreibung": "Legendenkunde: freie Wiederholung bei Allgemeinwissen, Geschichtswissen & Geographie, Sagen & Legenden oder Götter & Kulte",
       "neue_maechte": 0,
       "machtpunkte": 0,
       "ausgewaehlt": false,
@@ -2013,7 +1995,7 @@
       "rang": "A",
       "voraussetzungen": [
         "VER W8",
-        "Wissen (Geschichtswissen) W8",
+        "Geschichtswissen & Geographie W8",
         "Recherche W8"
       ],
       "beschreibung": "+2 Recherche und auf bestimmte Wahrnehmungsproben.",
@@ -2147,7 +2129,7 @@
       "voraussetzungen": [
         "VER W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand). Dämonologe der Schwarzen Gilde – verbotene Schwarzmagie der Dämonenbeschwörung (Heptagramm-Rituale, Pakte mit den Niederhöllen). In ganz Aventurien geächtet und von der Inquisition verfolgt.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER). Dämonologe der Schwarzen Gilde – verbotene Schwarzmagie der Dämonenbeschwörung (Heptagramm-Rituale, Pakte mit den Niederhöllen). In ganz Aventurien geächtet und von der Inquisition verfolgt.",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -2168,7 +2150,7 @@
       "voraussetzungen": [
         "VER W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand)",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER)",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -2185,7 +2167,7 @@
       "voraussetzungen": [
         "VER W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand)",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER)",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -2202,7 +2184,7 @@
       "voraussetzungen": [
         "VER W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand). Nekromant der Schwarzen Gilde – verbotene Magie über Tod und Untote. Von der Boronkirche und der Inquisition unerbittlich gejagt.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER). Nekromant der Schwarzen Gilde – verbotene Magie über Tod und Untote. Von der Boronkirche und der Inquisition unerbittlich gejagt.",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -2219,7 +2201,7 @@
       "voraussetzungen": [
         "WIL W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Glaube (Willenskraft)",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL)",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -2238,7 +2220,7 @@
       "voraussetzungen": [
         "VER W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand). Golembaumeister – eine magische Tradition (Graue bzw. Schwarze Gilde) zur Erschaffung und Beseelung künstlicher Diener: Homunkuli und Golems aus Lehm, Stein oder Eisen. Außerhalb der Akademien mit Argwohn betrachtet.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER). Golembaumeister – eine magische Tradition (Graue bzw. Schwarze Gilde) zur Erschaffung und Beseelung künstlicher Diener: Homunkuli und Golems aus Lehm, Stein oder Eisen. Außerhalb der Akademien mit Argwohn betrachtet.",
       "neue_maechte": 2,
       "machtpunkte": 15,
       "ausgewaehlt": false,
@@ -2349,7 +2331,7 @@
       "rang": "F",
       "voraussetzungen": [
         "AH (Illusionist)",
-        "Zaubern W10"
+        "Zaubern (VER) W10"
       ],
       "beschreibung": "Erlaubt den Einsatz des Machtmodifikators Tödliche Illusion ohne zusätzliche Machtpunkte.",
       "neue_maechte": 0,
@@ -2364,7 +2346,7 @@
       "rang": "A",
       "voraussetzungen": [
         "AH (Illusionist)",
-        "Zaubern W8"
+        "Zaubern (VER) W8"
       ],
       "beschreibung": "Illusionen erhalten die Machtmodifikatoren Beweglich und Geräusch ohne zusätzliche Machtpunkte.",
       "neue_maechte": 0,
@@ -2703,9 +2685,9 @@
       "rang": "H",
       "voraussetzungen": [
         "Artefakterschaffer",
-        "Wissen (Magie & Sphärenkunde) W10"
+        "Magie & Sphärenkunde W10"
       ],
-      "beschreibung": "Erhöht die Belohnung für Wissen (Magie & Sphärenkunde)proben bei der Herstellung magischer Gegenstände auf 1000 G pro Erfolg oder Steigerung.",
+      "beschreibung": "Erhöht die Belohnung für Magie & Sphärenkundeproben bei der Herstellung magischer Gegenstände auf 1000 G pro Erfolg oder Steigerung.",
       "neue_maechte": 0,
       "machtpunkte": 0,
       "ausgewaehlt": false,
@@ -2718,7 +2700,7 @@
       "rang": "F",
       "voraussetzungen": [
         "AH (beliebig)",
-        "Glaube oder Zaubern W8"
+        "Glaube oder Zaubern (VER) W8"
       ],
       "beschreibung": "Erlaubt das Ignorieren von bis zu zwei Punkten Abzügen bei der Aktivierung einer ausgewählten Macht.",
       "neue_maechte": 0,
@@ -2748,7 +2730,7 @@
       "rang": "V",
       "voraussetzungen": [
         "AH (beliebig)",
-        "Glaube oder Zaubern W6"
+        "Glaube oder Zaubern (VER) W6"
       ],
       "beschreibung": "Gewährt Zugang zu epischen Machtmodifikatoren für alle Mächte des Helden. Gilt für alle arkanen Hintergründe, die der Charakter besitzt, wenn er die Voraussetzungen erfüllt.",
       "neue_maechte": 0,
@@ -2777,7 +2759,7 @@
       "rang": "V",
       "voraussetzungen": [
         "AH (beliebig)",
-        "Glaube oder Zaubern W10"
+        "Glaube oder Zaubern (VER) W10"
       ],
       "beschreibung": "Erlaubt das Wirken von Zaubern auf große Einheiten von Statisten. Siehe Regeln für Schlachtenmagie.",
       "neue_maechte": 0,
@@ -2792,7 +2774,7 @@
       "rang": "A",
       "voraussetzungen": [
         "AH (jeder außer Barde)",
-        "Wissen (Magie & Sphärenkunde) W8"
+        "Magie & Sphärenkunde W8"
       ],
       "beschreibung": "Erlaubt das Wirken von Zaubern ohne zu sprechen. Funktioniert auch unter Wasser, in einem Vakuum, oder innerhalb der Macht Stille.",
       "neue_maechte": 0,
@@ -2927,7 +2909,7 @@
       "rang": "A",
       "voraussetzungen": [
         "Wahrnehmung W8",
-        "Wissen (Magie & Sphärenkunde) W8"
+        "Magie & Sphärenkunde W8"
       ],
       "beschreibung": "Erlaubt Verstandsproben zur Einschätzung von Schätzen und magischen Gegenständen. Ermöglicht das Neuwürfeln von magischen Gegenstandseffekten mit einem Benny.",
       "neue_maechte": 0,
@@ -4272,7 +4254,7 @@
       "rang": "A",
       "voraussetzungen": [
         "A",
-        "Glaube oder Zaubern W8",
+        "Glaube oder Zaubern (VER) W8",
         "AH"
       ],
       "beschreibung": "Erhalte 10 Machtpunkte zurück, wenn du im Kampf einen Joker ziehst.",
@@ -4388,7 +4370,7 @@
       "rang": "F",
       "voraussetzungen": [
         "AH",
-        "Glaube oder Zaubern W10"
+        "Glaube oder Zaubern (VER) W10"
       ],
       "beschreibung": "Erhalte 5 Machtpunkte für eine Stufe Erschöpfung.",
       "neue_maechte": 0,
@@ -4403,9 +4385,9 @@
       "rang": "F",
       "voraussetzungen": [
         "AH (Begabt)",
-        "Fokus W6"
+        "Zaubern (WIL) W6"
       ],
-      "beschreibung": "Erhöhe Fokus um +1 für 1 Machtpunkt oder +2 für 3 Machtpunkte.",
+      "beschreibung": "Erhöhe Zaubern (WIL) um +1 für 1 Machtpunkt oder +2 für 3 Machtpunkte.",
       "neue_maechte": 0,
       "machtpunkte": 0,
       "ausgewaehlt": false,
@@ -5195,7 +5177,7 @@
       "rang": "F",
       "voraussetzungen": [
         "Kanalisieren",
-        "Wissen (Magie & Sphärenkunde) W6"
+        "Magie & Sphärenkunde W6"
       ],
       "beschreibung": "Stigmata: Der Charakter erhält einen Bonus auf Heilungsproben.",
       "neue_maechte": 0,
@@ -5973,7 +5955,7 @@
       "kategorie": "Hintergrund",
       "rang": "A",
       "voraussetzungen": [],
-      "beschreibung": "Arkaner Hintergrund, Arkane Fertigkeit: Fokus (Willenskraft)",
+      "beschreibung": "Arkaner Hintergrund, Arkane Fertigkeit: Zaubern (WIL)",
       "neue_maechte": 1,
       "machtpunkte": 15,
       "ausgewaehlt": false,
@@ -6024,7 +6006,7 @@
       "rang": "F",
       "voraussetzungen": [
         "AH (Magier)",
-        "Zaubern W6"
+        "Zaubern (VER) W6"
       ],
       "beschreibung": "Gib 1 zusätzlichen Machtpunkt aus, um die Ausprägung einer Macht zu verändern.",
       "neue_maechte": 0,
@@ -6237,7 +6219,7 @@
       "voraussetzungen": [
         "AH (Magier)",
         "WIL W8",
-        "Wissen (Magie & Sphärenkunde) W8"
+        "Magie & Sphärenkunde W8"
       ],
       "beschreibung": "Auf einer Kraftlinie sind Zaubernproben um +2 erleichtert, auf einer Kreuzung zweier Linien um +4 (je weitere Linie +1). Dafür tritt der Rückschlag auf einer Kraftlinie schon bei 1–2 auf dem Zaubern-Würfel ein (egal, was der Wild Die zeigt). Erst dieses Talent erlaubt es, Kraftlinien mit Arkanes entdecken aufzuspüren.",
       "neue_maechte": 0,
@@ -6252,7 +6234,7 @@
       "rang": "A",
       "voraussetzungen": [
         "AH (Magier)",
-        "Zaubern W6"
+        "Zaubern (VER) W6"
       ],
       "beschreibung": "Der Magier kann eine Kristallkugel verzaubern: als Brennglas nutzen, Bilder der Umgebung aufnehmen und wiedergeben oder im Umkreis von VER × 10 m vor Untoten warnen (rotes Aufleuchten – je intensiver, desto näher die Untoten).",
       "neue_maechte": 0,
@@ -6282,7 +6264,7 @@
       "rang": "A",
       "voraussetzungen": [
         "AH (Magier)",
-        "Zaubern W8"
+        "Zaubern (VER) W8"
       ],
       "beschreibung": "Der Zauberer erledigt alltägliche Tätigkeiten (Kleidung reinigen, schneidern, Haare schneiden u.ä.) auf magische Weise. Deckt Zauber wie Sapefacta oder Accuratum ab; der SL entscheidet im Einzelfall, ob ein oder zwei Machtpunkte fällig werden.",
       "neue_maechte": 0,
@@ -6312,7 +6294,7 @@
       "kategorie": "Macht",
       "rang": "A",
       "voraussetzungen": [
-        "Zaubern W6",
+        "Zaubern (VER) W6",
         "Elf oder Halbelf"
       ],
       "beschreibung": "Mit seinem Seeleninstrument spielt der Elf magische Lieder, die +1 auf eine bestimmte Eigenschaft verleihen, solange das Lied gehört wird. Elfenlieder lösen stets positive Gefühle und Verbundenheit aus. Das Wirken erfordert eine erfolgreiche Verstandsprobe. (DSA: Arkaner Hintergrund Fey.)",
@@ -6328,7 +6310,7 @@
       "rang": "A",
       "voraussetzungen": [
         "AH (Hexe)",
-        "Zaubern W8"
+        "Zaubern (VER) W8"
       ],
       "beschreibung": "Die Hexe spricht lang anhaltende Flüche aus. Ein Hexenfluch kostet keine Machtpunkte, der Zauberwurf ist aber um −2 erschwert. Für einen Bennie kann sie die Wirkungsdauer von Eigenschaft schwächen oder Fesseln beliebig lange aufrechterhalten; dafür muss sie zu Beginn jeder Sitzung je aufrechterhaltenem Fluch einen Bennie ausgeben. (Auch die Darna – Waldmenschen-Fluchmagier – nutzen dieselben Flüche.)",
       "neue_maechte": 0,
@@ -6343,7 +6325,7 @@
       "rang": "A",
       "voraussetzungen": [
         "AH (Druide)",
-        "Zaubern W8"
+        "Zaubern (VER) W8"
       ],
       "beschreibung": "Der Vulkanglasdolch wird kalt bei dämonischer Präsenz, weist den Weg zu seinem Weiheort und zu günstigen Orten der Wildnis (+1 auf Überleben) und zeigt Kraftlinien an. Einmal pro Tag kann der Druide eine Erschöpfungsstufe heilen, wenn er den Dolch in die Erde steckt und ein kurzes Ritual ausführt.",
       "neue_maechte": 0,
@@ -6358,7 +6340,7 @@
       "rang": "A",
       "voraussetzungen": [
         "AH (Magier)",
-        "Wissen (Magie & Sphärenkunde) W4"
+        "Magie & Sphärenkunde W4"
       ],
       "beschreibung": "Der Magier bindet sich rituell an seinen Magierstab. Der Stab wird so stabil wie eine gleich große Eisenstange. Mit einer Aktion Konzentration und einer Zaubernprobe kann er den Stab in ein 20 m langes Seil oder eine Fackel verwandeln (kostet 1 MP); die Rückverwandlung ist kostenlos.",
       "neue_maechte": 0,
@@ -6373,7 +6355,7 @@
       "rang": "F",
       "voraussetzungen": [
         "Bindung des Stabes",
-        "Wissen (Magie & Sphärenkunde) W8"
+        "Magie & Sphärenkunde W8"
       ],
       "beschreibung": "Mit einer Aktion und einer Zaubernprobe halbiert oder verdoppelt der Magier die Länge seines Stabes. Der Stab zählt in jeder Form als Erweiterung der Reichweite Berührung. Zudem kann er ihn aus bis zu 100 m zu sich rufen – außer er wird mit mindestens der Kraft einer erwachsenen Hand festgehalten.",
       "neue_maechte": 0,
@@ -6388,7 +6370,7 @@
       "rang": "V",
       "voraussetzungen": [
         "Fokus des Stabes",
-        "Wissen (Magie & Sphärenkunde) W10"
+        "Magie & Sphärenkunde W10"
       ],
       "beschreibung": "Der Magier verwandelt seinen Stab in ein Flammenschwert (VE+W8, Angriff über den Kämpfen-Wert des Magiers). Verwandlung über Zaubern: 1 Aktion, 2 Machtpunkte, hält 5 Runden, danach 1 MP pro weiterer Runde. Das Schwert kann geführt oder schwebend genutzt werden (eigene Bewegungsaktion mit Standardgeschwindigkeit des Magiers).",
       "neue_maechte": 0,
@@ -6403,7 +6385,7 @@
       "rang": "V",
       "voraussetzungen": [
         "AH (Magier)",
-        "Zaubern W8",
+        "Zaubern (VER) W8",
         "VER W10"
       ],
       "beschreibung": "Der Magier speichert bis zu fünf Machtpunkte in seinem Zauberstab. Sie sind an eine bei der Talentwahl bestimmte Macht gebunden und nur verfügbar, solange er den Stab berührt; er kann sie mit seinen eigenen kombinieren. Sie regenerieren gemeinsam mit den Machtpunkten des Magiers.",
@@ -6419,7 +6401,7 @@
       "rang": "V",
       "voraussetzungen": [
         "AH (Magier)",
-        "Zaubern W8"
+        "Zaubern (VER) W8"
       ],
       "beschreibung": "Solange der Magier seinen Zauberstab in der Hand hält, würfelt er einen W8 statt einen W6 als Wild Die auf seine Zaubernproben.",
       "neue_maechte": 0,
@@ -6449,7 +6431,7 @@
       "voraussetzungen": [
         "WIL W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Magie (Willenskraft). Als Säugling von Kobolden entführt und aufgezogen, wirkt der Schelm allerlei magische Späße – Illusionen, Koboldrufe, harmlose Streiche. Seine intuitive Koboldmagie dient der Erheiterung, nie der ernsten Schädigung, taugt aber für Tricks und geistige Duelle.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL). Als Säugling von Kobolden entführt und aufgezogen, wirkt der Schelm allerlei magische Späße – Illusionen, Koboldrufe, harmlose Streiche. Seine intuitive Koboldmagie dient der Erheiterung, nie der ernsten Schädigung, taugt aber für Tricks und geistige Duelle.",
       "neue_maechte": 2,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -6538,7 +6520,7 @@
         "WIL W6",
         "Volk: Zwerg"
       ],
-      "beschreibung": "Arkane Fertigkeit: Magie (Willenskraft). Zwergische Geode der Erz- und Kristallmagie; bindet ihre Kraft an den Lebensring (Traditionsartefakt) und wirkt Geodenrituale.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL). Zwergische Geode der Erz- und Kristallmagie; bindet ihre Kraft an den Lebensring (Traditionsartefakt) und wirkt Geodenrituale.",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -6556,7 +6538,7 @@
       "voraussetzungen": [
         "VER W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand). Kristallomantin der Hellsicht; wirkt und deutet durch ihre Kristallkugel (Traditionsartefakt), eng mit den Echsenvölkern verbunden.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER). Kristallomantin der Hellsicht; wirkt und deutet durch ihre Kristallkugel (Traditionsartefakt), eng mit den Echsenvölkern verbunden.",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -6574,7 +6556,7 @@
       "voraussetzungen": [
         "WIL W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Magie (Willenskraft). Tulamidische Zibilja-Ritualmagierin; bewahrt ihr Wissen in der Sippenchronik (Traditionsartefakt).",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL). Tulamidische Zibilja-Ritualmagierin; bewahrt ihr Wissen in der Sippenchronik (Traditionsartefakt).",
       "neue_maechte": 5,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -6611,7 +6593,7 @@
         "WIL W6",
         "Elf oder Halbelf"
       ],
-      "beschreibung": "Arkane Fertigkeit: Magie (Willenskraft). Elfische Magie (Fey) — alle Elfen Aventuriens können zaubern.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL). Elfische Magie (Fey) — alle Elfen Aventuriens können zaubern.",
       "neue_maechte": 2,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -7233,7 +7215,7 @@
         "WIL W6",
         "Volk: Goblin"
       ],
-      "beschreibung": "Arkane Fertigkeit: Magie (Willenskraft). Goblinzauberin, deren Goblinrituale an Schamanenriten erinnern; bindet ihre Kraft an Goblinkeule, Schweinetrommel und Hauerkette (Traditionsartefakte).",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL). Goblinzauberin, deren Goblinrituale an Schamanenriten erinnern; bindet ihre Kraft an Goblinkeule, Schweinetrommel und Hauerkette (Traditionsartefakte).",
       "neue_maechte": 3,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -7251,7 +7233,7 @@
       "voraussetzungen": [
         "VER W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Zaubern (Verstand). Seltene Tradition der Runenmagie; der Runenschöpfer bringt Zauberrunen an, die eine gespeicherte Macht entfalten, sobald ihre Auslösebedingung eintritt.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (VER). Seltene Tradition der Runenmagie; der Runenschöpfer bringt Zauberrunen an, die eine gespeicherte Macht entfalten, sobald ihre Auslösebedingung eintritt.",
       "neue_maechte": 3,
       "machtpunkte": 10,
       "ausgewaehlt": false,
@@ -7268,7 +7250,7 @@
       "voraussetzungen": [
         "WIL W6"
       ],
-      "beschreibung": "Arkane Fertigkeit: Magie (Willenskraft). Fahrender Scharlatan-Magier (Gaukelei, Verblüffung, Illusionen); bindet seine Streiche an Zauberstecken und scharlatanische Zauberkugel (Traditionsartefakte). Anders als der koboldgeborene Schelm ist seine Trickmagie erlernt und durchaus auch zum Schaden einsetzbar.",
+      "beschreibung": "Arkane Fertigkeit: Zaubern (WIL). Fahrender Scharlatan-Magier (Gaukelei, Verblüffung, Illusionen); bindet seine Streiche an Zauberstecken und scharlatanische Zauberkugel (Traditionsartefakte). Anders als der koboldgeborene Schelm ist seine Trickmagie erlernt und durchaus auch zum Schaden einsetzbar.",
       "neue_maechte": 2,
       "machtpunkte": 10,
       "ausgewaehlt": false,

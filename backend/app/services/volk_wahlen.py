@@ -33,6 +33,11 @@ MIN_WUERFEL = 4
 
 # "Arkaner Hintergrund, Arkane Fertigkeit: Zaubern (Verstand)" -> "Zaubern"
 _ARKANE_FERTIGKEIT_RE = re.compile(r"Arkane Fertigkeit:\s*([^(,]+?)\s*(?:\(|,|$)")
+# Manche Settings (Savage Aventurien) führen Varianten derselben Fertigkeit als
+# "Zaubern (VER)" / "Zaubern (WIL)". Ein Attribut-Kürzel in Klammern gehört dann
+# zum Fertigkeitsnamen und wird angehängt; ausgeschriebene Attribute (Verstand,
+# Willenskraft, ...) bleiben wie bisher reine Attribut-Annotation und entfallen.
+_ARKANE_ATTR_RE = re.compile(r"Arkane Fertigkeit:\s*[^(,]+?\s*\((STÄ|GES|KON|VER|WIL)\)")
 
 _FERTIGKEIT_WAHLEN = {
     # wahl_id -> (filter, Beschreibung); Optionen kommen ggf. aus der Wahl-Definition
@@ -171,8 +176,13 @@ def _entferne_fertigkeit_bonus(daten: dict, snapshot: dict) -> None:
 
 
 def arkane_fertigkeit_aus_ah(talent_data: dict) -> str | None:
-    m = _ARKANE_FERTIGKEIT_RE.search(talent_data.get("beschreibung", "") or "")
-    return m.group(1).strip() if m else None
+    beschreibung = talent_data.get("beschreibung", "") or ""
+    m = _ARKANE_FERTIGKEIT_RE.search(beschreibung)
+    if not m:
+        return None
+    name = m.group(1).strip()
+    attr = _ARKANE_ATTR_RE.search(beschreibung)
+    return f"{name} ({attr.group(1)})" if attr else name
 
 
 def magieaffin_optionen(setting_talente: dict) -> list[str]:

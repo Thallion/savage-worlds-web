@@ -255,6 +255,59 @@ def test_einloesen_attribut_und_fertigkeit(daten):
     assert not r["success"]  # keine Punkte mehr
 
 
+def test_einloesen_zuruecknehmen(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # 2 Punkte
+    d = aktion("handicap-punkte/einloesen", d, "attribut")["charakter_daten"]
+
+    r = aktion("handicap-punkte/zuruecknehmen", d, "attribut")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["verbleibende_handicap_punkte"] == 2
+    assert d["verbleibende_attributsteigerungen"] == 5
+    assert d["maximale_attributsteigerungen"] == 5
+
+    # nichts mehr eingelöst → keine zweite Rücknahme
+    r = aktion("handicap-punkte/zuruecknehmen", d, "attribut")
+    assert not r["success"]
+    assert "keine Handicap-Punkte eingelöst" in r["message"]
+
+
+def test_zuruecknehmen_nach_ausgabe_abgelehnt(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # 2 Punkte
+    d = aktion("handicap-punkte/einloesen", d, "attribut")["charakter_daten"]
+    # alle 6 Steigerungen ausgeben
+    for attr in ("Stärke", "Geschicklichkeit", "Verstand"):
+        d = aktion("attribut/steigern", d, attr)["charakter_daten"]
+        d = aktion("attribut/steigern", d, attr)["charakter_daten"]
+    assert d["verbleibende_attributsteigerungen"] == 0
+
+    r = aktion("handicap-punkte/zuruecknehmen", d, "attribut")
+    assert not r["success"]
+    assert "bereits ausgegeben" in r["message"]
+
+    d = aktion("attribut/senken", d, "Stärke")["charakter_daten"]
+    r = aktion("handicap-punkte/zuruecknehmen", d, "attribut")
+    assert r["success"]
+    assert r["charakter_daten"]["verbleibende_handicap_punkte"] == 2
+
+
+def test_zuruecknehmen_startgeld(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]  # 2 Punkte
+    d = aktion("handicap-punkte/einloesen", d, "startgeld")["charakter_daten"]
+    assert d["startgeld_bonus_punkte"] == 1
+
+    r = aktion("handicap-punkte/zuruecknehmen", d, "startgeld")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["startgeld_bonus_punkte"] == 0
+    assert d["verbleibende_handicap_punkte"] == 2
+
+
+def test_zuruecknehmen_unbekannte_option(daten):
+    r = aktion("handicap-punkte/zuruecknehmen", daten, "talent")
+    assert not r["success"]
+
+
 def test_einloesen_unbekannte_option(daten):
     r = aktion("handicap-punkte/einloesen", daten, "startgeld")
     assert not r["success"]

@@ -667,6 +667,74 @@ def handicap_punkte_einloesen(req: SpiellogikRequest):
         feld = "attributsteigerungen" if option == "attribut" else "fertigkeitssteigerungen"
         daten[f"verbleibende_{feld}"] = daten.get(f"verbleibende_{feld}", 0) + 1
         daten[f"maximale_{feld}"] = daten.get(f"maximale_{feld}", 0) + 1
+    einloesungen = daten.setdefault("handicap_einloesungen", {})
+    einloesungen[option] = einloesungen.get(option, 0) + 1
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+def _einloesungen_anzahl(daten: dict, option: str) -> int:
+    """Wie oft die Option eingelöst wurde. Bestandscharaktere ohne Zähler:
+    beim Startgeld ist startgeld_bonus_punkte selbst der Zähler, bei
+    Attribut/Fertigkeit lässt sich die Einlösung nicht rekonstruieren
+    (maximale_* ändern auch Völker und die Startpunkte-Anpassung)."""
+    einloesungen = daten.get("handicap_einloesungen") or {}
+    if option in einloesungen:
+        return einloesungen.get(option, 0)
+    if option == "startgeld":
+        return daten.get("startgeld_bonus_punkte", 0)
+    return 0
+
+
+@router.post("/handicap-punkte/zuruecknehmen", response_model=SpiellogikResponse)
+def handicap_punkte_zuruecknehmen(req: SpiellogikRequest):
+    """Gegenstück zu /handicap-punkte/einloesen: gibt eine noch nicht
+    ausgegebene Einlösung zurück und erstattet die Handicap-Punkte."""
+    daten = req.charakter_daten
+    option = req.element_name or ""
+    kosten = HANDICAP_EINLOESE_KOSTEN.get(option)
+    if kosten is None or option == "talent":
+        return SpiellogikResponse(
+            success=False,
+            message=f"Unbekannte Einlöse-Option '{option}' (gültig: attribut, fertigkeit, startgeld)",
+        )
+
+    anzahl = _einloesungen_anzahl(daten, option)
+    if anzahl <= 0:
+        return SpiellogikResponse(
+            success=False,
+            message="Für diese Option wurden keine Handicap-Punkte eingelöst",
+            charakter_daten=daten,
+        )
+
+    if option == "startgeld":
+        try:
+            setting = load_setting(daten.get("active_setting_name", "SWAE"))
+        except FileNotFoundError:
+            setting = {}
+        basis = startkapital_basis(setting, daten)
+        verfuegbar, _ = verfuegbares_geld(daten, setting)
+        if verfuegbar < basis:
+            return SpiellogikResponse(
+                success=False,
+                message="Das eingelöste Startkapital ist bereits ausgegeben — zuerst Ausrüstung verkaufen",
+                charakter_daten=daten,
+            )
+        daten["startgeld_bonus_punkte"] = daten.get("startgeld_bonus_punkte", 0) - 1
+    else:
+        feld = "attributsteigerungen" if option == "attribut" else "fertigkeitssteigerungen"
+        if daten.get(f"verbleibende_{feld}", 0) < 1:
+            bezeichnung = "Attributssteigerung" if option == "attribut" else "Fertigkeitspunkt"
+            return SpiellogikResponse(
+                success=False,
+                message=f"Der eingelöste {bezeichnung} ist bereits ausgegeben — zuerst senken",
+                charakter_daten=daten,
+            )
+        daten[f"verbleibende_{feld}"] = daten[f"verbleibende_{feld}"] - 1
+        daten[f"maximale_{feld}"] = max(0, daten.get(f"maximale_{feld}", 0) - 1)
+
+    daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + kosten
+    einloesungen = daten.setdefault("handicap_einloesungen", {})
+    einloesungen[option] = anzahl - 1
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 

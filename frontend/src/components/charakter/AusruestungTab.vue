@@ -79,6 +79,15 @@
               <td>
                 {{ eintrag.name }}
                 <span class="text-caption text-medium-emphasis">({{ eintrag.kategorie }})</span>
+                <v-chip
+                  v-if="eintrag.natuerlich"
+                  size="x-small"
+                  variant="tonal"
+                  class="ml-1"
+                  title="Kostenlos aus Abstammung oder Talenten"
+                >
+                  natürlich
+                </v-chip>
               </td>
               <td class="text-right">{{ eintrag.anzahl }}</td>
               <td class="text-right">{{ gewichtAnzeige(eintrag.gewicht * eintrag.anzahl) }} kg</td>
@@ -367,6 +376,10 @@ const kategorien = computed(() =>
   [...new Set(Object.values(katalog.value).map((i: any) => i.kategorie as string))].sort(),
 )
 
+// Natürliche Waffen, die Abstammung und Talente kostenlos stellen
+// (backend/app/services/natuerliche_waffen.py)
+const natuerlicheWaffen = computed(() => daten.value.natuerliche_waffen ?? [])
+
 const besitz = computed(() =>
   Object.entries(daten.value.ausruestung_selected ?? {})
     .filter(([, e]) => (e.anzahl ?? 0) > 0)
@@ -380,6 +393,7 @@ const besitz = computed(() =>
         gewicht: item.gewicht ?? 0,
         kosten: item.kosten ?? 0,
         anlegbar: ANLEGBARE_KATEGORIEN.includes(item.kategorie),
+        natuerlich: natuerlicheWaffen.value.includes(name),
       }
     })
     .sort((a, b) => a.name.localeCompare(b.name)),
@@ -401,6 +415,7 @@ const gefilterterKatalog = computed(() => {
         (!kategorieFilter.value || i.kategorie === kategorieFilter.value) &&
         (!s ||
           i.name.toLowerCase().includes(s) ||
+          (i.unterkategorie ?? '').toLowerCase().includes(s) ||
           (i.beschreibung ?? '').toLowerCase().includes(s)),
     )
     .sort((a: any, b: any) => (vergleich[sortOption.value] ?? vergleich.Name)(a, b) * richtung)

@@ -73,6 +73,9 @@ export interface CharakterDaten {
   voelker_selected: Record<string, any>
   // Ausrüstung: {name: {anzahl, angelegt}}; Geld wird in /berechne hergeleitet
   ausruestung_selected?: Record<string, { anzahl: number; angelegt?: boolean }>
+  // kostenlos aus Abstammung/Talenten gestellte natürliche Waffen
+  // (backend/app/services/natuerliche_waffen.py)
+  natuerliche_waffen?: string[]
   ausruestung_ausgegeben?: number
   startgeld_bonus_punkte?: number
   // Overrides aus dem Vermögens-Dialog (Original: Vermögens-Popup)

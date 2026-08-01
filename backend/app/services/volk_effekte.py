@@ -9,6 +9,7 @@ in die Attribute geschrieben, sondern zur Laufzeit in /spiellogik/berechne aus
 voelker_selected gelesen.
 """
 
+from app.services.natuerliche_waffen import synchronisiere as synchronisiere_natuerliche_waffen
 from app.services.volk_wahlen import entferne_alle_spezialwahlen
 
 MAX_WUERFEL = 12
@@ -182,7 +183,7 @@ def entferne_volk_effekte(daten: dict) -> dict:
     return daten
 
 
-def wende_volk_an(daten: dict, volk_name: str, volk_data: dict) -> dict:
+def wende_volk_an(daten: dict, volk_name: str, volk_data: dict, setting: dict | None = None) -> dict:
     entferne_volk_effekte(daten)
 
     effekte = volk_data.get("effects") or {}
@@ -265,4 +266,7 @@ def wende_volk_an(daten: dict, volk_name: str, volk_data: dict) -> dict:
 
     daten["volk_effekte"] = angewendet
     daten["voelker_selected"] = {volk_name: volk_data}
+    # Klauen, Biss & Co. der Abstammung kostenlos ins Inventar (auch die von
+    # auto_talente mitgebrachten, deshalb erst hier am Ende)
+    synchronisiere_natuerliche_waffen(daten, setting)
     return daten

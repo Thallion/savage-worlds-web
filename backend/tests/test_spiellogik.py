@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from main import app
 from app.services.charakter_init import initialisiere_charakter_daten
+from app.services.natuerliche_waffen import abgeleitete_waffen
 
 client = TestClient(app)
 
@@ -296,6 +297,139 @@ def test_volk_fertigkeits_startbonus(daten):
     assert d["fertigkeiten"]["Wahrnehmung"]["wuerfel"]["value"] == 6
     d = aktion("volk/waehlen", d, "Mensch")["charakter_daten"]
     assert d["fertigkeiten"]["Wahrnehmung"]["wuerfel"]["value"] == 4
+
+
+# --- Natürliche Waffen aus der Abstammung ---
+
+def test_volk_natuerliche_waffen_ins_inventar(daten):
+    # Rakashaner: Biss (Stä+W4) und Klauen (Stä+W4, PB 2) laut besonderheiten
+    d = aktion("volk/waehlen", daten, "Rakashaner")["charakter_daten"]
+    assert d["ausruestung_selected"]["Biss (Stä+W4)"]["anzahl"] == 1
+    assert d["ausruestung_selected"]["Klauen (Stä+W4, PB 2)"]["anzahl"] == 1
+
+
+def test_volk_natuerliche_waffen_kosten_nichts(daten):
+    d = aktion("volk/waehlen", daten, "Rakashaner")["charakter_daten"]
+    werte = berechne(d)
+    assert werte["vermoegen"] == 500
+    assert werte["gesamtgewicht"] == 0
+
+
+def test_volk_wechsel_tauscht_natuerliche_waffen(daten):
+    d = aktion("volk/waehlen", daten, "Rakashaner")["charakter_daten"]
+    # Saurianer hat nur den Biss, die Klauen müssen verschwinden
+    d = aktion("volk/waehlen", d, "Saurianer")["charakter_daten"]
+    assert "Klauen (Stä+W4, PB 2)" not in d["ausruestung_selected"]
+    assert "Biss (Stä+W4)" in d["ausruestung_selected"]
+    d = aktion("volk/waehlen", d, "Mensch")["charakter_daten"]
+    assert d["ausruestung_selected"] == {}
+
+
+def test_volk_natuerliche_waffen_lassen_gekaufte_ausruestung_stehen(daten):
+    d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Rakashaner")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Mensch")["charakter_daten"]
+    assert d["ausruestung_selected"]["Fackel"]["anzahl"] == 1
+
+
+def test_natuerliche_waffen_aus_eigener_abstammung():
+    # Eigene Abstammung (volk_erstellung): Würfel steht direkt im Effekt
+    volk = {
+        "effects": {
+            "spezielle_effekte": {"klauen": "W6", "panzerbrechend": 2, "hoerner": "W4"}
+        }
+    }
+    waffen = abgeleitete_waffen({"voelker_selected": {"Testvolk": volk}})
+    assert waffen == ["Klauen (Stä+W6, PB 2)", "Hörner (Stä+W4)"]
+
+
+def test_natuerliche_waffen_ohne_angaben_default_w4():
+    volk = {"effects": {"spezielle_effekte": {"biss": True}}, "besonderheiten": []}
+    assert abgeleitete_waffen({"voelker_selected": {"V": volk}}) == ["Biss (Stä+W4)"]
+
+
+def test_natuerliche_waffen_nur_im_text_der_abstammung():
+    # Horror-Vampir nennt die Waffe nur in besonderheiten, ohne spezielle_effekte
+    volk = {"besonderheiten": ["Natürliche Waffen (Biss: Stä+W4)"]}
+    assert abgeleitete_waffen({"voelker_selected": {"Vampir": volk}}) == ["Biss (Stä+W4)"]
+
+
+def test_natuerliche_waffen_bedingte_angaben_ignoriert():
+    # Alternativfähigkeit (optionaler Tausch) und Formangaben zählen nicht
+    volk = {
+        "besonderheiten": [
+            "Alternativfähigkeit – Katzenkrallen: Natürliche Waffe, Stärke+W4 Schaden",
+            "Hybridform: Natürliche Waffen (Klauen/Biss: Stä+W6)",
+        ]
+    }
+    assert abgeleitete_waffen({"voelker_selected": {"V": volk}}) == []
+
+
+# --- Natürliche Waffen aus Talenten ---
+
+def test_talent_kampfkuenstler_gibt_waffenlosen_schlag(daten):
+    d = mit_talent_slot(daten)
+    d = aktion("talent/waehlen", d, "Kampfkünstler", ignoriere_pruefungen=True)["charakter_daten"]
+    assert "Waffenloser Schlag (Stä+W4)" in d["ausruestung_selected"]
+    assert berechne(d)["vermoegen"] == 500
+
+
+def test_talent_kette_steigert_waffenlosen_schaden(daten):
+    # Kampfkünstler W4 -> Kampfkunstmeister W6 -> Raufbold W8 -> Schläger W10
+    d = mit_talent_slot(daten, 4)
+    erwartet = ["W4", "W6", "W8", "W10"]
+    for talent, wuerfel in zip(
+        ["Kampfkünstler", "Kampfkunstmeister", "Raufbold", "Schläger"], erwartet
+    ):
+        d = aktion("talent/waehlen", d, talent, ignoriere_pruefungen=True)["charakter_daten"]
+        assert f"Waffenloser Schlag (Stä+{wuerfel})" in d["ausruestung_selected"]
+        # immer nur eine Stufe im Inventar, die vorherige verschwindet
+        assert len([n for n in d["ausruestung_selected"] if n.startswith("Waffenloser")]) == 1
+
+
+def test_talent_entfernen_senkt_waffenlosen_schaden(daten):
+    d = mit_talent_slot(daten, 2)
+    d = aktion("talent/waehlen", d, "Kampfkünstler", ignoriere_pruefungen=True)["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Kampfkunstmeister", ignoriere_pruefungen=True)["charakter_daten"]
+    d = aktion("talent/entfernen", d, "Kampfkunstmeister")["charakter_daten"]
+    assert "Waffenloser Schlag (Stä+W4)" in d["ausruestung_selected"]
+    assert "Waffenloser Schlag (Stä+W6)" not in d["ausruestung_selected"]
+    d = aktion("talent/entfernen", d, "Kampfkünstler")["charakter_daten"]
+    assert d["ausruestung_selected"] == {}
+
+
+def test_talent_verbessert_klauen_der_abstammung(daten):
+    # Rakashaner-Klauen Stä+W4/PB 2 -> Wilde Klauen macht Stä+W6/PB 2 daraus
+    d = aktion("volk/waehlen", daten, "Rakashaner")["charakter_daten"]
+    assert "Klauen (Stä+W4, PB 2)" in d["ausruestung_selected"]
+    d["selected_talente"] = d.get("selected_talente", []) + ["Wilde Klauen"]
+    waffen = abgeleitete_waffen(d)
+    assert "Klauen (Stä+W6, PB 2)" in waffen
+    assert "Klauen (Stä+W4, PB 2)" not in waffen
+
+
+def test_talent_verleihen_vor_steigern(daten):
+    # Der Mönch bringt Stä+W4 mit, Kampfkünstler steigert das auf Stä+W6 —
+    # unabhängig von der Reihenfolge in der Konfiguration
+    assert abgeleitete_waffen({"selected_talente": ["Waffenloser Schlag"]}) == [
+        "Waffenloser Schlag (Stä+W4)"
+    ]
+    assert abgeleitete_waffen(
+        {"selected_talente": ["Waffenloser Schlag", "Kampfkünstler"]}
+    ) == ["Waffenloser Schlag (Stä+W6)"]
+
+
+def test_talent_steigern_ohne_grundwaffe_wirkungslos():
+    # Kampfkunstmeister allein (ohne Kampfkünstler) verleiht keine Waffe
+    assert abgeleitete_waffen({"selected_talente": ["Kampfkunstmeister"]}) == []
+
+
+def test_talent_mehrfachauswahl_verbessert(daten):
+    # Horror-Talent "Klauen": 1. Mal Stä+W4, 2. Mal Stä+W6 mit PB 2
+    assert abgeleitete_waffen({"selected_talente": ["Klauen"]}) == ["Klauen (Stä+W4)"]
+    assert abgeleitete_waffen({"selected_talente": ["Klauen", "Klauen"]}) == [
+        "Klauen (Stä+W6, PB 2)"
+    ]
 
 
 # --- Talente: Ökonomie + Voraussetzungen ---

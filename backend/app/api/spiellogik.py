@@ -61,6 +61,7 @@ from app.services.steigerungs_journal import (
     journal_eintrag_entfernen,
     wuerfel_anzeige,
 )
+from app.services.natuerliche_waffen import synchronisiere as synchronisiere_natuerliche_waffen
 from app.services.volk_effekte import wende_volk_an, wende_volk_wahl_an
 from app.services.volk_wahlen import wende_volk_spezialwahl_an
 
@@ -76,6 +77,14 @@ def _load_setting(setting_name: str, daten: dict | None = None) -> dict:
     if daten is not None:
         setting = wende_setting_overrides_an(setting, daten)
     return setting
+
+
+def _setting_oder_none(daten: dict) -> dict | None:
+    """Setting des Charakters, None wenn es nicht (mehr) geladen werden kann."""
+    try:
+        return _load_setting(daten.get("active_setting_name", "SWAE"), daten)
+    except HTTPException:
+        return None
 
 
 @router.post("/attribut/steigern", response_model=SpiellogikResponse)
@@ -774,6 +783,9 @@ def talent_waehlen(req: SpiellogikRequest):
     zahlungen[talent_name] = bisherige + [zahlungsquelle]
     # Auto-Handicaps/-Talente/-Mächte und Attribut-Effekte (z. B. Berserker)
     wende_talent_effekte_an(daten, talent_name, talent_data)
+    # Talente wie Kampfkünstler oder Wilde Klauen verleihen bzw. verbessern
+    # natürliche Waffen im Inventar
+    synchronisiere_natuerliche_waffen(daten, _setting_oder_none(daten))
     journal_details = {"name": talent_name}
     if zahlungsquelle == "aufstieg":
         journal_details["kosten"] = AUFSTIEG_KOSTEN_TALENT
@@ -849,6 +861,7 @@ def talent_entfernen(req: SpiellogikRequest):
     else:
         daten["verbleibende_talente"] = daten.get("verbleibende_talente", 0) + 1
     entferne_talent_effekte(daten, talent_name)
+    synchronisiere_natuerliche_waffen(daten, _setting_oder_none(daten))
     if daten.get("char_gen_completed"):
         journal_eintrag_entfernen(daten, "talent_hinzugefuegt", talent_name)
     return SpiellogikResponse(success=True, charakter_daten=daten)
@@ -1096,7 +1109,7 @@ def volk_waehlen(req: SpiellogikRequest):
     if not volk_data:
         return SpiellogikResponse(success=False, message=f"Volk '{volk_name}' nicht gefunden")
 
-    daten = wende_volk_an(daten, volk_name, volk_data)
+    daten = wende_volk_an(daten, volk_name, volk_data, setting)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 

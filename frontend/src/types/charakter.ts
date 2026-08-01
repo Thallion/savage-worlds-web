@@ -108,6 +108,8 @@ export interface CharakterDaten {
   maximale_fertigkeitssteigerungen?: number
   gesamt_handicap_punkte?: number
   verbleibende_handicap_punkte?: number
+  // wie oft je Option Handicap-Punkte eingelöst wurden (für die Rücknahme)
+  handicap_einloesungen?: Partial<Record<'attribut' | 'fertigkeit' | 'startgeld' | 'talent', number>>
   aufstiege_gesamt?: number
   verbleibende_aufstiege?: number
   verbleibende_talente?: number

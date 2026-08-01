@@ -12,39 +12,30 @@
         </template>
       </v-alert>
 
-      <div class="mb-4 d-flex ga-2 flex-wrap">
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-arrow-up-bold"
-          :disabled="verbleibendePunkte < 2"
-          @click="einloesen('attribut')"
-        >
-          2 Punkte → 1 Attributssteigerung
-        </v-btn>
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-school"
-          :disabled="verbleibendePunkte < 1"
-          @click="einloesen('fertigkeit')"
-        >
-          1 Punkt → 1 Fertigkeitspunkt
-        </v-btn>
-        <v-btn
-          size="small"
-          color="primary"
-          variant="tonal"
-          prepend-icon="mdi-cash-plus"
-          :disabled="verbleibendePunkte < 1"
-          @click="einloesen('startgeld')"
-        >
-          1 Punkt → Startkapital erneut
-        </v-btn>
+      <div class="mb-4 d-flex ga-4 flex-wrap">
+        <div v-for="option in einloeseOptionen" :key="option.key" class="d-flex align-center ga-1">
+          <v-btn
+            size="small"
+            color="primary"
+            variant="tonal"
+            :prepend-icon="option.icon"
+            :disabled="verbleibendePunkte < option.kosten"
+            @click="einloesen(option.key)"
+          >
+            {{ option.label }}
+          </v-btn>
+          <v-btn
+            icon="mdi-undo"
+            size="x-small"
+            color="primary"
+            variant="tonal"
+            :disabled="!eingeloest(option.key)"
+            :title="`Rückgängig: ${option.rueckgabe} zurück in ${option.kosten} Handicap-Punkt${option.kosten > 1 ? 'e' : ''}`"
+            @click="zuruecknehmen(option.key)"
+          />
+        </div>
         <span class="text-caption align-self-center">
-          Talente kosten direkt 2 Punkte im Talente-Tab
+          Talente kosten direkt 2 Punkte im Talente-Tab — Rücknahme dort durch Abwählen des Talents
         </span>
       </div>
 
@@ -198,6 +189,45 @@ const selectedHandicaps = computed(() => daten.value.selected_handicaps || [])
 const verbleibendePunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)
 const istAbgeschlossen = computed(() => !!daten.value.char_gen_completed)
 
+type EinloeseOption = 'attribut' | 'fertigkeit' | 'startgeld'
+
+const einloeseOptionen: {
+  key: EinloeseOption
+  kosten: number
+  icon: string
+  label: string
+  rueckgabe: string
+}[] = [
+  {
+    key: 'attribut',
+    kosten: 2,
+    icon: 'mdi-arrow-up-bold',
+    label: '2 Punkte → 1 Attributssteigerung',
+    rueckgabe: '1 ungenutzte Attributssteigerung',
+  },
+  {
+    key: 'fertigkeit',
+    kosten: 1,
+    icon: 'mdi-school',
+    label: '1 Punkt → 1 Fertigkeitspunkt',
+    rueckgabe: '1 ungenutzter Fertigkeitspunkt',
+  },
+  {
+    key: 'startgeld',
+    kosten: 1,
+    icon: 'mdi-cash-plus',
+    label: '1 Punkt → Startkapital erneut',
+    rueckgabe: '1 ungenutztes Startkapital',
+  },
+]
+
+// Bestandscharaktere ohne Zähler: startgeld_bonus_punkte ist selbst der Zähler
+function eingeloest(option: EinloeseOption): boolean {
+  const zaehler = daten.value.handicap_einloesungen
+  if (zaehler && option in zaehler) return (zaehler[option] ?? 0) > 0
+  return option === 'startgeld' && (daten.value.startgeld_bonus_punkte ?? 0) > 0
+}
+
 const meldung = ref('')
 const meldungSichtbar = ref(false)
 
@@ -278,8 +308,16 @@ async function reduziereHandicap(name: string) {
   }
 }
 
-async function einloesen(option: 'attribut' | 'fertigkeit' | 'startgeld') {
+async function einloesen(option: EinloeseOption) {
   const result = await store.spiellogikAktion('handicap-punkte/einloesen', option)
+  if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
+
+async function zuruecknehmen(option: EinloeseOption) {
+  const result = await store.spiellogikAktion('handicap-punkte/zuruecknehmen', option)
   if (!result.success && result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true

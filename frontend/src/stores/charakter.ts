@@ -111,12 +111,15 @@ export const useCharakterStore = defineStore('charakter', () => {
   async function speichereCharakter() {
     if (!aktuellerCharakter.value) return
     const id = aktuellerCharakter.value.id
-    await api.put(`/charaktere/${id}`, {
+    const gespeichert = await api.put<CharakterDetail>(`/charaktere/${id}`, {
       char_name: aktuellerCharakter.value.char_name,
       active_setting_name: aktuellerCharakter.value.active_setting_name,
       char_gen_completed: aktuellerCharakter.value.char_gen_completed,
       charakter_daten: aktuellerCharakter.value.charakter_daten,
     })
+    // Der Server leitet char_name aus dem Profilnamen ab (und nummeriert bei
+    // Namensgleichheit) — den Stand übernehmen, damit Kopfzeile und Export folgen.
+    aktuellerCharakter.value.char_name = gespeichert.char_name
   }
 
   async function loescheCharakter(id: number) {

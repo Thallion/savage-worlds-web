@@ -79,19 +79,7 @@ def import_charakter(
     char_name = (
         daten.get("profil_daten", {}).get("Name") or ""
     ).strip() or "Importierter Charakter"
-
-    # char_name ist pro User eindeutig — bei Kollision nummerieren
-    vorhandene = {
-        name
-        for (name,) in db.query(db_models.Charakter.char_name).filter(
-            db_models.Charakter.user_id == current_user.id
-        )
-    }
-    if char_name in vorhandene:
-        n = 2
-        while f"{char_name} ({n})" in vorhandene:
-            n += 1
-        char_name = f"{char_name} ({n})"
+    char_name = _eindeutiger_char_name(db, current_user.id, char_name)
 
     charakter = db_models.Charakter(
         user_id=current_user.id,
@@ -133,14 +121,25 @@ def update_charakter(
 ):
     charakter = _get_own_charakter(db, charakter_id, current_user.id)
 
-    if data.char_name is not None:
-        charakter.char_name = data.char_name
     if data.active_setting_name is not None:
         charakter.active_setting_name = data.active_setting_name
     if data.char_gen_completed is not None:
         charakter.char_gen_completed = data.char_gen_completed
     if data.charakter_daten is not None:
         charakter.charakter_daten = data.charakter_daten
+
+    # Der Name im Profil ist die Quelle der Wahrheit: wird er im Editor geändert,
+    # zieht die Spalte char_name nach (Charakterliste, Export-Dateiname). Nur wenn
+    # keine charakter_daten mitkommen, zählt ein explizit gesetztes char_name.
+    neuer_name = data.char_name
+    if data.charakter_daten is not None:
+        neuer_name = (data.charakter_daten.get("profil_daten") or {}).get("Name")
+    if neuer_name is not None:
+        neuer_name = neuer_name.strip()
+        if neuer_name and neuer_name != charakter.char_name:
+            charakter.char_name = _eindeutiger_char_name(
+                db, current_user.id, neuer_name, ausser_id=charakter.id
+            )
 
     charakter.aktualisiert_am = datetime.utcnow()
     db.commit()
@@ -201,6 +200,26 @@ def export_charakter(
             "Content-Disposition": f'attachment; filename="{charakter.char_name or "charakter"}.json"'
         },
     )
+
+
+def _eindeutiger_char_name(
+    db: Session, user_id: int, char_name: str, ausser_id: int | None = None
+) -> str:
+    """char_name ist pro User eindeutig — bei Kollision durchnummerieren.
+    ausser_id klammert den Charakter aus, der gerade umbenannt wird."""
+    query = db.query(db_models.Charakter.char_name).filter(
+        db_models.Charakter.user_id == user_id
+    )
+    if ausser_id is not None:
+        query = query.filter(db_models.Charakter.id != ausser_id)
+    vorhandene = {name for (name,) in query}
+
+    if char_name not in vorhandene:
+        return char_name
+    n = 2
+    while f"{char_name} ({n})" in vorhandene:
+        n += 1
+    return f"{char_name} ({n})"
 
 
 def _get_own_charakter(db: Session, charakter_id: int, user_id: int) -> db_models.Charakter:

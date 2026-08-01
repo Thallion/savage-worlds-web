@@ -5,6 +5,7 @@ import json
 import re
 
 from app.config import settings
+from app.services.talent_effekte import migriere_temporaere_attribut_effekte
 
 START_ATTRIBUTSTEIGERUNGEN = 5
 START_FERTIGKEITSSTEIGERUNGEN = 12
@@ -453,6 +454,7 @@ def ergaenze_fehlende_eigenschaften(daten: dict) -> tuple[dict, bool]:
     # nach dem Auffüllen, damit die Wahl-Rekonstruktion Attribute/Fertigkeiten
     # validieren kann
     geaendert = _migriere_kivy_altformat(neu, setting) or geaendert
+    geaendert = migriere_temporaere_attribut_effekte(neu) or geaendert
 
     start_attr = config.get("start_attributsteigerungen", START_ATTRIBUTSTEIGERUNGEN)
     start_fert = config.get("start_fertigkeitssteigerungen", START_FERTIGKEITSSTEIGERUNGEN)

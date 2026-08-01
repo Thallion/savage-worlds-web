@@ -41,6 +41,7 @@ from app.services.charakterbogen import (
     _wuerfel,
 )
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
+from app.services.volk_effekte import gewaehltes_volk
 
 # DIN A4 mit schmalen Rändern
 SEITE = A4
@@ -278,19 +279,9 @@ def _attribute_fertigkeiten(bogen: _Bogen, daten: dict, setting: dict, werte: di
 
 
 def _volk(bogen: _Bogen, daten: dict, setting: dict, breite: float) -> list:
-    selected_volk = None
-    volk_data = None
-    for volk, eintrag in daten.get("voelker_selected", {}).items():
-        if eintrag:
-            selected_volk = volk
-            volk_data = eintrag if isinstance(eintrag, dict) else None
-            break
-
+    selected_volk, volk_data = gewaehltes_volk(daten, setting)
     if not selected_volk:
         return [bogen.p("Keine Abstammung ausgewählt.", bogen.hinweis)]
-
-    if volk_data is None:
-        volk_data = setting.get("voelker", {}).get(selected_volk)
 
     flows = [bogen.band_flow(f"Abstammung: {selected_volk}", breite), Spacer(1, 3)]
     if not volk_data:

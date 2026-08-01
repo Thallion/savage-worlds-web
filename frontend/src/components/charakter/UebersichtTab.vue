@@ -84,7 +84,12 @@
           >
             {{ h }}
           </v-chip>
-          <p v-if="!daten.selected_handicaps?.length" class="text-grey">Keine</p>
+          <p v-if="!daten.selected_handicaps?.length && !volkHandicapAnzahl" class="text-grey">
+            Keine
+          </p>
+          <p v-if="volkHandicapAnzahl" class="text-caption text-medium-emphasis mt-1">
+            + {{ volkHandicapAnzahl }} aus der Abstammung (siehe unten)
+          </p>
         </v-col>
 
         <!-- Talente -->
@@ -112,6 +117,28 @@
               </tr>
             </tbody>
           </v-table>
+        </v-col>
+      </v-row>
+
+      <!-- Abstammungs-Eigenschaften (wie die Abstammungs-Sektion im Charakterbogen) -->
+      <v-row v-if="volkEigenschaften" class="mt-4">
+        <v-col cols="12">
+          <h3 class="text-h6 mb-3">Abstammung: {{ volkEigenschaften.name }}</h3>
+          <v-row>
+            <v-col
+              v-for="block in volkEigenschaften.bloecke"
+              :key="block.titel"
+              cols="12"
+              md="4"
+            >
+              <div class="text-subtitle-2 mb-2">{{ block.titel }}</div>
+              <v-list density="compact" class="pa-0 bg-transparent">
+                <v-list-item v-for="eintrag in block.eintraege" :key="eintrag" class="px-0">
+                  <v-list-item-title class="text-body-2 text-wrap">{{ eintrag }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-col>
+          </v-row>
         </v-col>
       </v-row>
 
@@ -288,9 +315,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
+import { useEinstellungenStore } from '@/stores/einstellungen'
+import { mergeKatalog } from '@/utils/settingElemente'
 import { api } from '@/api/client'
 
 const store = useCharakterStore()
+const einstellungenStore = useEinstellungenStore()
 
 const statblockText = ref('')
 const statblockMeldung = ref('')
@@ -420,6 +450,36 @@ const gewaehlteVoelker = computed(() =>
     .filter(([, v]) => v)
     .map(([name]) => name)
     .join(', '),
+)
+
+// Talente, Handicaps und Besonderheiten der Abstammung stehen nur am Volk und
+// nicht in selected_talente/selected_handicaps (Ausnahme: auto_talente wie
+// Nachtsicht). Spiegelt _volk_sektion aus backend/app/services/charakterbogen.py:
+// bevorzugt der im Charakter gespeicherte Volk-Snapshot, sonst der Setting-Katalog.
+const volkEigenschaften = computed(() => {
+  const gewaehlt = Object.entries(daten.value.voelker_selected || {}).find(([, v]) => v)
+  if (!gewaehlt) return null
+  const [name, eintrag] = gewaehlt
+
+  const katalog = mergeKatalog(einstellungenStore.aktuellesSetting?.voelker, daten.value, 'voelker')
+  const volk = (typeof eintrag === 'object' ? eintrag : null) ?? katalog[name]
+  if (!volk) return null
+
+  const bloecke = (
+    [
+      ['Talente', 'talente'],
+      ['Handicaps', 'handicaps'],
+      ['Besonderheiten', 'besonderheiten'],
+    ] as const
+  )
+    .map(([titel, feld]) => ({ titel, eintraege: (volk[feld] ?? []) as string[] }))
+    .filter((block) => block.eintraege.length)
+
+  return bloecke.length ? { name, bloecke } : null
+})
+
+const volkHandicapAnzahl = computed(
+  () => volkEigenschaften.value?.bloecke.find((b) => b.titel === 'Handicaps')?.eintraege.length ?? 0,
 )
 
 const besitz = computed(() =>

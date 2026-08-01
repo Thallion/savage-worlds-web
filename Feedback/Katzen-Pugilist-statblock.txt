@@ -1,0 +1,8 @@
+Katzen-Pugilist
+Abstammung: Rakashaner (Fantasy Kompendium)
+Attribute: Geschicklichkeit W8, Verstand W4, Willenskraft W6, Stärke W8, Konstitution W8
+Fertigkeiten: Allgemeinwissen W4, Athletik W8, Diebeskunst W8, Heimlichkeit W8, Kämpfen W8, Wahrnehmung W6, Überreden W4
+Bewegungsweite: 6; Parade: 6; Robustheit: 10 (3); Größe: +0
+Handicaps: Arrogant (schwer), Loyal (leicht), Stur (leicht)
+Talente: Nachtsicht, Raufbold
+Ausrüstung: Abenteurerpaket, Kettenhaube [angelegt], Kettenhemd [angelegt], Kettenhose [angelegt], Trank: Heilung — Geld: 5

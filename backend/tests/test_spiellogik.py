@@ -461,6 +461,41 @@ def test_talent_verbessert_klauen_der_abstammung(daten):
     assert "Klauen (Stä+W4, PB 2)" not in waffen
 
 
+def test_raufbold_steigert_natuerliche_waffen_der_abstammung(daten):
+    # Rakashaner (Biss Stä+W4, Klauen Stä+W4/PB 2): Raufbold macht nicht die
+    # Fäuste zur Waffe, sondern steigert die vorhandenen natürlichen Waffen
+    d = aktion("volk/waehlen", daten, "Rakashaner")["charakter_daten"]
+    d["selected_talente"] = d.get("selected_talente", []) + ["Raufbold"]
+    waffen = abgeleitete_waffen(d)
+    assert waffen == ["Klauen (Stä+W6, PB 2)", "Biss (Stä+W6)"]
+    assert not [n for n in waffen if n.startswith("Waffenloser")]
+
+    d["selected_talente"] = d["selected_talente"] + ["Schläger"]
+    assert abgeleitete_waffen(d) == ["Klauen (Stä+W8, PB 2)", "Biss (Stä+W8)"]
+
+
+def test_raufbold_ohne_natuerliche_waffen_gibt_waffenlosen_schlag():
+    # ohne vorhandene Waffe bleibt es beim Grundwürfel für die Fäuste
+    assert abgeleitete_waffen({"selected_talente": ["Raufbold"]}) == [
+        "Waffenloser Schlag (Stä+W4)"
+    ]
+    assert abgeleitete_waffen({"selected_talente": ["Raufbold", "Schläger"]}) == [
+        "Waffenloser Schlag (Stä+W6)"
+    ]
+    # Schläger allein verleiht nichts
+    assert abgeleitete_waffen({"selected_talente": ["Schläger"]}) == []
+
+
+def test_raufbold_steigert_klauen_und_waffenlosen_schlag(daten):
+    # Kampfkünstler verleiht die Fäuste, danach steigert Raufbold beides
+    d = aktion("volk/waehlen", daten, "Saurianer")["charakter_daten"]
+    d["selected_talente"] = d.get("selected_talente", []) + [
+        "Kampfkünstler",
+        "Raufbold",
+    ]
+    assert abgeleitete_waffen(d) == ["Biss (Stä+W6)", "Waffenloser Schlag (Stä+W6)"]
+
+
 def test_talent_verleihen_vor_steigern(daten):
     # Der Mönch bringt Stä+W4 mit, Kampfkünstler steigert das auf Stä+W6 —
     # unabhängig von der Reihenfolge in der Konfiguration

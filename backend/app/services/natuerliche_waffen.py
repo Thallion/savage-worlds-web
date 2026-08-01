@@ -3,8 +3,9 @@
 Der Bestand wird nicht fortgeschrieben, sondern bei jeder Änderung neu aus
 Abstammung + gewählten Talenten abgeleitet und mit dem Inventar abgeglichen
 (synchronisiere). Das ist nötig, weil Talente vorhandene Waffen verbessern
-(Kampfkünstler W4 -> Kampfkunstmeister W6 -> Schläger W8) und ein Snapshot je
-Talent diese Ketten nicht sauber zurücknehmen könnte.
+(Kampfkünstler W4 -> Kampfkunstmeister W6 -> Schläger W8, Raufbold steigert
+Klauen der Abstammung) und ein Snapshot je Talent diese Ketten nicht sauber
+zurücknehmen könnte.
 
 Quellen, in dieser Reihenfolge:
 
@@ -147,6 +148,23 @@ def _reihenfolge(eintrag: tuple[int, tuple[str, dict]]) -> tuple[int, int, int]:
     return (1 if regel.get("steigert") else 0, 0 if regel.get("grundwuerfel") else 1, index)
 
 
+def _steigere_alle(zustand: dict, regel: dict, kette: list[str]) -> bool:
+    """Steigert jede Gruppe, die schon einen Würfel hat (Raufbold, Schläger).
+
+    Raufbold macht die Fäuste zur natürlichen Waffe (Stä+W4) — wer aber bereits
+    eine hat (Klauen der Abstammung, Kampfkünstler, ...), steigert stattdessen
+    deren Würfeltyp; Schläger steigert danach dasselbe noch einmal. Gibt False
+    zurück, wenn nichts zu steigern war, damit die Regel auf ihren
+    grundwuerfel zurückfallen kann.
+    """
+    eintraege = [e for e in zustand.values() if e["wuerfel"]]
+    if not eintraege:
+        return False
+    for eintrag in eintraege:
+        eintrag["wuerfel"] = _steigere(eintrag["wuerfel"], regel.get("steigert") or 0, kette)
+    return True
+
+
 def _aus_talenten(daten: dict, zustand: dict, kette: list[str]) -> None:
     gewaehlt = daten.get("selected_talente") or []
     talente = _config().get("talente") or {}
@@ -158,6 +176,8 @@ def _aus_talenten(daten: dict, zustand: dict, kette: list[str]) -> None:
         wiederholung = regel.get("wiederholung") or {}
         for kopie in range(anzahl):
             aktiv = {**regel, **wiederholung} if kopie else regel
+            if aktiv.get("steigert_alle") and _steigere_alle(zustand, aktiv, kette):
+                continue
             eintrag = zustand.setdefault(gruppe, {"wuerfel": None, "pb": 0})
             if aktiv.get("setzt"):
                 eintrag["wuerfel"] = _maximum(eintrag["wuerfel"], aktiv["setzt"], kette)

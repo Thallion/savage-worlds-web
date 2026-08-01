@@ -15,3 +15,6 @@ frontend/dist/
 # Lokale Charakter-Exporte (enthalten echte User-E-Mails) + Export-Skript
 exports/
 scripts/export_chars.sh
+
+# Lokales Nutzer-Feedback
+feedback/

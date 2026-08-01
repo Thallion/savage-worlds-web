@@ -1315,6 +1315,7 @@ def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
 
     # Handicaps: Lookup über Stufe aus dem Setting (oder alle_stufen)
     setting_handicaps = setting.get("handicaps", {})
+    setting_name = daten.get("active_setting_name", "")
     for handicap in daten.get("selected_handicaps", []):
         # Setting-Namen tragen die Stufe teils als Suffix ("Langsam_leicht"),
         # die Effekt-Config führt den Basisnamen mit Stufen-Keys
@@ -1326,6 +1327,8 @@ def _sammle_effekt_boni(daten: dict, setting: dict) -> dict:
             continue
         if stufe is None:
             stufe = setting_handicaps.get(handicap, {}).get("stufe", "leicht").lower()
+        # Gleichnamige Handicaps bedeuten je nach Setting Verschiedenes
+        stufen_effekte = (stufen_effekte.get("pro_setting") or {}).get(setting_name) or stufen_effekte
         effekt = stufen_effekte.get(stufe) or stufen_effekte.get("alle_stufen") or {}
         for stat, wert in effekt.items():
             if stat in boni:

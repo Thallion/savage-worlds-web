@@ -767,6 +767,48 @@ def test_berechne_volk_boni(daten):
     assert w["robustheit"] == 5  # Konstitution W6 durch Volk
 
 
+def test_berechne_zerbrechlich_senkt_robustheit(daten):
+    d = aktion("setting/wechseln", daten, "Fantasy Kompendium")["charakter_daten"]
+    ohne = berechne(d)["robustheit"]
+    d = aktion("handicap/waehlen", d, "Zerbrechlich")["charakter_daten"]
+    assert berechne(d)["robustheit"] == ohne - 1
+
+
+def test_berechne_zerbrechlich_ohne_robustheitsmalus_in_swae(daten):
+    # SWAE-Zerbrechlich (leicht) gibt +1 Schaden statt -1 Robustheit
+    ohne = berechne(daten)["robustheit"]
+    d = aktion("handicap/waehlen", daten, "Zerbrechlich")["charakter_daten"]
+    assert berechne(d)["robustheit"] == ohne
+
+
+def test_berechne_zerbrechlich_pro_setting_override(daten):
+    # Savage Pathfinder führt Zerbrechlich als leichtes Handicap mit -1 Robustheit
+    d = aktion("setting/wechseln", daten, "Savage Pathfinder")["charakter_daten"]
+    ohne = berechne(d)["robustheit"]
+    d = aktion("handicap/waehlen", d, "Zerbrechlich")["charakter_daten"]
+    assert berechne(d)["robustheit"] == ohne - 1
+
+
+def test_berechne_groesse_minus_1_handicap(daten):
+    d = aktion("setting/wechseln", daten, "Savage Aventurien")["charakter_daten"]
+    ohne = berechne(d)
+    d = aktion("handicap/waehlen", d, "Größe -1")["charakter_daten"]
+    mit = berechne(d)
+    assert mit["groesse"] == ohne["groesse"] - 1
+    assert mit["robustheit"] == ohne["robustheit"] - 1
+
+
+def test_berechne_groesse_zaehlt_nicht_doppelt(daten):
+    # Savage Pathfinder modelliert die Größe kleiner Völker als Handicap
+    # "Größe -1"; deren groesse_modifikator muss deshalb 0 sein
+    d = aktion("setting/wechseln", daten, "Savage Pathfinder")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Gnom")["charakter_daten"]
+    assert "Größe -1" in d["selected_handicaps"]
+    w = berechne(d)
+    assert w["groesse"] == -1
+    assert w["robustheit"] == 4  # 2 + W6//2 - 1 (Größe)
+
+
 def test_berechne_bennys_durch_glueck(daten):
     daten["selected_talente"] = ["Glück", "Großes Glück"]
     w = berechne(daten)

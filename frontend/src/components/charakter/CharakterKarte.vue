@@ -3,12 +3,14 @@
     <v-card-title>{{ char.char_name || 'Unbenannt' }}</v-card-title>
     <v-card-subtitle>{{ char.active_setting_name }}</v-card-subtitle>
     <v-card-text>
+      <!-- Der Chip meint den Stand der Erschaffung (wie „Erschaffung abschließen"
+           im Editor), nicht ob der Bogen gerade offen ist. -->
       <v-chip :color="char.char_gen_completed ? 'success' : 'warning'" size="small">
-        {{ char.char_gen_completed ? 'Fertig' : 'In Bearbeitung' }}
+        {{ char.char_gen_completed ? 'Erschaffung abgeschlossen' : 'Erschaffung offen' }}
       </v-chip>
-      <span class="text-caption ml-2">
-        {{ new Date(char.aktualisiert_am).toLocaleDateString('de-DE') }}
-      </span>
+      <div class="text-caption mt-2">
+        Zuletzt bearbeitet: {{ new Date(char.aktualisiert_am).toLocaleDateString('de-DE') }}
+      </div>
     </v-card-text>
     <v-card-actions>
       <!-- Verschieben -->

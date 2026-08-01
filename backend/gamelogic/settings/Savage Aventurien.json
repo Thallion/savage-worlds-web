@@ -219,7 +219,7 @@
     "Goblin": {
       "name": "Goblin",
       "handicaps": [
-        "Größe -1 (Reduzierte Größe und Robustheit)",
+        "Größe -1",
         "Außenseiter (leicht: bei den Kulturvölkern Aventuriens verachtet)",
         "Abergläubisch (Aberglaube und Neugier prägen das Verhalten)"
       ],
@@ -8153,20 +8153,11 @@
       "aktiv": true,
       "custom": false
     },
-    "Größe -1 (Reduzierte Robustheit)": {
-      "name": "Größe -1 (Reduzierte Robustheit)",
+    "Größe -1": {
+      "name": "Größe -1",
       "stufe": "leicht",
       "punkte": 1,
-      "beschreibung": "Reduzierte Robustheit um 1",
-      "ausgewaehlt": false,
-      "aktiv": true,
-      "custom": false
-    },
-    "Größe -1 (Reduzierte Größe und Robustheit)": {
-      "name": "Größe -1 (Reduzierte Größe und Robustheit)",
-      "stufe": "leicht",
-      "punkte": 1,
-      "beschreibung": "Reduzierte Größe und Robustheit um 1",
+      "beschreibung": "Größe und Robustheit sinken um 1",
       "ausgewaehlt": false,
       "aktiv": true,
       "custom": false

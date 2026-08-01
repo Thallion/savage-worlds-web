@@ -1,0 +1,9 @@
+Tierschamane
+Abstammung: Gnom (Fantasy Kompendium)
+Attribute: Geschicklichkeit W4, Verstand W8, Willenskraft W8, Stärke W6, Konstitution W6
+Fertigkeiten: Allgemeinwissen W4, Athletik W4, Glaube W8, Heimlichkeit W4, Kämpfen W4, Okkultismus W6, Schießen W4, Wahrnehmung W8, Überleben W6, Überreden W8
+Bewegungsweite: 5; Parade: 4; Robustheit: 5 (1); Größe: -1
+Handicaps: Neugierig (schwer), Behindernde_Rüstung (leicht), Tick (leicht), Materialkomponenten (schwer), Zerbrechlich (schwer)
+Talente: Nachtsicht, Geschärfte Sinne, AH (Schamane)
+Mächte: Arkaner Schutz, Linderung, Tierfreund, Verwirrung, Geschoss (10 Machtpunkte)
+Ausrüstung: Abenteurerpaket, Beinlinge [angelegt], Bogen, Kurz-, Pfeile (20), Robe mit Kapuze [angelegt], Speer, Trank: Heilung — Geld: 207

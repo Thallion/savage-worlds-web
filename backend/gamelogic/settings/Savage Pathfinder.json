@@ -85,7 +85,7 @@
                 ],
                 "auto_handicaps": [
                     "Langsam_leicht",
-                    "Größe -1 (Reduzierte Robustheit)",
+                    "Größe -1",
                     "Zwanghaft"
                 ],
                 "spezielle_effekte": {
@@ -96,7 +96,7 @@
                 "wahlmoeglichkeiten": {
                     "freie_verstandsfertigkeit": true
                 },
-                "groesse_modifikator": -1
+                "groesse_modifikator": 0
             }
         },
         "Halbelf": {
@@ -169,13 +169,13 @@
                     "Glück"
                 ],
                 "auto_handicaps": [
-                    "Größe -1 (Reduzierte Robustheit)"
+                    "Größe -1"
                 ],
                 "spezielle_effekte": {
                     "geschaerfte_sinne": true
                 },
                 "wahlmoeglichkeiten": {},
-                "groesse_modifikator": -1
+                "groesse_modifikator": 0
             }
         },
         "Halbork": {
@@ -514,7 +514,7 @@
                 },
                 "auto_talente": [],
                 "auto_handicaps": [
-                    "Größe -1 (Reduzierte Größe und Robustheit)",
+                    "Größe -1",
                     "Verringerte Fertigkeiten"
                 ],
                 "spezielle_effekte": {
@@ -524,7 +524,7 @@
                     "uppiger_ausbruch": true
                 },
                 "wahlmoeglichkeiten": {},
-                "groesse_modifikator": -1
+                "groesse_modifikator": 0
             }
         },
         "Aasimars": {
@@ -744,13 +744,13 @@
                 },
                 "auto_talente": [],
                 "auto_handicaps": [
-                    "Größe -1 (Reduzierte Größe und Robustheit)"
+                    "Größe -1"
                 ],
                 "spezielle_effekte": {
                     "dunkelsicht": true
                 },
                 "wahlmoeglichkeiten": {},
-                "groesse_modifikator": -1
+                "groesse_modifikator": 0
             }
         }
     },
@@ -8163,20 +8163,11 @@
             "aktiv": true,
             "custom": false
         },
-        "Größe -1 (Reduzierte Robustheit)": {
-            "name": "Größe -1 (Reduzierte Robustheit)",
+        "Größe -1": {
+            "name": "Größe -1",
             "stufe": "leicht",
             "punkte": 1,
-            "beschreibung": "Reduzierte Robustheit um 1",
-            "ausgewaehlt": false,
-            "aktiv": true,
-            "custom": false
-        },
-        "Größe -1 (Reduzierte Größe und Robustheit)": {
-            "name": "Größe -1 (Reduzierte Größe und Robustheit)",
-            "stufe": "leicht",
-            "punkte": 1,
-            "beschreibung": "Reduzierte Größe und Robustheit um 1",
+            "beschreibung": "Größe und Robustheit sinken um 1",
             "ausgewaehlt": false,
             "aktiv": true,
             "custom": false

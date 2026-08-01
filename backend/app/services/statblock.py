@@ -8,13 +8,19 @@ Erzeugt einen kompakten Text-Statblock im SWADE-Stil:
     Fertigkeiten: Athletik W4, Kämpfen W6, ...
     Bewegungsweite: 5; Parade: 5; Robustheit: 7 (1); Größe: +0
     Handicaps: ...  / Talente: ...  / Mächte: ... (10 Machtpunkte)
+    Abstammungs-Handicaps: Blutrünstig (...), Nichtschwimmer (...)
+    Besonderheiten: Klauen (Stä+W4 Schaden, PB 2, +2 Athletik Klettern), ...
     Superkräfte: Fliegen [4 SKP, Senkrechtstarter] (Machtstufe I, 4/15 SKP)
     Cyberware: Scanner (Stress 1/2)
     Ausrüstung: Fackel (2x), ... — Geld: 475
 
 Abweichung vom Original: Fertigkeiten listen alle gelernten Werte (auch W4),
-nicht nur die über W4 — Grundfertigkeiten wären sonst unsichtbar.
+nicht nur die über W4 — Grundfertigkeiten wären sonst unsichtbar. Ebenfalls
+ergänzt sind die Abstammungs-Zeilen: Volks-Handicaps und -Besonderheiten stehen
+nicht in selected_handicaps/selected_talente und fehlten sonst im Export.
 """
+
+from app.services.volk_effekte import gewaehltes_volk
 
 # Anzeige-Reihenfolge nach SWADE-Statblock (Agility, Smarts, Spirit, Strength, Vigor)
 ATTRIBUT_REIHENFOLGE = ["Geschicklichkeit", "Verstand", "Willenskraft", "Stärke", "Konstitution"]
@@ -58,6 +64,37 @@ def _handicaps(daten: dict, setting: dict) -> str:
             name, stufe = name[:-7], name[-6:]
         teile.append(f"{name} ({stufe})" if stufe else name)
     return ", ".join(teile)
+
+
+def _basisname(eintrag: str) -> str:
+    """Vergleichsname ohne Stufen-Suffix und erklärenden Klammerzusatz —
+    "Schwur_schwer" und "Schwur (schwer: ...)" sind dasselbe Handicap."""
+    if eintrag.endswith(("_leicht", "_schwer")):
+        eintrag = eintrag[:-7]
+    return eintrag.split(" (", 1)[0].strip()
+
+
+def _volk_zeilen(daten: dict, setting: dict) -> list[tuple[str, str]]:
+    """Talente, Handicaps und Besonderheiten der Abstammung.
+
+    Sie stehen nur am Volk und fehlten deshalb im Statblock. Einträge, die als
+    Auto-Talent/-Handicap ohnehin schon in den Zeilen darüber stehen, werden
+    nicht doppelt gelistet.
+    """
+    _, volk_data = gewaehltes_volk(daten, setting)
+    if not volk_data:
+        return []
+
+    zeilen = []
+    for feld, label, gewaehlt in (
+        ("talente", "Abstammungs-Talente", daten.get("selected_talente", [])),
+        ("handicaps", "Abstammungs-Handicaps", daten.get("selected_handicaps", [])),
+        ("besonderheiten", "Besonderheiten", []),
+    ):
+        bekannt = {_basisname(e) for e in gewaehlt}
+        eintraege = [e for e in volk_data.get(feld) or [] if _basisname(e) not in bekannt]
+        zeilen.append((label, ", ".join(eintraege)))
+    return zeilen
 
 
 def _maechte(daten: dict, werte: dict) -> str:
@@ -151,6 +188,7 @@ def generiere_statblock(daten: dict, setting: dict, werte: dict) -> str:
     for label, text in (
         ("Handicaps", _handicaps(daten, setting)),
         ("Talente", ", ".join(daten.get("selected_talente", []))),
+        *_volk_zeilen(daten, setting),
         ("Mächte", _maechte(daten, werte)),
         ("Superkräfte", _superkraefte(daten, werte)),
         ("Cyberware", _cyberware(daten, werte)),

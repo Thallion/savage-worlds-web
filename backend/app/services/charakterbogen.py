@@ -24,6 +24,7 @@ from pathlib import Path
 
 from app.services.aufstiege import rang_fuer_aufstiege
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
+from app.services.volk_effekte import gewaehltes_volk
 
 ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
 
@@ -350,20 +351,9 @@ def _attribute_fertigkeiten_sektion(daten: dict, setting: dict, werte: dict) -> 
 
 
 def _volk_sektion(daten: dict, setting: dict) -> str:
-    # Alt-Format aus der Kivy-App: {volk_name: bool} — nur truthy Einträge sind gewählt
-    selected_volk = None
-    volk_data = None
-    for volk, eintrag in daten.get("voelker_selected", {}).items():
-        if eintrag:
-            selected_volk = volk
-            volk_data = eintrag if isinstance(eintrag, dict) else None
-            break
-
+    selected_volk, volk_data = gewaehltes_volk(daten, setting)
     if not selected_volk:
         return '<p class="hinweis">Keine Abstammung ausgewählt.</p>'
-
-    if volk_data is None:
-        volk_data = setting.get("voelker", {}).get(selected_volk)
 
     result = f"<h2>Abstammung: {_esc(selected_volk)}</h2>"
     if not volk_data:

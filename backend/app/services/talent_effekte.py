@@ -2,9 +2,12 @@
 
 Talente können beim Wählen weitere Elemente mitbringen (auto_handicaps /
 auto_talente / auto_maechte aus dem Setting-JSON, z. B. AH (Verdorbener) →
-Handicap "Verderbnis") oder Eigenschaften verändern (Berserker → Stärke
-+1 Würfeltyp, effekt.attribut_bonus in Deadlands, Rohling → Athletik an
-Stärke gekoppelt). Auto-Elemente kosten keine Handicap-Punkte/Slots.
+Handicap "Verderbnis") oder Eigenschaften verändern (effekt.attribut_bonus in
+Deadlands, Rohling → Athletik an Stärke gekoppelt). Auto-Elemente kosten keine
+Handicap-Punkte/Slots.
+
+Nur dauerhafte Effekte gehören hierher: Berserker etwa gibt +1 Würfeltyp Stärke
+ausschließlich während des Berserkerrauschs, die Basiswerte bleiben unverändert.
 
 Wie bei den Volk-Effekten wird ein Snapshot pro gewählter Kopie in
 daten["talent_effekte"][talent_name] abgelegt (Liste, bei Mehrfachauswahl
@@ -16,11 +19,15 @@ MAX_WUERFEL = 12
 MIN_WUERFEL = 4
 
 # Statische Spezialfälle aus dem Original (stehen nicht im Setting-JSON)
-TALENT_ATTRIBUT_WUERFEL_EFFEKTE = {"Berserker": "Stärke"}
 TALENT_FERTIGKEITS_LINKS = {
     "Rohling": [("Athletik", "Stärke")],
     "Naturgespür": [("Überleben", "Willenskraft")],
 }
+
+# Talente, deren Attribut-Erhöhung früher dauerhaft gebucht wurde, inzwischen
+# aber als temporär erkannt ist — bei Bestandscharakteren nimmt
+# migriere_temporaere_attribut_effekte() sie beim Laden zurück
+TEMPORAERE_ATTRIBUT_EFFEKTE = ("Berserker",)
 
 
 def _snapshots(eintrag) -> list[dict]:
@@ -37,6 +44,18 @@ def _attribut_stufe_erhoehen(attr: dict) -> str:
         return "wert"
     attr["modifier"] = attr.get("modifier", 0) + 1
     return "modifier"
+
+
+def _nimm_attribut_stufen_zurueck(daten: dict, stufen: list) -> None:
+    """Macht gebuchte Würfeltyp-Erhöhungen rückgängig (letzte zuerst)."""
+    for attr_name, feld in reversed(stufen):
+        attr = daten.get("attribute", {}).get(attr_name)
+        if not attr:
+            continue
+        if feld == "modifier":
+            attr["modifier"] = attr.get("modifier", 0) - 1
+        else:
+            attr["wert"] = max(MIN_WUERFEL, attr.get("wert", MIN_WUERFEL) - 2)
 
 
 def wende_talent_effekte_an(daten: dict, talent_name: str, talent_data: dict) -> None:
@@ -66,10 +85,9 @@ def wende_talent_effekte_an(daten: dict, talent_name: str, talent_data: dict) ->
         daten["selected_maechte"].extend(maechte)
         angewendet["maechte"] = maechte
 
-    # Attribut-Würfeltyp-Effekte: statisch (Berserker) + effekt.attribut_bonus
+    # Attribut-Würfeltyp-Effekte aus effekt.attribut_bonus des Setting-JSONs
     stufen: list[tuple[str, str]] = []  # (attribut, verändertes Feld)
-    statisch = TALENT_ATTRIBUT_WUERFEL_EFFEKTE.get(talent_name)
-    boni: list[tuple[str, int]] = [(statisch, 1)] if statisch else []
+    boni: list[tuple[str, int]] = []
     effekt = talent_data.get("effekt")
     if isinstance(effekt, dict):
         boni.extend((name, anzahl) for name, anzahl in (effekt.get("attribut_bonus") or {}).items())
@@ -119,14 +137,7 @@ def entferne_talent_effekte(daten: dict, talent_name: str) -> None:
         if m in daten.get("selected_maechte", []):
             daten["selected_maechte"].remove(m)
 
-    for attr_name, feld in reversed(angewendet.get("attribut_stufen", [])):
-        attr = daten.get("attribute", {}).get(attr_name)
-        if not attr:
-            continue
-        if feld == "modifier":
-            attr["modifier"] = attr.get("modifier", 0) - 1
-        else:
-            attr["wert"] = max(MIN_WUERFEL, attr.get("wert", MIN_WUERFEL) - 2)
+    _nimm_attribut_stufen_zurueck(daten, angewendet.get("attribut_stufen", []))
 
     for fert_name, altes_attr in angewendet.get("fertigkeit_links", {}).items():
         fert = daten.get("fertigkeiten", {}).get(fert_name)
@@ -135,6 +146,38 @@ def entferne_talent_effekte(daten: dict, talent_name: str) -> None:
 
     if not daten.get("talent_effekte"):
         daten.pop("talent_effekte", None)
+
+
+def migriere_temporaere_attribut_effekte(daten: dict) -> bool:
+    """Nimmt bei Bestandscharakteren dauerhaft gebuchte Attribut-Erhöhungen
+    zurück, die nach heutiger Auslegung nur temporär gelten (Berserker: +1
+    Würfeltyp Stärke nur im Berserkerrausch). Gibt zurück, ob etwas geändert
+    wurde; das Talent selbst bleibt gewählt."""
+    effekte = daten.get("talent_effekte") or {}
+    geaendert = False
+
+    for talent_name in TEMPORAERE_ATTRIBUT_EFFEKTE:
+        if talent_name not in effekte:
+            continue
+        rest = []
+        for snapshot in _snapshots(effekte[talent_name]):
+            stufen = snapshot.get("attribut_stufen")
+            if stufen:
+                _nimm_attribut_stufen_zurueck(daten, stufen)
+                snapshot = {k: v for k, v in snapshot.items() if k != "attribut_stufen"}
+                geaendert = True
+            rest.append(snapshot)
+        # nur leere Snapshots übrig: Eintrag entfernen, wie bei einem heute
+        # frisch gewählten Talent ohne dauerhafte Effekte
+        if any(rest):
+            effekte[talent_name] = rest
+        else:
+            effekte.pop(talent_name)
+            geaendert = True
+
+    if geaendert and not effekte:
+        daten.pop("talent_effekte", None)
+    return geaendert
 
 
 def ist_auto_element(daten: dict, art: str, name: str) -> bool:

@@ -26,6 +26,23 @@ KERN_WAHL_KEYS = (
 )
 
 
+def gewaehltes_volk(daten: dict, setting: dict | None = None) -> tuple[str | None, dict | None]:
+    """(Name, Daten) des gewählten Volkes — für Exporte, die dessen Talente,
+    Handicaps und Besonderheiten anzeigen.
+
+    voelker_selected trägt seit dem Kivy-Import eine Daten-Kopie je Volk; im
+    Alt-Format {volk_name: bool} liefert erst das Setting die Volk-Daten.
+    """
+    for name, eintrag in (daten.get("voelker_selected") or {}).items():
+        if not eintrag:
+            continue
+        volk_data = eintrag if isinstance(eintrag, dict) else None
+        if volk_data is None and setting is not None:
+            volk_data = (setting.get("voelker") or {}).get(name)
+        return name, volk_data
+    return None, None
+
+
 def verfuegbare_volk_wahl(volk_data: dict) -> dict | None:
     """Offene Wahlmöglichkeit eines Volkes: {"optionen": [...], "attribute": [...]|None}.
 

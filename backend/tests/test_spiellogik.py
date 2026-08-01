@@ -439,6 +439,19 @@ def mit_talent_slot(daten: dict, anzahl: int = 1) -> dict:
     return daten
 
 
+def mit_eigenes_attribut_talent(daten: dict) -> dict:
+    """Eigenes Talent mit effekt.attribut_bonus als Charakter-Override — SWAE
+    selbst kennt keine Talente, die ein Attribut dauerhaft erhöhen."""
+    daten.setdefault("setting_overrides", {}).setdefault("talente", {})["Krafttraining"] = {
+        "name": "Krafttraining",
+        "kategorie": "Hintergrund",
+        "rang": "A",
+        "voraussetzungen": [],
+        "effekt": {"attribut_bonus": {"Stärke": 1}},
+    }
+    return daten
+
+
 def test_talent_ohne_slot_abgelehnt(daten):
     r = aktion("talent/waehlen", daten, "Aristokrat")
     assert not r["success"]
@@ -519,15 +532,16 @@ def test_talent_kopie_entfernen_erstattet_letzte_zahlung(daten):
 
 
 def test_talent_mehrfach_effekte_pro_kopie(daten):
-    # Berserker erhöht Stärke je Kopie um einen Würfeltyp; das Entfernen einer
-    # Kopie nimmt genau deren Effekt zurück
-    d = aktion("talent/waehlen", mit_talent_slot(daten, 2), "Berserker")["charakter_daten"]
+    # Ein Talent mit attribut_bonus erhöht Stärke je Kopie um einen Würfeltyp;
+    # das Entfernen einer Kopie nimmt genau deren Effekt zurück
+    d = mit_eigenes_attribut_talent(mit_talent_slot(daten, 2))
+    d = aktion("talent/waehlen", d, "Krafttraining")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 6
-    d = aktion("talent/waehlen", d, "Berserker")["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Krafttraining")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 8
-    d = aktion("talent/entfernen", d, "Berserker")["charakter_daten"]
+    d = aktion("talent/entfernen", d, "Krafttraining")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 6
-    d = aktion("talent/entfernen", d, "Berserker")["charakter_daten"]
+    d = aktion("talent/entfernen", d, "Krafttraining")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 4
     assert "talent_effekte" not in d
 
@@ -943,12 +957,21 @@ def test_handicap_alt_erhaelt_ausgegebene_punkte(daten):
 
 # --- Talent-Auto-Effekte ---
 
-def test_berserker_erhoeht_staerke(daten):
+def test_berserker_laesst_staerke_unveraendert(daten):
+    # Berserker gibt +1 Würfeltyp Stärke nur während des Berserkerrauschs —
+    # die Basiswerte im Generator bleiben unverändert
     d = mit_talent_slot(daten)
     d = aktion("talent/waehlen", d, "Berserker")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert "talent_effekte" not in d
+
+
+def test_talent_attribut_bonus_aus_setting(daten):
+    d = mit_eigenes_attribut_talent(mit_talent_slot(daten))
+    d = aktion("talent/waehlen", d, "Krafttraining")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 6
-    assert d["talent_effekte"]["Berserker"] == [{"attribut_stufen": [["Stärke", "wert"]]}]
-    d = aktion("talent/entfernen", d, "Berserker")["charakter_daten"]
+    assert d["talent_effekte"]["Krafttraining"] == [{"attribut_stufen": [["Stärke", "wert"]]}]
+    d = aktion("talent/entfernen", d, "Krafttraining")["charakter_daten"]
     assert d["attribute"]["Stärke"]["wert"] == 4
     assert "talent_effekte" not in d
 
@@ -1775,6 +1798,26 @@ def test_statblock_handicap_stufe_und_ruestung(daten):
     assert "Robustheit: 5 (1)" in text
     assert "Jacke (dünn) [angelegt]" in text
     assert "Geld: 480" in text
+
+
+def test_statblock_abstammungs_handicaps_und_besonderheiten(daten):
+    # Volks-Handicaps stehen nicht in selected_handicaps und fehlten im Export
+    d = aktion("volk/waehlen", daten, "Rakashaner")["charakter_daten"]
+    text = statblock(d)
+    assert "Abstammungs-Handicaps: Blutrünstig (Grausam zu Feinden, spielen mit ihnen), " in text
+    assert "Volksfeind (-2 Überreden mit einem anderen Volk)" in text
+    assert "Besonderheiten: Biss (Stä+W4 Schaden, gegen gepackte Feinde), " in text
+
+
+def test_statblock_abstammung_ohne_doppelte_eintraege(daten):
+    # "Zwei linke Hände" ist Auto-Handicap des Elfen und steht schon in der
+    # Handicaps-Zeile; "Nachtsicht" analog als Auto-Talent
+    d = aktion("setting/wechseln", daten, "Superkräfte Kompendium")["charakter_daten"]
+    d = aktion("volk/waehlen", d, "Elf")["charakter_daten"]
+    text = statblock(d)
+    assert "Handicaps: Zwei linke Hände (leicht)" in text
+    assert "Abstammungs-Handicaps" not in text
+    assert "Abstammungs-Talente" not in text
 
 
 def test_statblock_superkraefte_und_rang(daten):

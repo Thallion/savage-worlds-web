@@ -410,3 +410,45 @@ def test_kivy_import_cyberware_effekt_snapshots_rekonstruiert():
     ok, _ = deinstalliere(daten, setting, "Cyberware: Attributerhöhung")
     assert ok
     assert daten["attribute"]["Stärke"]["wert"] == 4
+
+
+# --- Migration: Berserker-Stärkebonus (nur temporär im Berserkerrausch) ---
+
+def _berserker_bestand(stufen: list, kopien: int = 1) -> dict:
+    daten = initialisiere_charakter_daten("Wüterich", "SWAE")
+    daten["selected_talente"] = ["Berserker"] * kopien
+    daten["attribute"]["Stärke"]["wert"] = 4 + 2 * len(stufen)
+    daten["talent_effekte"] = {"Berserker": [{"attribut_stufen": s} for s in stufen]}
+    return daten
+
+
+def test_migration_berserker_nimmt_staerkebonus_zurueck():
+    neu, geaendert = ergaenze_fehlende_eigenschaften(_berserker_bestand([[["Stärke", "wert"]]]))
+    assert geaendert
+    assert neu["attribute"]["Stärke"]["wert"] == 4
+    assert "talent_effekte" not in neu
+    # das Talent selbst bleibt gewählt
+    assert neu["selected_talente"] == ["Berserker"]
+
+
+def test_migration_berserker_mehrere_kopien():
+    alt = _berserker_bestand([[["Stärke", "wert"]], [["Stärke", "wert"]]], kopien=2)
+    neu, _ = ergaenze_fehlende_eigenschaften(alt)
+    assert neu["attribute"]["Stärke"]["wert"] == 4
+
+
+def test_migration_berserker_modifier_stufe():
+    alt = _berserker_bestand([])
+    alt["attribute"]["Stärke"] = {"attribut_name": "Stärke", "wert": 12, "modifier": 1}
+    alt["talent_effekte"] = {"Berserker": [{"attribut_stufen": [["Stärke", "modifier"]]}]}
+    neu, _ = ergaenze_fehlende_eigenschaften(alt)
+    assert neu["attribute"]["Stärke"] == {"attribut_name": "Stärke", "wert": 12, "modifier": 0}
+
+
+def test_migration_laesst_andere_talent_effekte_unangetastet():
+    alt = initialisiere_charakter_daten("Verdorben", "SWAE")
+    alt["selected_talente"] = ["Rohling"]
+    alt["talent_effekte"] = {"Rohling": [{"fertigkeit_links": {"Athletik": "Geschicklichkeit"}}]}
+    neu, geaendert = ergaenze_fehlende_eigenschaften(alt)
+    assert not geaendert
+    assert neu["talent_effekte"] == alt["talent_effekte"]

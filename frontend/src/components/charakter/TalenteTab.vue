@@ -186,13 +186,13 @@ const talentAnzahl = computed(() => {
   for (const name of selectedTalente.value) anzahl[name] = (anzahl[name] ?? 0) + 1
   return anzahl
 })
-// Savage Pathfinder: ein Klassen-Talent ist bei der Erschaffung kostenlos
+// Savage Pathfinder: ein Klassen-, Hintergrund- oder Expertentalent ist bei der Erschaffung kostenlos
 const pathfinderKostenlosHinweis = computed(() => {
   if (daten.value.char_gen_completed) return ''
   if (!daten.value.active_setting_name?.toLowerCase().includes('pathfinder')) return ''
   return (daten.value.pathfinder_kostenlose_talente_gewaehlt ?? 0) > 0
-    ? 'kostenloses Klassen-Talent eingelöst'
-    : 'ein Klassen-Talent ist kostenlos'
+    ? 'kostenloses Talent eingelöst'
+    : 'ein Klassen-Talent (oder Hintergrund-/Expertentalent) ist kostenlos'
 })
 const verbleibendeTalente = computed(() => daten.value.verbleibende_talente ?? 0)
 const verbleibendeHandicapPunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)

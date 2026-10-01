@@ -143,7 +143,7 @@ export interface CharakterDaten {
   // Zahlungsquelle je gekaufter Talent-Kopie für korrekte Rückerstattung
   // beim Entfernen (Altbestand: einzelner String statt Liste)
   talent_zahlungen?: Record<string, TalentZahlung | TalentZahlung[]>
-  // Savage Pathfinder: gewählte kostenlose Klassen-Talente (max. 1)
+  // Savage Pathfinder: gewählte kostenlose Klassen-/Hintergrund-/Expertentalente (max. 1)
   pathfinder_kostenlose_talente_gewaehlt?: number
   // Snapshot der Auto-Effekte gewählter Talente (Berserker, AH-Auto-Handicaps, ...)
   // — eine Liste je Kopie bei Mehrfachauswahl (Altbestand: einzelnes Objekt)

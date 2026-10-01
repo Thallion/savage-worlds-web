@@ -726,9 +726,29 @@ def test_pathfinder_nur_ein_kostenloses_klassen_talent(pathfinder):
     assert "Slot" in r["message"]
 
 
-def test_pathfinder_hintergrund_talent_nicht_kostenlos(pathfinder):
-    # nur Kategorie "Klasse" ist frei (Original: ist_pathfinder_kostenloses_talent)
+def test_pathfinder_hintergrund_talent_kostenlos(pathfinder):
+    # SWPF: statt des Klassentalents darf ein Hintergrund- oder
+    # Expertentalent kostenlos gewählt werden
     r = aktion("talent/waehlen", pathfinder, "Aristokrat")  # Kategorie Hintergrund
+    assert r["success"] and "kostenlos" in r["message"]
+    d = r["charakter_daten"]
+    assert d["pathfinder_kostenlose_talente_gewaehlt"] == 1
+    # danach ist auch ein Klassen-Talent nicht mehr kostenlos
+    r = aktion("talent/waehlen", d, "Barbar")
+    assert not r["success"]
+    assert "Slot" in r["message"]
+
+
+def test_pathfinder_experten_talent_kostenlos(pathfinder):
+    d = aktion("attribut/steigern", pathfinder, "Verstand")["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Verstand")["charakter_daten"]  # Gelehrter: VER W8
+    r = aktion("talent/waehlen", d, "Gelehrter")  # Kategorie Experte
+    assert r["success"] and "kostenlos" in r["message"]
+    assert r["charakter_daten"]["talent_zahlungen"]["Gelehrter"] == ["pathfinder_kostenlos"]
+
+
+def test_pathfinder_kampf_talent_nicht_kostenlos(pathfinder):
+    r = aktion("talent/waehlen", pathfinder, "Bedrohlich")  # Kategorie Kampf/Sozial
     assert not r["success"]
     assert "Slot" in r["message"]
 

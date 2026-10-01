@@ -743,13 +743,18 @@ def _ist_pathfinder_setting(daten: dict) -> bool:
     return "pathfinder" in daten.get("active_setting_name", "").lower()
 
 
+# SWPF-Grundregelwerk: "Alle Charaktere erhalten ein kostenloses Klassentalent
+# (oder auf Wunsch ein Hintergrund- oder Expertentalent)."
+PATHFINDER_KOSTENLOSE_KATEGORIEN = {"Klasse", "Hintergrund", "Experte"}
+
+
 def _pathfinder_kostenlos_moeglich(daten: dict, talent_data: dict) -> bool:
-    """Savage Pathfinder: bei der Erschaffung ist ein Talent der Kategorie
-    "Klasse" kostenlos (Original: ist_pathfinder_kostenloses_talent /
+    """Savage Pathfinder: bei der Erschaffung ist ein Klassen-, Hintergrund-
+    oder Expertentalent kostenlos (Original: ist_pathfinder_kostenloses_talent /
     hat_bereits_kostenloses_pathfinder_talent)."""
     if daten.get("char_gen_completed") or not _ist_pathfinder_setting(daten):
         return False
-    if talent_data.get("kategorie") != "Klasse":
+    if talent_data.get("kategorie") not in PATHFINDER_KOSTENLOSE_KATEGORIEN:
         return False
     maximum = load_config("talent_config.json").get("kosten", {}).get("pathfinder_max_kostenlose", 1)
     return daten.get("pathfinder_kostenlose_talente_gewaehlt", 0) < maximum
@@ -819,7 +824,7 @@ def talent_waehlen(req: SpiellogikRequest):
         daten["pathfinder_kostenlose_talente_gewaehlt"] = (
             daten.get("pathfinder_kostenlose_talente_gewaehlt", 0) + 1
         )
-        erfolgsmeldung = f"'{talent_name}' als kostenloses Klassen-Talent gewählt (Savage Pathfinder)"
+        erfolgsmeldung = f"'{talent_name}' als kostenloses Talent gewählt (Savage Pathfinder)"
     elif daten.get("verbleibende_talente", 0) > 0:
         zahlungsquelle = "slot"
         daten["verbleibende_talente"] = daten["verbleibende_talente"] - 1
@@ -866,15 +871,16 @@ def talent_waehlen(req: SpiellogikRequest):
 def _kivy_import_zahlungsquelle(daten: dict, talent_name: str) -> str:
     """Zahlungsquelle für Talente ohne Zahlungsjournal (Kivy-Importe).
 
-    Wie das Original beim Abwählen: ein Klassen-Talent gibt zuerst das
-    kostenlose Pathfinder-Talent frei, sonst wird ein Slot erstattet."""
+    Wie das Original beim Abwählen: ein Klassen-, Hintergrund- oder
+    Expertentalent gibt zuerst das kostenlose Pathfinder-Talent frei, sonst
+    wird ein Slot erstattet."""
     if _ist_pathfinder_setting(daten) and daten.get("pathfinder_kostenlose_talente_gewaehlt", 0) > 0:
         try:
             setting = _load_setting(daten.get("active_setting_name", "SWAE"), daten)
         except HTTPException:
             return "slot"
         talent_data = setting.get("talente", {}).get(talent_name) or {}
-        if talent_data.get("kategorie") == "Klasse":
+        if talent_data.get("kategorie") in PATHFINDER_KOSTENLOSE_KATEGORIEN:
             return "pathfinder_kostenlos"
     return "slot"
 
@@ -1016,7 +1022,10 @@ def erschaffung_abschliessen(req: SpiellogikRequest):
     # Original: nur ein Hinweis, das Abschließen bleibt möglich
     hinweis = ""
     if _ist_pathfinder_setting(daten) and not daten.get("pathfinder_kostenlose_talente_gewaehlt", 0):
-        hinweis = " — Hinweis: das kostenlose Klassen-Talent (Savage Pathfinder) wurde nicht gewählt"
+        hinweis = (
+            " — Hinweis: das kostenlose Klassen-Talent (oder Hintergrund-/Expertentalent, "
+            "Savage Pathfinder) wurde nicht gewählt"
+        )
     daten["char_gen_completed"] = True
     return SpiellogikResponse(
         success=True,

@@ -96,6 +96,8 @@ def generiere_kampfprofil(kreatur: dict[str, Any]) -> dict[str, Any]:
         "robustheit": kreatur.get("robustheit", 4) - panzerung,
         "panzerung": panzerung,
         "bennys": WILDCARD_BENNYS if kreatur.get("wildcard") else 0,
+        # Größe: Größenkategorie-Modifikatoren und zusätzliche Wunden
+        "groesse": kreatur.get("groesse", 0),
         "waffen": waffen,
         "talente": list(kreatur.get("talente") or []),
         "handicaps": list(kreatur.get("handicaps") or []),

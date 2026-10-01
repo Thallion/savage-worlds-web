@@ -573,6 +573,65 @@ def test_talent_voraussetzung_anderes_talent(daten):
     assert r["success"]
 
 
+@pytest.mark.parametrize("handicap", ["Blutrünstig", "Fies", "Skrupellos_schwer", "Hässlich"])
+def test_bedrohlich_erfordert_eines_der_handicaps(daten, handicap):
+    # SWAE S. 50: entweder Blutrünstig, Fies, Skrupellos oder Hässlich
+    r = aktion("talent/waehlen", mit_talent_slot(daten), "Bedrohlich")
+    assert not r["success"]
+    assert "Hässlich" in r["message"]
+
+    daten["selected_handicaps"] = [handicap]
+    r = aktion("talent/waehlen", mit_talent_slot(daten), "Bedrohlich")
+    assert r["success"]
+
+
+def test_bedrohlich_nur_mit_handicap_verfuegbar(daten):
+    verfuegbar = aktion("talente/verfuegbar", daten)["verfuegbar"]
+    assert "Bedrohlich" not in verfuegbar
+    daten["selected_handicaps"] = ["Hässlich"]
+    assert "Bedrohlich" in aktion("talente/verfuegbar", daten)["verfuegbar"]
+
+
+def test_oder_voraussetzung_mit_unbekannten_namen_blockiert_nicht():
+    from app.services.talent_voraussetzungen import pruefe_voraussetzungen
+
+    # z. B. Völker ("Elf oder Halbelf") kennt die Prüfung nicht
+    talent = {"voraussetzungen": ["Elf oder Halbelf"]}
+    assert pruefe_voraussetzungen(talent, {"selected_handicaps": []}, {}, {"Fies": {}}) == []
+
+
+def test_oder_voraussetzung_mit_fehlendem_handicap():
+    from app.services.talent_voraussetzungen import pruefe_voraussetzungen
+
+    # Unbeugsamer Verteidiger (Pathfinder)
+    talent = {"voraussetzungen": ["Keine Rüstungsbeschränkung oder Behindernde Rüstung"]}
+    handicaps = {"Rüstungsbeschränkung_leicht": {}, "Behindernde Rüstung": {}}
+    assert pruefe_voraussetzungen(talent, {"selected_handicaps": []}, {}, handicaps) == []
+    daten = {"selected_handicaps": ["Rüstungsbeschränkung_leicht"]}
+    assert pruefe_voraussetzungen(talent, daten, {}, handicaps) != []
+    daten = {"selected_handicaps": ["Rüstungsbeschränkung_leicht", "Behindernde Rüstung"]}
+    assert pruefe_voraussetzungen(talent, daten, {}, handicaps) == []
+
+
+def test_oder_voraussetzung_als_objekt():
+    """Horror Kompendium: {"oder": [...]} darf die Prüfung nicht abstürzen lassen."""
+    from app.services.charakter_init import initialisiere_charakter_daten
+
+    d = initialisiere_charakter_daten("Monster", "Horror Kompendium")
+    verfuegbar = aktion("talente/verfuegbar", d)["verfuegbar"]
+    assert "Bevorzugte Macht" not in verfuegbar  # braucht einen der AH
+
+
+def test_aufwiegler_erfordert_willenskraft(daten):
+    # SWAE S. 50: Fortgeschritten, Willenskraft W8+ (nicht Heimlichkeit)
+    r = aktion("talent/waehlen", mit_talent_slot(daten), "Aufwiegler", ignoriere_pruefungen=False)
+    assert not r["success"]
+    from app.services.charakter_init import load_setting
+
+    for setting in ("SWAE", "Savage Pathfinder", "Fantasy Kompendium", "Deadlands"):
+        assert load_setting(setting)["talente"]["Aufwiegler"]["voraussetzungen"] == ["WIL W8"]
+
+
 def test_talent_hoeherer_rang_bei_erschaffung_abgelehnt(daten):
     r = aktion("talent/waehlen", mit_talent_slot(daten), "Ausweichen")  # Rang F
     assert not r["success"]
@@ -748,7 +807,7 @@ def test_pathfinder_experten_talent_kostenlos(pathfinder):
 
 
 def test_pathfinder_kampf_talent_nicht_kostenlos(pathfinder):
-    r = aktion("talent/waehlen", pathfinder, "Bedrohlich")  # Kategorie Kampf/Sozial
+    r = aktion("talent/waehlen", pathfinder, "Beziehungen")  # Kategorie Sozial
     assert not r["success"]
     assert "Slot" in r["message"]
 

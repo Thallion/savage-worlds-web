@@ -22,6 +22,15 @@ IMPLEMENTIERTE_MAECHTE = [
     "Waffe verbessern",
     "Heilung",
     "Betäuben",
+    "Verwirrung",
+    "Linderung",
+    "Blenden",
+    "Eigenschaft erhöhen/senken",
+    "Verstricken",
+    "Flächenschlag",
+    "Strahl",
+    "Arkaner Schutz",
+    "Schlummer",
 ]
 
 
@@ -80,3 +89,21 @@ def test_implementierte_maechte_existieren_im_setting(setting):
     kann ein Charakter die Macht nie wirken."""
     katalog = set(setting.get("maechte", {}))
     assert set(IMPLEMENTIERTE_MAECHTE) <= katalog
+
+
+def test_handicaps_behalten_ihre_stufe(daten):
+    """Der Simulator wertet z. B. Dünnhäutig (schwer) mit –4 statt –2 aus."""
+    daten["selected_handicaps"] = ["Dünnhäutig_schwer", "Langsam (leicht: -1 Bewegung)", "Feige"]
+    handicaps = kampfprofil(daten)["handicaps"]
+    assert "Dünnhäutig (schwer)" in handicaps
+    assert "Langsam (leicht)" in handicaps
+    assert "Feige" in handicaps
+
+
+def test_talente_ohne_klammerzusatz(daten):
+    daten["selected_talente"] = ["Block"]
+    assert "Block" in kampfprofil(daten)["talente"]
+
+
+def test_groesse_im_profil(daten):
+    assert kampfprofil(daten)["groesse"] == 0

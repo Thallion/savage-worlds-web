@@ -78,6 +78,7 @@ def test_kampfprofil_zieht_panzerung_ab(kreatur_id):
     assert profil["bennys"] == (3 if kreatur["wildcard"] else 0)
     assert profil["widerstandsfaehig"] == kreatur["widerstandsfaehig"]
     assert profil["zaeh"] == kreatur["zaeh"]
+    assert profil["groesse"] == kreatur.get("groesse", 0)
     for waffe in profil["waffen"]:
         assert waffe["schaden"]
         assert waffe["fertigkeit"] in {"Kämpfen", "Schießen"}

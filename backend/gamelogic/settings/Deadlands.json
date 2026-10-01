@@ -2590,7 +2590,7 @@
       "kategorie": "Sozial",
       "rang": "F",
       "voraussetzungen": [
-        "Heimlichkeit W8"
+        "WIL W8"
       ],
       "beschreibung": "Einmal pro Zug kannst du alle Feinde in einer mittleren Flächenschablone mit einer Einschüchtern- oder Provozieren-Herausforderung beeinflussen.",
       "neue_maechte": 0,
@@ -2602,7 +2602,9 @@
       "name": "Bedrohlich",
       "kategorie": "Sozial",
       "rang": "A",
-      "voraussetzungen": [],
+      "voraussetzungen": [
+        "Blutrünstig oder Fies oder Skrupellos oder Hässlich"
+      ],
       "beschreibung": "+2 auf Einschüchtern.",
       "neue_maechte": 0,
       "machtpunkte": 0,

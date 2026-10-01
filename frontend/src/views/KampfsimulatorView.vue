@@ -194,6 +194,16 @@
                     persistent-hint
                     density="compact"
                   />
+                  <v-text-field
+                    v-model.number="schnell.groesse"
+                    type="number"
+                    min="-4"
+                    max="20"
+                    label="Größe"
+                    hint="0 = Mensch; ab 4 Groß"
+                    persistent-hint
+                    density="compact"
+                  />
                   <v-switch
                     v-model="schnell.zaeh"
                     label="Zäh"
@@ -260,7 +270,7 @@
                 <div class="d-flex justify-space-between ga-2">
                   <strong>{{ k.name }}</strong>
                   <span class="text-medium-emphasis text-no-wrap">
-                    Parade {{ k.aktuelleParade }}, Robustheit {{ k.gesamtRobustheit }}{{ k.gesamtPanzerung ? ` (${k.gesamtPanzerung})` : '' }}
+                    Parade {{ k.aktuelleParade }}, Robustheit {{ kampf.robustheitVon(k) }}{{ k.gesamtPanzerung ? ` (${k.gesamtPanzerung})` : '' }}
                   </span>
                 </div>
                 <div class="d-flex flex-wrap align-center ga-2 mt-1">
@@ -305,6 +315,7 @@
                     color="warning"
                     variant="tonal"
                     :title="z.hinweis"
+                    @click="z.beenden?.()"
                   >
                     {{ z.text }}
                   </v-chip>
@@ -334,6 +345,45 @@
                     @click="kampf.schalteBetaeubt(k.id)"
                   >
                     Betäubt
+                  </v-chip>
+                  <v-chip
+                    v-if="k.schlaeft"
+                    size="small"
+                    color="error"
+                    variant="flat"
+                    title="Schlummer: keine Aktionen. Klicken weckt den Kämpfer."
+                    @click="kampf.schalteSchlaeft(k.id)"
+                  >
+                    Schläft
+                  </v-chip>
+                  <template v-if="k.hatTalent(TALENT.BERSERKER)">
+                    <v-chip
+                      size="small"
+                      :color="k.berserker ? 'error' : undefined"
+                      :variant="k.berserker ? 'flat' : 'outlined'"
+                      title="Berserkerrausch manuell an- oder abschalten"
+                      @click="kampf.schalteBerserker(k.id)"
+                    >
+                      Berserkerrausch{{ k.berserker ? ` (${k.berserkerRunden})` : '' }}
+                    </v-chip>
+                    <v-chip
+                      v-if="k.berserker"
+                      size="small"
+                      variant="outlined"
+                      title="Freie Verstandsprobe mit –2"
+                      @click="kampf.beendeBerserker(k.id)"
+                    >
+                      Rausch beenden
+                    </v-chip>
+                  </template>
+                  <v-chip
+                    v-if="k.fessel !== 'frei'"
+                    size="small"
+                    variant="outlined"
+                    prepend-icon="mdi-lock-open-variant"
+                    @click="kampf.loeseFessel(k.id)"
+                  >
+                    Fessel lösen
                   </v-chip>
                   <v-chip
                     size="small"
@@ -417,121 +467,314 @@
               <div class="text-h5 mb-1">{{ aktueller.name }} ist am Zug</div>
               <p class="text-medium-emphasis mb-4">{{ zugInfo }}</p>
 
-              <v-alert v-if="aktueller.betaeubt" type="warning" variant="tonal">
+              <v-alert v-if="aktueller.schlaeft" type="warning" variant="tonal">
+                {{ aktueller.name }} schläft (Schlummer) und kann nicht handeln. Wachrütteln oder Schaden erlauben eine
+                neue Willenskraftprobe; über den Status-Chip „Schläft" lässt er sich manuell wecken.
+              </v-alert>
+              <v-alert v-else-if="aktueller.betaeubt" type="warning" variant="tonal">
                 {{ aktueller.name }} ist Betäubt: keine Aktionen, keine Bewegung, am Boden – und Verwundbar
                 (+2 für Angreifer). Die Konstitutionsprobe zu Zugbeginn ist bereits gewürfelt.
               </v-alert>
               <v-alert v-else-if="!kampf.zugDarfHandeln" type="info" variant="tonal">
-                {{ aktueller.name }} ist Angeschlagen und kann in diesem Zug nur freie Aktionen ausführen.
-                <template v-if="aktueller.wildcard && aktueller.bennys > 0" #append>
+                {{
+                  aktueller.verteidigt
+                    ? `${aktueller.name} verteidigt sich (Parade ${aktueller.aktuelleParade}) – der Zug ist verbraucht.`
+                    : `${aktueller.name} ist Angeschlagen und kann in diesem Zug nur freie Aktionen ausführen.`
+                }}
+                <template v-if="!aktueller.verteidigt && aktueller.wildcard && aktueller.bennys > 0" #append>
                   <v-btn color="primary" @click="kampf.bennyGegenAngeschlagen(aktueller.id)">Benny ausgeben und handeln</v-btn>
                 </template>
               </v-alert>
 
-              <v-row v-else dense>
-                <v-col cols="12" sm="6">
-                  <v-select v-model="angriff.zielId" :items="zielOptionen" label="Ziel" density="compact" />
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-select v-model="angriff.waffenIndex" :items="waffenOptionen" label="Waffe" density="compact" />
-                </v-col>
-                <v-col v-if="gewaehlteWaffe?.istNahkampf" cols="12" sm="6">
-                  <v-checkbox
-                    v-model="angriff.ruecksichtslos"
-                    label="Rücksichtslos (+2 Angriff und Schaden, –2 Parade)"
-                    density="compact"
-                    hide-details
-                  />
-                </v-col>
-                <v-col v-else cols="12" sm="6">
-                  <v-select
-                    v-model="angriff.reichweite"
-                    :items="REICHWEITEN"
-                    :label="`Reichweite${gewaehlteWaffe?.reichweite ? ` (${gewaehlteWaffe.reichweite})` : ''}`"
-                    density="compact"
-                  />
-                </v-col>
-                <v-col cols="6" sm="3">
-                  <v-select v-model="angriff.aktionen" :items="AKTIONEN" label="Aktionen im Zug" density="compact" />
-                </v-col>
-                <v-col cols="6" sm="3">
-                  <v-text-field v-model.number="angriff.modifikator" type="number" label="Situativ" density="compact" />
-                </v-col>
-                <v-col cols="12">
-                  <v-btn color="primary" prepend-icon="mdi-sword" :disabled="!angriff.zielId" @click="greifeAn">
-                    Angreifen
-                  </v-btn>
-                </v-col>
-              </v-row>
+              <template v-else>
+                <v-alert
+                  v-if="aktueller.fessel !== 'frei'"
+                  type="warning"
+                  variant="tonal"
+                  density="compact"
+                  class="mb-3"
+                >
+                  {{ aktueller.name }} ist {{ aktueller.fessel === 'gebunden' ? 'Gebunden – nur Befreien ist möglich' : 'Festgehalten – keine Bewegung' }}.
+                  <div class="d-flex flex-wrap align-center ga-2 mt-2">
+                    <v-btn-toggle v-model="befreiung.eigenschaft" mandatory density="compact" color="primary">
+                      <v-btn value="Athletik">Athletik</v-btn>
+                      <v-btn value="Stärke">Stärke –2</v-btn>
+                    </v-btn-toggle>
+                    <v-btn color="primary" prepend-icon="mdi-lock-open-variant" @click="befreie">Befreien</v-btn>
+                  </div>
+                </v-alert>
 
-              <!-- Mächte sind volle Aktionen: gleiche Sperren wie beim Angriff. -->
-              <template v-if="aktueller.istWirker && kampf.zugDarfHandeln && !kampf.offenerSchaden">
-                <v-divider class="my-3" />
-                <div class="d-flex align-center ga-2 mb-2">
-                  <v-icon icon="mdi-auto-fix" />
-                  <strong>Macht wirken</strong>
-                  <v-chip size="small" variant="outlined">
-                    {{ aktueller.machtpunkte }}/{{ aktueller.maxMachtpunkte }} Machtpunkte
-                  </v-chip>
-                  <span class="text-caption text-medium-emphasis">volle Aktion</span>
-                </div>
-                <v-row dense>
-                  <v-col cols="12" sm="6">
-                    <v-select v-model="macht.name" :items="machtOptionen" label="Macht" density="compact" />
-                  </v-col>
-                  <v-col cols="12" sm="6">
-                    <v-select v-model="macht.zielId" :items="machtZielOptionen" label="Ziel" density="compact" />
-                  </v-col>
-                  <v-col v-if="gewaehlteMacht?.modifikatoren.length" cols="12">
-                    <v-chip-group v-model="macht.modifikatoren" multiple column>
-                      <v-chip
-                        v-for="m in gewaehlteMacht.modifikatoren"
-                        :key="m.name"
-                        :value="m.name"
-                        size="small"
-                        filter
-                        variant="outlined"
-                        :title="m.beschreibung"
-                      >
-                        {{ m.name }} (+{{ m.kosten }})
-                      </v-chip>
-                    </v-chip-group>
-                  </v-col>
-                  <v-col v-if="macht.name === MACHT.ABWEHREN" cols="12" sm="6">
-                    <v-select
-                      v-model="macht.abwehrArt"
-                      :items="ABWEHR_ARTEN"
-                      label="Abzug gilt für"
-                      hint="Bei einer Steigerung gilt er ohnehin für beides"
-                      persistent-hint
-                      density="compact"
-                    />
-                  </v-col>
-                  <v-col cols="6" sm="3">
-                    <v-select v-model="macht.aktionen" :items="AKTIONEN" label="Aktionen im Zug" density="compact" />
-                  </v-col>
-                  <v-col cols="6" sm="3">
-                    <v-text-field v-model.number="macht.modifikator" type="number" label="Situativ" density="compact" />
-                  </v-col>
-                  <v-col cols="12">
-                    <p v-if="gewaehlteMacht" class="text-caption text-medium-emphasis mb-2">
-                      {{ gewaehlteMacht.zusammenfassung }} — Kosten {{ machtGesamtkosten }} MP,
-                      Wirkungsdauer
-                      {{ gewaehlteMacht.wirkungsdauer === SOFORT ? 'Sofort' : `${gewaehlteMacht.wirkungsdauer} Runden` }}
-                    </p>
-                    <v-btn
-                      color="primary"
-                      prepend-icon="mdi-auto-fix"
-                      :disabled="!macht.zielId || !macht.name || machtGesamtkosten > aktueller.machtpunkte"
-                      @click="wirkeMacht"
-                    >
-                      Wirken
-                    </v-btn>
-                    <span v-if="machtGesamtkosten > aktueller.machtpunkte" class="text-caption text-error ml-2">
-                      Nicht genug Machtpunkte
-                    </span>
-                  </v-col>
-                </v-row>
+                <template v-if="aktueller.fessel !== 'gebunden'">
+                  <v-tabs v-model="aktionsArt" density="compact" class="mb-3" show-arrows>
+                    <v-tab value="angriff" prepend-icon="mdi-sword">Angriff</v-tab>
+                    <v-tab value="optionen" prepend-icon="mdi-shield-sword-outline">Kampfoptionen</v-tab>
+                    <v-tab v-if="aktueller.istWirker" value="macht" prepend-icon="mdi-auto-fix">Macht</v-tab>
+                  </v-tabs>
+
+                  <v-window v-model="aktionsArt">
+                    <!-- Angriff -->
+                    <v-window-item value="angriff">
+                      <v-row dense>
+                        <v-col cols="12" sm="6">
+                          <v-select v-model="angriff.zielId" :items="zielOptionen" label="Ziel" density="compact" />
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-select v-model="angriff.waffenIndex" :items="waffenOptionen" label="Waffe" density="compact" />
+                        </v-col>
+                        <template v-if="gewaehlteWaffe?.istNahkampf">
+                          <v-col cols="12" sm="6">
+                            <v-checkbox
+                              v-model="angriff.ruecksichtslos"
+                              :disabled="aktueller.berserker"
+                              :label="aktueller.berserker ? 'Rücksichtslos (Berserkerrausch: Pflicht)' : 'Rücksichtslos (+2 Angriff und Schaden, danach Verwundbar)'"
+                              density="compact"
+                              hide-details
+                            />
+                          </v-col>
+                          <v-col cols="6" sm="3">
+                            <v-select
+                              v-model="angriff.verzweifelt"
+                              :items="VERZWEIFELT"
+                              :disabled="angriff.ruecksichtslos || aktueller.berserker"
+                              label="Verzweifelter Angriff"
+                              density="compact"
+                            />
+                          </v-col>
+                          <v-col cols="6" sm="3">
+                            <v-select v-model="angriff.ueberzahl" :items="UEBERZAHL" label="Weitere Angreifer" density="compact" />
+                          </v-col>
+                          <v-col v-if="schnellerAngriffWuerfel" cols="12" sm="6">
+                            <v-checkbox
+                              v-model="angriff.schnellerAngriff"
+                              :label="`${schnellerAngriffWuerfel === 2 ? 'Blitzschneller' : 'Schneller'} Angriff (+${schnellerAngriffWuerfel} Kämpfen-Würfel, einmal pro Zug)`"
+                              density="compact"
+                              hide-details
+                            />
+                          </v-col>
+                        </template>
+                        <template v-else>
+                          <v-col cols="12" sm="6">
+                            <v-select
+                              v-model="angriff.reichweite"
+                              :items="REICHWEITEN"
+                              :label="`Reichweite${gewaehlteWaffe?.reichweite ? ` (${gewaehlteWaffe.reichweite})` : ''}`"
+                              density="compact"
+                            />
+                          </v-col>
+                          <v-col v-if="aktueller.hatTalent(TALENT.DOPPELSCHUSS)" cols="12" sm="6">
+                            <v-checkbox
+                              v-model="angriff.doppelschuss"
+                              label="Doppelschuss (+1 Schießen und Schaden, max. FR 1)"
+                              density="compact"
+                              hide-details
+                            />
+                          </v-col>
+                        </template>
+                        <v-col cols="12" sm="6">
+                          <v-select v-model="angriff.angesagtesZiel" :items="ANGESAGTE_ZIEL_OPTIONEN" label="Angesagtes Ziel" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-select v-model="angriff.deckung" :items="DECKUNG" label="Deckung" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-select v-model="angriff.beleuchtung" :items="BELEUCHTUNG" label="Beleuchtung" density="compact" />
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-checkbox
+                            v-model="angriff.ueberraschung"
+                            label="Überraschungsangriff (+4 Angriff und Schaden)"
+                            density="compact"
+                            hide-details
+                          />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-select v-model="angriff.aktionen" :items="AKTIONEN" label="Aktionen im Zug" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-text-field v-model.number="angriff.modifikator" type="number" label="Situativ" density="compact" />
+                        </v-col>
+                        <v-col cols="12">
+                          <p v-if="angriffsHinweise.length" class="text-caption text-medium-emphasis mb-2">
+                            Automatisch berücksichtigt: {{ angriffsHinweise.join(' · ') }}
+                          </p>
+                          <v-btn color="primary" prepend-icon="mdi-sword" :disabled="!angriff.zielId" @click="greifeAn">
+                            Angreifen
+                          </v-btn>
+                        </v-col>
+                      </v-row>
+                    </v-window-item>
+
+                    <!-- Kampfoptionen -->
+                    <v-window-item value="optionen">
+                      <v-row dense>
+                        <v-col cols="12" sm="6">
+                          <v-select v-model="angriff.zielId" :items="zielOptionen" label="Ziel" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-select v-model="angriff.aktionen" :items="AKTIONEN" label="Aktionen im Zug" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-text-field v-model.number="angriff.modifikator" type="number" label="Situativ" density="compact" />
+                        </v-col>
+                      </v-row>
+
+                      <div class="text-subtitle-2 mt-1">Herausfordern</div>
+                      <p class="text-caption text-medium-emphasis mb-2">
+                        Vergleichender Wurf gegen das verknüpfte Attribut. Sieg: Abgelenkt oder Verwundbar, mit Steigerung
+                        zusätzlich Angeschlagen.
+                      </p>
+                      <v-row dense>
+                        <v-col cols="12" sm="5">
+                          <v-select v-model="herausforderung.fertigkeit" :items="herausforderungsOptionen" label="Fertigkeit" density="compact" />
+                        </v-col>
+                        <v-col cols="12" sm="4">
+                          <v-select v-model="herausforderung.wirkung" :items="HERAUSFORDERN_WIRKUNGEN" label="Wirkung" density="compact" />
+                        </v-col>
+                        <v-col cols="12" sm="3">
+                          <v-btn variant="tonal" :disabled="!angriff.zielId" @click="fordereHeraus">Herausfordern</v-btn>
+                        </v-col>
+                      </v-row>
+
+                      <div class="text-subtitle-2 mt-2">Ringen</div>
+                      <p class="text-caption text-medium-emphasis mb-2">
+                        Vergleichende Athletikprobe. Sieg: Festgehalten, mit Steigerung oder gegen bereits Festgehaltene
+                        Gebunden. Ein Größenunterschied wird abgezogen.
+                      </p>
+                      <div class="d-flex flex-wrap align-center ga-2">
+                        <v-select
+                          v-model="angriff.ueberzahl"
+                          :items="UEBERZAHL"
+                          label="Weitere Angreifer"
+                          density="compact"
+                          hide-details
+                          class="flex-grow-0"
+                          style="min-width: 10rem"
+                        />
+                        <v-btn variant="tonal" :disabled="!angriff.zielId" @click="ringe">Ringen</v-btn>
+                        <v-btn v-if="gewaehltesZiel?.gehaltenVon === aktueller.id" variant="tonal" @click="zerquetsche">
+                          Zerquetschen (Stärkeschaden)
+                        </v-btn>
+                        <v-btn
+                          v-if="gewaehltesZiel?.gehaltenVon === aktueller.id"
+                          variant="text"
+                          @click="kampf.loeseFessel(gewaehltesZiel.id)"
+                        >
+                          Loslassen
+                        </v-btn>
+                      </div>
+
+                      <div class="text-subtitle-2 mt-3">Verteidigen</div>
+                      <p class="text-caption text-medium-emphasis mb-2">
+                        Parade +{{ VERTEIDIGEN_BONUS }} bis zum nächsten Zug; verbraucht den ganzen Zug (keine Mehrfachaktionen).
+                      </p>
+                      <v-btn variant="tonal" prepend-icon="mdi-shield" @click="kampf.verteidigen(aktueller.id)">Verteidigen</v-btn>
+                    </v-window-item>
+
+                    <!-- Mächte sind volle Aktionen: gleiche Sperren wie beim Angriff. -->
+                    <v-window-item v-if="aktueller.istWirker" value="macht">
+                      <div class="d-flex align-center ga-2 mb-2">
+                        <v-chip size="small" variant="outlined">
+                          {{ aktueller.machtpunkte }}/{{ aktueller.maxMachtpunkte }} Machtpunkte
+                        </v-chip>
+                        <span class="text-caption text-medium-emphasis">volle Aktion, {{ aktueller.arkaneFertigkeit }}</span>
+                      </div>
+                      <v-row dense>
+                        <v-col cols="12" sm="6">
+                          <v-select v-model="macht.name" :items="machtOptionen" label="Macht" density="compact" />
+                        </v-col>
+                        <v-col v-if="macht.name === MACHT.EIGENSCHAFT" cols="12" sm="6">
+                          <v-btn-toggle v-model="macht.eigenschaftModus" mandatory density="compact" color="primary">
+                            <v-btn value="erhoehen">Erhöhen</v-btn>
+                            <v-btn value="senken">Senken</v-btn>
+                          </v-btn-toggle>
+                        </v-col>
+                        <v-col cols="12" sm="6">
+                          <v-select
+                            v-model="machtZielAuswahl"
+                            :items="machtZielOptionen"
+                            :multiple="mehrereMachtZiele"
+                            :chips="mehrereMachtZiele"
+                            :label="mehrereMachtZiele ? 'Ziele' : 'Ziel'"
+                            density="compact"
+                          />
+                        </v-col>
+                        <v-col v-if="macht.name === MACHT.EIGENSCHAFT" cols="12" sm="6">
+                          <v-select v-model="macht.eigenschaft" :items="eigenschaftsOptionenMacht" label="Eigenschaft" density="compact" />
+                        </v-col>
+                        <v-col v-if="sichtbareMachtModifikatoren.length" cols="12">
+                          <v-chip-group v-model="macht.modifikatoren" multiple column>
+                            <v-chip
+                              v-for="m in sichtbareMachtModifikatoren"
+                              :key="m.name"
+                              :value="m.name"
+                              size="small"
+                              filter
+                              variant="outlined"
+                              :title="m.beschreibung"
+                            >
+                              {{ m.name }} (+{{ m.kosten }})
+                            </v-chip>
+                          </v-chip-group>
+                        </v-col>
+                        <v-col v-if="macht.name === MACHT.ABWEHREN" cols="12" sm="6">
+                          <v-select
+                            v-model="macht.abwehrArt"
+                            :items="ABWEHR_ARTEN"
+                            label="Abzug gilt für"
+                            hint="Bei einer Steigerung gilt er ohnehin für beides"
+                            persistent-hint
+                            density="compact"
+                          />
+                        </v-col>
+                        <v-col v-if="macht.name === MACHT.LINDERUNG" cols="12" sm="6">
+                          <v-select v-model="macht.linderungModus" :items="LINDERUNG_MODI" label="Anwendung" density="compact" />
+                        </v-col>
+                        <v-col v-if="macht.name === MACHT.VERWIRRUNG" cols="12" sm="6">
+                          <v-select
+                            v-model="macht.verwirrung"
+                            :items="VERWIRRUNG_WAHL"
+                            label="Zustand"
+                            hint="Bei einer Steigerung beides"
+                            persistent-hint
+                            density="compact"
+                          />
+                        </v-col>
+                        <v-col v-if="macht.name === MACHT.GESCHOSS" cols="6" sm="3">
+                          <v-select v-model="macht.deckung" :items="DECKUNG" label="Deckung" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-select v-model="macht.beleuchtung" :items="BELEUCHTUNG" label="Beleuchtung" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-select v-model="macht.aktionen" :items="AKTIONEN" label="Aktionen im Zug" density="compact" />
+                        </v-col>
+                        <v-col cols="6" sm="3">
+                          <v-text-field v-model.number="macht.modifikator" type="number" label="Situativ" density="compact" />
+                        </v-col>
+                        <v-col cols="12">
+                          <p v-if="gewaehlteMacht" class="text-caption text-medium-emphasis mb-2">
+                            {{ gewaehlteMacht.zusammenfassung }} — Kosten {{ machtGesamtkosten }} MP<template
+                              v-if="gewaehlteMacht.empfaengerKosten && macht.zielIds.length > 1"
+                            > (inkl. {{ macht.zielIds.length - 1 }} zusätzliche Empfänger)</template>,
+                            Wirkungsdauer
+                            {{ gewaehlteMacht.wirkungsdauer === SOFORT ? 'Sofort' : `${gewaehlteMacht.wirkungsdauer} Runden` }}
+                          </p>
+                          <v-btn
+                            color="primary"
+                            prepend-icon="mdi-auto-fix"
+                            :disabled="!kannMachtWirken"
+                            @click="wirkeMacht"
+                          >
+                            Wirken
+                          </v-btn>
+                          <span v-if="machtGesamtkosten > aktueller.machtpunkte" class="text-caption text-error ml-2">
+                            Nicht genug Machtpunkte
+                          </span>
+                        </v-col>
+                      </v-row>
+                    </v-window-item>
+                  </v-window>
+                </template>
               </template>
             </template>
           </v-card-text>
@@ -576,27 +819,35 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
-import { KampfController } from '@/kampf/controller'
+import { ANGESAGTE_ZIELE, HERAUSFORDERN_ATTRIBUT, KampfController, type AngesagtesZiel } from '@/kampf/controller'
 import {
   ATTRIBUTE,
   FERTIGKEIT,
+  HANDICAP,
   KAMPF_HANDICAPS,
   KAMPF_TALENTE,
   Kaempfer,
   MINDESTWURF,
   SEITE,
   Schadensformel,
+  TALENT,
+  VERTEIDIGEN_BONUS,
   Waffe,
   Wuerfel,
+  istKampfHandicap,
   type Seite,
 } from '@/kampf/domain'
 import {
   ERSCHOEPFUNG_NAMEN,
   MACHT,
   SOFORT,
+  erlaubtMehrereZiele,
   machtDefinition,
   machtKosten,
   type AbwehrArt,
+  type EigenschaftModus,
+  type LinderungModus,
+  type VerwirrungWahl,
 } from '@/kampf/maechte'
 import type { BestiariumKreatur, Kampfprofil } from '@/types/charakter'
 
@@ -620,6 +871,42 @@ const AKTIONEN = [
   { value: 1, title: '1 (±0)' },
   { value: 2, title: '2 (–2)' },
   { value: 3, title: '3 (–4)' },
+]
+const VERZWEIFELT = [
+  { value: 0, title: 'Nein' },
+  { value: 2, title: '+2 (Schaden –2)' },
+  { value: 4, title: '+4 (Schaden –4)' },
+]
+const UEBERZAHL = [0, 1, 2, 3, 4].map((n) => ({ value: n, title: n ? `${n} (+${n})` : 'Keine' }))
+const DECKUNG = [
+  { value: 0, title: 'Keine' },
+  { value: -2, title: 'Leicht (–2)' },
+  { value: -4, title: 'Mittel / liegt (–4)' },
+  { value: -6, title: 'Schwer (–6)' },
+  { value: -8, title: 'Fast vollständig (–8)' },
+]
+const BELEUCHTUNG = [
+  { value: 0, title: 'Hell' },
+  { value: -2, title: 'Düster (–2)' },
+  { value: -4, title: 'Dunkel (–4)' },
+  { value: -6, title: 'Finsternis (–6)' },
+]
+const ANGESAGTE_ZIEL_OPTIONEN = (Object.keys(ANGESAGTE_ZIELE) as AngesagtesZiel[]).map((key) => {
+  const z = ANGESAGTE_ZIELE[key]
+  const teile = [z.malus ? `${z.malus}` : '', z.schaden ? `Schaden +${z.schaden}` : ''].filter(Boolean)
+  return { value: key, title: teile.length ? `${z.name} (${teile.join(', ')})` : z.name }
+})
+const HERAUSFORDERN_WIRKUNGEN = [
+  { value: 'abgelenkt', title: 'Abgelenkt (–2 auf Proben)' },
+  { value: 'verwundbar', title: 'Verwundbar (+2 für Angreifer)' },
+]
+const LINDERUNG_MODI = [
+  { value: 'erholen' as LinderungModus, title: 'Erholen (Zustände aufheben)' },
+  { value: 'abschwaechen' as LinderungModus, title: 'Abschwächen (Wund-/Erschöpfungsabzug)' },
+]
+const VERWIRRUNG_WAHL = [
+  { value: 'abgelenkt' as VerwirrungWahl, title: 'Abgelenkt' },
+  { value: 'verwundbar' as VerwirrungWahl, title: 'Verwundbar' },
 ]
 
 const store = useCharakterStore()
@@ -673,6 +960,7 @@ const schnell = reactive({
   bennys: 2,
   merkmale: [] as string[],
   widerstandsfaehig: 0,
+  groesse: 0,
   zaeh: false,
 })
 
@@ -739,7 +1027,6 @@ const nichtSimulierteRegeln = computed(() => {
   const k = kreatur.value
   if (!k) return []
   const regeln: string[] = []
-  if (k.groesse) regeln.push(`Größe ${k.groesse > 0 ? '+' : ''}${k.groesse}`)
   const besondere = k.spezialfaehigkeiten
     .map((f) => f.name)
     .filter((n) => /^(Furchterregend|Gift|Unverwundbarkeit|Ätherisch|Schnelle Regeneration)/.test(n))
@@ -792,6 +1079,7 @@ function erstelleSchnellKaempfer(): Kaempfer {
     handicaps: schnell.merkmale.filter((m) => KAMPF_HANDICAPS.includes(m)),
     bennys: Number(schnell.bennys) || 0,
     widerstandsfaehig: Number(schnell.widerstandsfaehig) || 0,
+    groesse: Number(schnell.groesse) || 0,
     zaeh: schnell.zaeh,
   })
 }
@@ -827,6 +1115,8 @@ async function fuegeHinzu() {
 
 const aktueller = computed(() => kampf.aktueller)
 
+const aktionsArt = ref<'angriff' | 'optionen' | 'macht'>('angriff')
+
 const angriff = reactive({
   zielId: '',
   waffenIndex: 0,
@@ -834,6 +1124,14 @@ const angriff = reactive({
   aktionen: 1,
   modifikator: 0,
   ruecksichtslos: false,
+  verzweifelt: 0,
+  angesagtesZiel: 'keins' as AngesagtesZiel,
+  deckung: 0,
+  beleuchtung: 0,
+  ueberzahl: 0,
+  ueberraschung: false,
+  doppelschuss: false,
+  schnellerAngriff: false,
 })
 
 const zielOptionen = computed(() => {
@@ -841,7 +1139,7 @@ const zielOptionen = computed(() => {
   if (!k) return []
   return kampf.moeglicheZiele(k).map((z) => ({
     value: z.id,
-    title: `${z.name} (Parade ${z.aktuelleParade}, Robustheit ${z.gesamtRobustheit}${z.panzerung ? ` inkl. ${z.panzerung}` : ''})`,
+    title: `${z.name} (Parade ${z.aktuelleParade}, Robustheit ${kampf.robustheitVon(z)}${z.gesamtPanzerung ? ` inkl. ${z.gesamtPanzerung}` : ''})`,
   }))
 })
 
@@ -853,6 +1151,42 @@ const waffenOptionen = computed(() =>
 )
 
 const gewaehlteWaffe = computed(() => aktueller.value?.waffen[angriff.waffenIndex] ?? null)
+const gewaehltesZiel = computed(() => (angriff.zielId ? kampf.finde(angriff.zielId) : null))
+const schnellerAngriffWuerfel = computed(() =>
+  aktueller.value ? KampfController.zusatzKaempfenWuerfel(aktueller.value) : 0,
+)
+
+/** Was der Simulator beim gewählten Angriff von sich aus einrechnet. */
+const angriffsHinweise = computed(() => {
+  const a = aktueller.value
+  const z = gewaehltesZiel.value
+  const w = gewaehlteWaffe.value
+  if (!a || !z || !w) return []
+  const hinweise: string[] = []
+  const groesse = z.groessenKategorie - a.groessenKategorie
+  if (groesse) hinweise.push(`Größenkategorie ${groesse > 0 ? '+' : ''}${groesse}`)
+  if (!angriff.ueberraschung) {
+    if (z.istVerwundbar) hinweise.push('Ziel Verwundbar +2')
+    if (w.istNahkampf && !z.istBewaffnet && (!w.istWaffenlos || a.istBewaffnet)) {
+      hinweise.push('Unbewaffneter Verteidiger +2')
+    }
+  }
+  if (!w.istNahkampf && z.hatTalent(TALENT.AUSWEICHEN)) hinweise.push('Ausweichen –2 (statt Deckung, wenn höher)')
+  if (z.abwehrMalus(w.istNahkampf)) hinweise.push(`Abwehren ${z.abwehrMalus(w.istNahkampf)}`)
+  if (w.istNahkampf && angriff.ueberzahl) {
+    if (z.hatTalent(TALENT.HARTER_BLOCK)) hinweise.push('Harter Block: Überzahl –2')
+    else if (z.hatTalent(TALENT.BLOCK)) hinweise.push('Block: Überzahl –1')
+  }
+  if (a.hatTalent(TALENT.RIESENTOETER) && z.groesse - a.groesse >= 3) hinweise.push('Riesentöter +W6 Schaden')
+  if (a.berserker) hinweise.push('Berserkerrausch: Stärke +1 Würfeltyp')
+  if (w.istNahkampf && kampf.anfuehrerBonus(a, TALENT.ANHEIZEN)) hinweise.push('Anheizen +1 Schaden')
+  if (z.arkaneAbwehr && a.schadensbonus) hinweise.push('Arkane Resistenz mindert Waffe verbessern')
+  if (a.hatHandicap(HANDICAP.BLIND)) hinweise.push('Blind –6')
+  if (a.blendmalus) hinweise.push(`Geblendet ${a.blendmalus}`)
+  if (!w.istNahkampf && a.hatHandicap(HANDICAP.EINAEUGIG)) hinweise.push('Einäugig –2')
+  if (!w.istNahkampf && a.hatHandicap(HANDICAP.SCHLECHTE_AUGEN)) hinweise.push('Schlechte Augen')
+  return hinweise
+})
 
 // ---------------------------------------------------------------
 // Mächte (volle Aktion)
@@ -860,11 +1194,17 @@ const gewaehlteWaffe = computed(() => aktueller.value?.waffen[angriff.waffenInde
 
 const macht = reactive({
   name: '',
-  zielId: '',
+  zielIds: [] as string[],
   aktionen: 1,
   modifikator: 0,
   modifikatoren: [] as string[],
   abwehrArt: 'nahkampf' as AbwehrArt,
+  eigenschaftModus: 'erhoehen' as EigenschaftModus,
+  eigenschaft: '',
+  linderungModus: 'erholen' as LinderungModus,
+  verwirrung: 'abgelenkt' as VerwirrungWahl,
+  deckung: 0,
+  beleuchtung: 0,
 })
 
 // Nur Mächte anbieten, die der Simulator auch auswerten kann.
@@ -877,35 +1217,145 @@ const machtOptionen = computed(() =>
 const gewaehlteMacht = computed(() => (macht.name ? machtDefinition(macht.name) : null))
 
 const machtGesamtkosten = computed(() =>
-  gewaehlteMacht.value ? machtKosten(gewaehlteMacht.value, macht.modifikatoren) : 0,
+  gewaehlteMacht.value ? machtKosten(gewaehlteMacht.value, macht.modifikatoren, macht.zielIds.length || 1) : 0,
+)
+
+const mehrereMachtZiele = computed(() =>
+  gewaehlteMacht.value ? erlaubtMehrereZiele(gewaehlteMacht.value, macht.modifikatoren) : false,
+)
+
+// Modifikatoren, die nur für einen Modus gelten (Stark nur beim Senken), ausblenden.
+const sichtbareMachtModifikatoren = computed(() =>
+  (gewaehlteMacht.value?.modifikatoren ?? []).filter((m) => !m.modus || m.modus === macht.eigenschaftModus),
 )
 
 const machtZielOptionen = computed(() => {
   const k = aktueller.value
   if (!k || !macht.name) return []
-  return kampf.moeglicheMachtZiele(k, macht.name).map((z) => ({
+  return kampf.moeglicheMachtZiele(k, macht.name, macht.eigenschaftModus).map((z) => ({
     value: z.id,
     title: z === k ? `${z.name} (selbst)` : z.name,
   }))
 })
+
+/** Einzel- oder Mehrfachauswahl der Ziele über dasselbe Array. */
+const machtZielAuswahl = computed<string | string[] | null>({
+  get: () => (mehrereMachtZiele.value ? macht.zielIds : macht.zielIds[0] ?? null),
+  set: (wert) => {
+    macht.zielIds = Array.isArray(wert) ? wert : wert ? [wert] : []
+  },
+})
+
+const eigenschaftsOptionenMacht = computed(() => {
+  const ziele = macht.zielIds.map((id) => kampf.finde(id)).filter((z): z is Kaempfer => Boolean(z))
+  const fertigkeiten = new Set<string>(SCHNELL_FERTIGKEITEN)
+  ziele.forEach((z) => Object.keys(z.fertigkeiten).forEach((f) => fertigkeiten.add(f)))
+  return [...ATTRIBUTE, ...[...fertigkeiten].sort((a, b) => a.localeCompare(b))]
+})
+
+const kannMachtWirken = computed(
+  () =>
+    Boolean(macht.name && macht.zielIds.length) &&
+    machtGesamtkosten.value <= (aktueller.value?.machtpunkte ?? 0) &&
+    (macht.name !== MACHT.EIGENSCHAFT || Boolean(macht.eigenschaft)),
+)
+
+/** Ziele auf die gültige Auswahl begrenzen und notfalls eines vorwählen. */
+function pruefeMachtZiele() {
+  const erlaubt = machtZielOptionen.value.map((o) => o.value)
+  let ziele = macht.zielIds.filter((id) => erlaubt.includes(id))
+  if (!mehrereMachtZiele.value) ziele = ziele.slice(0, 1)
+  if (!ziele.length && erlaubt.length) ziele = [erlaubt[0]]
+  macht.zielIds = ziele
+  if (!eigenschaftsOptionenMacht.value.includes(macht.eigenschaft)) {
+    macht.eigenschaft = macht.eigenschaftModus === 'senken' ? FERTIGKEIT.KAEMPFEN : ATTRIBUTE[0]
+  }
+}
 
 // Machtwechsel: Modifikatoren verwerfen und ein passendes Ziel vorwählen.
 watch(
   () => macht.name,
   () => {
     macht.modifikatoren = []
-    const optionen = machtZielOptionen.value
-    if (!optionen.some((o) => o.value === macht.zielId)) macht.zielId = optionen[0]?.value ?? ''
+    pruefeMachtZiele()
+  },
+)
+watch(() => macht.eigenschaftModus, () => {
+  macht.modifikatoren = macht.modifikatoren.filter((n) => sichtbareMachtModifikatoren.value.some((m) => m.name === n))
+  pruefeMachtZiele()
+})
+
+// Modifikatoren einer Gruppe (Flächeneffekt, Panzerbrechend) schließen sich aus.
+watch(
+  () => [...macht.modifikatoren],
+  (neu, alt) => {
+    const definition = gewaehlteMacht.value
+    if (!definition) return
+    const hinzu = neu.filter((n) => !alt.includes(n))
+    const gruppen = new Set(definition.modifikatoren.filter((m) => hinzu.includes(m.name) && m.gruppe).map((m) => m.gruppe))
+    if (gruppen.size) {
+      macht.modifikatoren = neu.filter((n) => {
+        const m = definition.modifikatoren.find((d) => d.name === n)
+        return !m?.gruppe || !gruppen.has(m.gruppe) || hinzu.includes(n)
+      })
+    }
+    pruefeMachtZiele()
   },
 )
 
 function wirkeMacht() {
-  kampf.wirkeMacht(aktueller.value!.id, macht.name, macht.zielId, {
+  kampf.wirkeMacht(aktueller.value!.id, macht.name, [...macht.zielIds], {
     modifikator: Number(macht.modifikator) || 0,
     aktionen: macht.aktionen,
     modifikatoren: [...macht.modifikatoren],
     abwehrArt: macht.abwehrArt,
+    deckung: macht.deckung,
+    beleuchtung: macht.beleuchtung,
+    eigenschaftModus: macht.eigenschaftModus,
+    eigenschaft: macht.eigenschaft,
+    linderungModus: macht.linderungModus,
+    verwirrung: macht.verwirrung,
   })
+}
+
+// ---------------------------------------------------------------
+// Kampfoptionen: Herausfordern, Ringen, Befreien
+// ---------------------------------------------------------------
+
+const herausforderung = reactive({ fertigkeit: 'Provozieren', wirkung: 'abgelenkt' as 'abgelenkt' | 'verwundbar' })
+const befreiung = reactive({ eigenschaft: FERTIGKEIT.ATHLETIK as string })
+
+const herausforderungsOptionen = computed(() => {
+  const k = aktueller.value
+  return Object.entries(HERAUSFORDERN_ATTRIBUT).map(([fertigkeit, attribut]) => {
+    const widerstand =
+      fertigkeit === FERTIGKEIT.KAEMPFEN && k?.hatTalent(TALENT.FINTE) ? 'Verstand (Finte)' : attribut
+    const wuerfel = k ? k.wuerfelFuer(fertigkeit) : null
+    return {
+      value: fertigkeit,
+      title: `${fertigkeit} ${wuerfel ? `${wuerfel.wuerfel}${wuerfel.ungeuebt ? ' ungeübt' : ''}` : ''} gegen ${widerstand}`,
+    }
+  })
+})
+
+function aktionsOptionen() {
+  return { modifikator: Number(angriff.modifikator) || 0, aktionen: angriff.aktionen }
+}
+
+function fordereHeraus() {
+  kampf.herausfordern(aktueller.value!.id, angriff.zielId, { ...aktionsOptionen(), ...herausforderung })
+}
+
+function ringe() {
+  kampf.ringen(aktueller.value!.id, angriff.zielId, { ...aktionsOptionen(), ueberzahl: angriff.ueberzahl })
+}
+
+function zerquetsche() {
+  kampf.zerquetschen(aktueller.value!.id, angriff.zielId)
+}
+
+function befreie() {
+  kampf.befreien(aktueller.value!.id, befreiung.eigenschaft, aktionsOptionen())
 }
 
 const zugInfo = computed(() => {
@@ -914,7 +1364,7 @@ const zugInfo = computed(() => {
   return [
     `${k.karte.name}${k.hatJoker ? ' (+2 auf alle Würfe)' : ''}`,
     `Parade ${k.aktuelleParade}`,
-    `Robustheit ${k.gesamtRobustheit}`,
+    `Robustheit ${kampf.robustheitVon(k)}`,
     k.wildcard ? `${k.bennys} Benny${k.bennys === 1 ? '' : 's'}` : '',
     k.wundmalus ? `Wundmalus ${k.wundmalus}` : '',
   ]
@@ -939,10 +1389,21 @@ watch(
     angriff.waffenIndex = 0
     angriff.ruecksichtslos = false
     angriff.aktionen = 1
+    angriff.verzweifelt = 0
+    angriff.angesagtesZiel = 'keins'
+    angriff.deckung = 0
+    angriff.ueberzahl = 0
+    angriff.ueberraschung = false
+    angriff.doppelschuss = false
+    angriff.schnellerAngriff = false
+    aktionsArt.value = 'angriff'
     macht.name = machtOptionen.value[0]?.value ?? ''
     macht.aktionen = 1
     macht.modifikator = 0
     macht.modifikatoren = []
+    macht.deckung = 0
+    macht.zielIds = []
+    pruefeMachtZiele()
     probe.kaempferId = id
     nextTick(() => reihe.value?.querySelector('.platz-aktiv')?.scrollIntoView({ block: 'nearest', inline: 'center' }))
   },
@@ -965,6 +1426,14 @@ function greifeAn() {
     aktionen: angriff.aktionen,
     reichweite: angriff.reichweite,
     ruecksichtslos: angriff.ruecksichtslos,
+    verzweifelt: angriff.verzweifelt,
+    angesagtesZiel: angriff.angesagtesZiel,
+    deckung: angriff.deckung,
+    beleuchtung: angriff.beleuchtung,
+    ueberzahl: angriff.ueberzahl,
+    ueberraschung: angriff.ueberraschung,
+    doppelschuss: angriff.doppelschuss,
+    schnellerAngriff: angriff.schnellerAngriff,
   })
 }
 
@@ -1009,17 +1478,44 @@ const statusGruppen = computed(() => [
 ])
 
 function kampfMerkmale(k: Kaempfer): string[] {
-  const merkmale = [...k.talente, ...k.handicaps].filter((m) => MERKMALE.includes(m))
+  const merkmale = [
+    ...[...k.talente].filter((t) => KAMPF_TALENTE.includes(t)),
+    ...[...k.handicaps].filter(istKampfHandicap),
+  ]
+  if (k.groesse) merkmale.push(`Größe ${k.groesse > 0 ? '+' : ''}${k.groesse}`)
   if (k.widerstandsfaehig) merkmale.push('Widerstandsfähig')
   if (k.zaeh) merkmale.push('Zäh')
   return merkmale
 }
 
-/** Abgelenkt/Verwundbar als eigene Chips — sie laufen zugweise ab. */
-function zustaende(k: Kaempfer): { text: string; hinweis: string }[] {
-  const liste: { text: string; hinweis: string }[] = []
+/** Zustände als eigene Chips – manche lassen sich per Klick beenden. */
+function zustaende(k: Kaempfer): { text: string; hinweis: string; beenden?: () => void }[] {
+  const liste: { text: string; hinweis: string; beenden?: () => void }[] = []
   if (k.istAbgelenkt) liste.push({ text: 'Abgelenkt –2', hinweis: '–2 auf alle Eigenschaftsproben bis zum Ende des nächsten Zuges' })
   if (k.istVerwundbar) liste.push({ text: 'Verwundbar +2', hinweis: 'Angriffe gegen diesen Kämpfer erhalten +2' })
+  if (k.fessel !== 'frei') {
+    const ringer = k.gehaltenVon ? kampf.finde(k.gehaltenVon)?.name : null
+    liste.push({
+      text: `${k.fessel === 'gebunden' ? 'Gebunden' : 'Festgehalten'}${ringer ? ` (${ringer})` : ''}`,
+      hinweis: 'Befreien mit Stärke –2 oder Athletik (Aktion)',
+    })
+  }
+  if (k.verteidigt) liste.push({ text: `Verteidigt +${VERTEIDIGEN_BONUS}`, hinweis: 'Parade erhöht bis zum nächsten eigenen Zug' })
+  if (k.blendung) {
+    liste.push({
+      text: `Geblendet –${k.blendung.malus}`,
+      hinweis: 'Abzug auf Aktionen mit Sicht; Klick beendet die Blendung',
+      beenden: () => kampf.beendeBlendung(k.id),
+    })
+  }
+  k.senkungen.forEach((s) =>
+    liste.push({
+      text: `${s.eigenschaft} –${s.stufen}`,
+      hinweis: 'Eigenschaft gesenkt; Klick beendet die Senkung',
+      beenden: () => kampf.beendeSenkung(k.id, s.eigenschaft),
+    }),
+  )
+  if (k.linderungsbonus > 0) liste.push({ text: `Linderung +${k.linderungsbonus}`, hinweis: 'Ignoriert Wund- und Erschöpfungsabzüge' })
   return liste
 }
 

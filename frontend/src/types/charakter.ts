@@ -240,7 +240,10 @@ export interface Kampfprofil {
   bennys: number
   waffen: KampfprofilWaffe[]
   talente: string[]
+  // Bei Stufen-Handicaps mit Stufe, z. B. "Dünnhäutig (schwer)"
   handicaps: string[]
+  // Größe (0 = Mensch): Größenkategorie und zusätzliche Wunden
+  groesse?: number
   // Nur aus dem Bestiarium; Charaktere liefern diese Felder nicht.
   widerstandsfaehig?: number
   zaeh?: boolean

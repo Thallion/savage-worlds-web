@@ -2206,7 +2206,9 @@
       "name": "Bedrohlich",
       "kategorie": "Sozial",
       "rang": "A",
-      "voraussetzungen": [],
+      "voraussetzungen": [
+        "Blutrünstig oder Fies oder Skrupellos oder Hässlich"
+      ],
       "beschreibung": "+2 auf Einschüchtern.",
       "neue_maechte": 0,
       "machtpunkte": 0,

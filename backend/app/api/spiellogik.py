@@ -776,7 +776,8 @@ def talent_waehlen(req: SpiellogikRequest):
 
     setting_name = daten.get("active_setting_name", "SWAE")
     try:
-        setting_talente = _load_setting(setting_name, daten).get("talente", {})
+        setting = _load_setting(setting_name, daten)
+        setting_talente = setting.get("talente", {})
     except HTTPException:
         return SpiellogikResponse(success=False, message=f"Setting '{setting_name}' nicht gefunden")
 
@@ -800,7 +801,7 @@ def talent_waehlen(req: SpiellogikRequest):
             bestaetigung_moeglich=True,
         )
 
-    fehlend = pruefe_voraussetzungen(talent_data, daten, setting_talente)
+    fehlend = pruefe_voraussetzungen(talent_data, daten, setting_talente, setting.get("handicaps"))
     if fehlend and not req.ignoriere_pruefungen:
         return SpiellogikResponse(
             success=False,
@@ -1596,7 +1597,7 @@ def talente_verfuegbar(req: SpiellogikRequest):
         name
         for name, talent in setting_talente.items()
         if rang_erlaubt(talent.get("rang", "A"), daten)
-        and not pruefe_voraussetzungen(talent, daten, setting_talente)
+        and not pruefe_voraussetzungen(talent, daten, setting_talente, setting.get("handicaps"))
     ]
     return {"verfuegbar": verfuegbar}
 

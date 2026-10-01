@@ -13,7 +13,8 @@ Liefert die kampfrelevanten Werte eines Charakters in kompakter Form:
         "waffen": [{"name": ..., "fertigkeit": ..., "schaden": ..., "pb": ...,
                     "mindeststaerke": ..., "reichweite": ...}],
         "talente": [...],                             # inkl. Abstammungs-Talente
-        "handicaps": [...],                           # ohne Stufen-Suffix
+        "handicaps": [...],                           # "Name" bzw. "Name (schwer)"
+        "groesse": 0,
     }
 
 Parade, Robustheit, Panzerung und Bennys stammen aus /spiellogik/berechne,
@@ -21,6 +22,8 @@ damit Talent-, Handicap-, Volks- und Cyberware-Boni identisch zum
 Charakterbogen einfließen. Die Robustheit wird ohne Panzerung geliefert,
 weil der Simulator Panzerbrechend (PB) gegen die Panzerung verrechnet.
 """
+
+import re
 
 from app.services.statblock import _basisname
 from app.services.volk_effekte import gewaehltes_volk
@@ -70,13 +73,26 @@ def _fertigkeiten(daten: dict) -> dict[str, str]:
     return gelernt
 
 
+_STUFE = re.compile(r"(?:_|\()\s*(leicht|schwer)")
+
+
+def _mit_stufe(eintrag: str) -> str:
+    """Handicap normalisiert, die Stufe bleibt erhalten: "Dünnhäutig_schwer"
+    und "Dünnhäutig (schwer: ...)" werden zu "Dünnhäutig (schwer)" — der
+    Simulator wertet bei einigen Handicaps die Stufe aus."""
+    name = _basisname(eintrag)
+    treffer = _STUFE.search(eintrag)
+    return f"{name} ({treffer.group(1)})" if name and treffer else name
+
+
 def _merkmale(daten: dict, setting: dict, feld: str) -> list[str]:
     """Gewählte Talente bzw. Handicaps plus die der Abstammung, normalisiert."""
     auswahl_feld = "selected_talente" if feld == "talente" else "selected_handicaps"
-    namen = [_basisname(e) for e in daten.get(auswahl_feld, [])]
+    normalisiere = _basisname if feld == "talente" else _mit_stufe
+    namen = [normalisiere(e) for e in daten.get(auswahl_feld, [])]
     _, volk_data = gewaehltes_volk(daten, setting)
     if volk_data:
-        namen += [_basisname(e) for e in volk_data.get(feld) or []]
+        namen += [normalisiere(e) for e in volk_data.get(feld) or []]
     return list(dict.fromkeys(n for n in namen if n))
 
 
@@ -138,6 +154,7 @@ def generiere_kampfprofil(daten: dict, setting: dict, werte: dict) -> dict:
         "robustheit": werte.get("robustheit", 4) - panzerung,
         "panzerung": panzerung,
         "bennys": werte.get("bennys", 3),
+        "groesse": werte.get("groesse", 0),
         "waffen": _waffen(daten, setting),
         "talente": _merkmale(daten, setting, "talente"),
         "handicaps": _merkmale(daten, setting, "handicaps"),

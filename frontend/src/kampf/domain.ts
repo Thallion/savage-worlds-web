@@ -8,7 +8,8 @@
  *   - InitiativeRegeln (Kühler Kopf, Schnell, Zögerlich, Taktiker)
  *   - Schadensformel / SchadensRegeln (Robustheit, Steigerungen, Wunden)
  *   - Kaempfer (Entity mit Zustand: Wunden, Angeschlagen, Bennys,
- *     Machtpunkte und aktive Macht-Effekte)
+ *     Machtpunkte, aktive Macht-Effekte, Fesselung, Berserkerrausch)
+ *   - Größe & Größenkategorie (Modifikatoren, zusätzliche Wunden)
  *
  * Der Machtkatalog liegt in kampf/maechte.ts; die Abhängigkeit geht nur
  * in diese Richtung.
@@ -25,9 +26,13 @@ const STEIGERUNG = 4
 const MAX_WUNDMALUS = 3
 export const JOKER_BONUS = 2
 export const RUECKSICHTSLOS_BONUS = 2
-const RUECKSICHTSLOS_PARADE_MALUS = 2
 const ABGELENKT_MALUS = 2
 const VERWUNDBAR_BONUS = 2
+/** Verteidigen: Parade +4 bis zum nächsten eigenen Zug. */
+export const VERTEIDIGEN_BONUS = 4
+/** Berserkerrausch (Zornig): Robustheit +2, eine Stufe Wundabzüge ignoriert. */
+const BERSERKER_ROBUSTHEIT = 2
+const BERSERKER_WUNDEN_IGNORIERT = 1
 
 export const TALENT = {
   KUEHLER_KOPF: 'Kühler Kopf',
@@ -44,15 +49,79 @@ export const TALENT = {
   ZAEHER_ALS_LEDER: 'Zäher als Leder',
   MAECHTIGER_HIEB: 'Mächtiger Hieb',
   VOLLTREFFER: 'Volltreffer',
+  AUSWEICHEN: 'Ausweichen',
+  BLOCK: 'Block',
+  HARTER_BLOCK: 'Harter Block',
+  BERSERKER: 'Berserker',
+  SCHNELLER_ANGRIFF: 'Schneller Angriff',
+  BLITZSCHNELLER_ANGRIFF: 'Blitzschneller Angriff',
+  RIESENTOETER: 'Riesentöter',
+  DOPPELSCHUSS: 'Doppelschuss',
+  FINTE: 'Finte',
+  KAMPFKUENSTLER: 'Kampfkünstler',
+  ARKANE_RESISTENZ: 'Arkane Resistenz',
+  STARKE_ARKANE_RESISTENZ: 'Starke Arkane Resistenz',
+  ANFUEHRER: 'Anführer',
+  GEBORENER_ANFUEHRER: 'Geborener Anführer',
+  ANHEIZEN: 'Anheizen',
+  HALTET_DIE_STELLUNG: 'Haltet die Stellung!',
 } as const
 
 export const HANDICAP = {
   ZOEGERLICH: 'Zögerlich',
+  BLIND: 'Blind',
+  EINAEUGIG: 'Einäugig',
+  EINARMIG: 'Einarmig',
+  SCHLECHTE_AUGEN: 'Schlechte Augen',
+  DUENNHAEUTIG: 'Dünnhäutig',
+  FEIGE: 'Feige',
+  SANFTMUETIG: 'Sanftmütig',
+  TOLLPATSCHIG: 'Tollpatschig',
+  LANGSAM: 'Langsam',
 } as const
 
-/** Talente und Handicaps, die der Simulator regeltechnisch auswertet. */
+export type HandicapStufe = 'leicht' | 'schwer'
+
+/** Talente, die der Simulator regeltechnisch auswertet. */
 export const KAMPF_TALENTE: readonly string[] = Object.values(TALENT)
-export const KAMPF_HANDICAPS: readonly string[] = Object.values(HANDICAP)
+
+/**
+ * Handicaps, die der Simulator auswertet – in der Schreibweise der
+ * Schnellanlage. Bei Handicaps mit Stufe zählt die Stufe; Langsam wirkt
+ * sich nur als schweres Handicap auf Proben aus.
+ */
+export const KAMPF_HANDICAPS: readonly string[] = [
+  HANDICAP.ZOEGERLICH,
+  HANDICAP.BLIND,
+  HANDICAP.EINAEUGIG,
+  HANDICAP.EINARMIG,
+  `${HANDICAP.SCHLECHTE_AUGEN} (leicht)`,
+  `${HANDICAP.SCHLECHTE_AUGEN} (schwer)`,
+  `${HANDICAP.DUENNHAEUTIG} (leicht)`,
+  `${HANDICAP.DUENNHAEUTIG} (schwer)`,
+  HANDICAP.FEIGE,
+  HANDICAP.SANFTMUETIG,
+  HANDICAP.TOLLPATSCHIG,
+  `${HANDICAP.LANGSAM} (schwer)`,
+]
+
+/** Handicap-Eintrag ohne Stufe: "Langsam_schwer" / "Langsam (schwer)" → "Langsam". */
+export function handicapBasis(eintrag: string): string {
+  return eintrag.replace(/_(leicht|schwer)$/, '').split(' (')[0].trim()
+}
+
+/** Stufe aus "X_schwer", "X (schwer)" oder "X (schwer: …)"; sonst null. */
+export function handicapStufeAus(eintrag: string): HandicapStufe | null {
+  const treffer = eintrag.match(/(?:_|\()\s*(leicht|schwer)/)
+  return treffer ? (treffer[1] as HandicapStufe) : null
+}
+
+/** Wird das Handicap vom Simulator ausgewertet (Anzeige der Kampfmerkmale)? */
+export function istKampfHandicap(eintrag: string): boolean {
+  const basis = handicapBasis(eintrag)
+  if (basis === HANDICAP.LANGSAM) return handicapStufeAus(eintrag) === 'schwer'
+  return (Object.values(HANDICAP) as string[]).includes(basis)
+}
 
 export const FERTIGKEIT = {
   KAEMPFEN: 'Kämpfen',
@@ -104,6 +173,8 @@ export class Zufall {
 // Würfel
 // ------------------------------------------------------------------
 
+const WUERFEL_STUFEN = [4, 6, 8, 10, 12]
+
 /** Value Object für einen Eigenschaftswürfel, z. B. W8+1. */
 export class Wuerfel {
   constructor(
@@ -127,6 +198,28 @@ export class Wuerfel {
     const seiten = parseInt(treffer[1], 10)
     const bonus = treffer[2] ? parseInt(treffer[2].replace(/\s/g, ''), 10) : 0
     return new Wuerfel(seiten, bonus)
+  }
+
+  get istUngeuebt(): boolean {
+    return this.seiten === 4 && this.bonus === -2
+  }
+
+  /**
+   * Verändert den Würfel um Würfeltypen (Eigenschaft erhöhen/senken,
+   * Berserker): W4 → W6 → … → W12 → W12+1 → W12+2. Nach unten ist bei W4
+   * Schluss; ein ungeübter W4–2 wird beim Erhöhen zunächst zum W4.
+   */
+  stufe(delta: number): Wuerfel {
+    if (delta === 0) return this
+    if (this.istUngeuebt) return delta > 0 ? new Wuerfel(4, 0).stufe(delta - 1) : this
+    const index = WUERFEL_STUFEN.indexOf(this.seiten)
+    if (index < 0) return this
+    const ueberW12 = this.seiten === 12 && this.bonus > 0 ? this.bonus : 0
+    const restBonus = ueberW12 ? 0 : this.bonus
+    const ziel = Math.max(0, index + ueberW12 + delta)
+    const letzte = WUERFEL_STUFEN.length - 1
+    if (ziel <= letzte) return new Wuerfel(WUERFEL_STUFEN[ziel], restBonus)
+    return new Wuerfel(12, restBonus + ziel - letzte)
   }
 
   toString(): string {
@@ -237,6 +330,120 @@ export class Eigenschaftsprobe {
     if (ergebnis.steigerungen > 0) return `${text} – Erfolg mit ${ergebnis.steigerungen} Steigerung(en)`
     return `${text} – Erfolg`
   }
+}
+
+export interface MehrfachTreffer {
+  wurf: Wurf
+  /** Dieser Würfel ist der Wildcard-Würfel, der einen Fertigkeitswürfel ersetzt. */
+  wild: boolean
+  gesamt: number
+  erfolg: boolean
+  steigerungen: number
+}
+
+export interface MehrfachProbe {
+  wuerfel: Wuerfel
+  wuerfe: Wurf[]
+  wildWurf: Wurf | null
+  modifikator: number
+  mindestwurf: number
+  treffer: MehrfachTreffer[]
+  kritisch: boolean
+  modifikatoren: Modifikator[]
+  ungeuebt: boolean
+}
+
+/**
+ * Probe mit mehreren Eigenschaftswürfeln (Schneller Angriff, S. 88): der
+ * Wildcard-Würfel ersetzt höchstens einen Fertigkeitswürfel und fügt nie
+ * einen zusätzlichen Treffer hinzu. Kritischer Fehlschlag, wenn mehr als
+ * die Hälfte aller Würfel eine 1 zeigt – bei Wildcards inklusive des
+ * Wildcard-Würfels.
+ */
+export function wuerfleMehrfach(p: {
+  anzahl: number
+  wuerfel: Wuerfel
+  wildcard: boolean
+  modifikator?: number
+  mindestwurf: number
+  zufall: Zufall
+}): MehrfachProbe {
+  const modifikator = p.modifikator ?? 0
+  const wuerfe = Array.from({ length: Math.max(1, p.anzahl) }, () => wuerfleExplodierend(p.wuerfel.seiten, p.zufall))
+  const wildWurf = p.wildcard ? wuerfleExplodierend(6, p.zufall) : null
+  const genutzt = wuerfe.map((wurf) => ({ wurf, wild: false }))
+  if (wildWurf) {
+    const schwaechster = genutzt.reduce((min, e, i) => (e.wurf.summe < genutzt[min].wurf.summe ? i : min), 0)
+    if (wildWurf.summe > genutzt[schwaechster].wurf.summe) genutzt[schwaechster] = { wurf: wildWurf, wild: true }
+  }
+  const einsen = wuerfe.filter((w) => w.wuerfe[0] === 1).length + (wildWurf?.wuerfe[0] === 1 ? 1 : 0)
+  const alleWuerfel = wuerfe.length + (wildWurf ? 1 : 0)
+  const kritisch = Boolean(wildWurf && wildWurf.wuerfe[0] === 1 && einsen > alleWuerfel / 2)
+  const treffer = genutzt.map(({ wurf, wild }) => {
+    const gesamt = wurf.summe + p.wuerfel.bonus + modifikator
+    const erfolg = !kritisch && gesamt >= p.mindestwurf
+    return { wurf, wild, gesamt, erfolg, steigerungen: erfolg ? steigerungen(gesamt, p.mindestwurf) : 0 }
+  })
+  return {
+    wuerfel: p.wuerfel,
+    wuerfe,
+    wildWurf,
+    modifikator,
+    mindestwurf: p.mindestwurf,
+    treffer,
+    kritisch,
+    modifikatoren: [],
+    ungeuebt: false,
+  }
+}
+
+export function beschreibeMehrfach(probe: MehrfachProbe): string {
+  let text = `${probe.wuerfel}: ${probe.wuerfe.map(formatiereWurf).join(', ')}`
+  if (probe.wildWurf) text += `, Wild ${formatiereWurf(probe.wildWurf)}`
+  const summeBoni = probe.wuerfel.bonus + probe.modifikator
+  if (summeBoni !== 0) text += ` ${formatiereModifikator(summeBoni)}`
+  if (probe.kritisch) return `${text} – Kritischer Fehlschlag!`
+  const ergebnisse = probe.treffer.map((t) => {
+    const art = !t.erfolg ? 'verfehlt' : t.steigerungen > 0 ? `Treffer mit ${t.steigerungen} Steigerung(en)` : 'Treffer'
+    return `${t.gesamt}${t.wild ? ' (Wild)' : ''} ${art}`
+  })
+  return `${text} gegen ${probe.mindestwurf} → ${ergebnisse.join('; ')}`
+}
+
+/** Vergleichender Wurf (S. 88): der Verteidiger gewinnt bei Gleichstand. */
+export function vergleiche(angreifer: ProbenErgebnis, verteidiger: ProbenErgebnis): {
+  gewonnen: boolean
+  steigerungen: number
+} {
+  if (!angreifer.erfolg) return { gewonnen: false, steigerungen: 0 }
+  // Ein Kritischer Fehlschlag des Verteidigers scheitert automatisch; die
+  // Steigerungen zählen dann wie bei einer normalen Probe gegen 4.
+  const zielwert = verteidiger.kritisch ? MINDESTWURF : verteidiger.gesamt
+  if (!verteidiger.kritisch && angreifer.gesamt <= zielwert) return { gewonnen: false, steigerungen: 0 }
+  return { gewonnen: true, steigerungen: steigerungen(angreifer.gesamt, zielwert) }
+}
+
+// ------------------------------------------------------------------
+// Größe
+// ------------------------------------------------------------------
+
+/** Größenkategorie-Modifikator (Größentabelle S. 179). */
+export function groessenKategorie(groesse: number): number {
+  if (groesse <= -4) return -6
+  if (groesse === -3) return -4
+  if (groesse === -2) return -2
+  if (groesse <= 3) return 0
+  if (groesse <= 7) return 2
+  if (groesse <= 11) return 4
+  return 6
+}
+
+/** Zusätzliche Wunden: Groß +1, Riesig +2, Gigantisch +3 (S. 176). */
+export function groessenWunden(groesse: number): number {
+  if (groesse >= 12) return 3
+  if (groesse >= 8) return 2
+  if (groesse >= 4) return 1
+  return 0
 }
 
 // ------------------------------------------------------------------
@@ -523,6 +730,8 @@ export class SchadensRegeln {
     staerke: Wuerfel
     mindeststaerke?: number
     steigerung?: boolean
+    /** weitere Bonuswürfel, z. B. Riesentöter (+W6) */
+    zusatzWuerfel?: number[]
     modifikator?: number
     verdoppeln?: boolean
     zufall: Zufall
@@ -538,6 +747,7 @@ export class SchadensRegeln {
       wuerfe.push(wuerfleExplodierend(begrenzt, p.zufall))
     })
     if (p.steigerung) wuerfe.push(wuerfleExplodierend(6, p.zufall))
+    ;(p.zusatzWuerfel ?? []).forEach((seiten) => wuerfe.push(wuerfleExplodierend(seiten, p.zufall)))
     const staerkeBonus = formel.staerke ? p.staerke.bonus : 0
     const bonus = formel.bonus + staerkeBonus + (p.modifikator ?? 0)
     let gesamt = wuerfe.reduce((s, w) => s + w.summe, 0) + bonus
@@ -582,6 +792,8 @@ export class SchadensRegeln {
 // Waffe
 // ------------------------------------------------------------------
 
+const WAFFENLOS = 'Waffenlos'
+
 export interface WaffenDaten {
   name: string
   fertigkeit?: string
@@ -614,8 +826,12 @@ export class Waffe {
     return this.fertigkeit === FERTIGKEIT.KAEMPFEN
   }
 
+  get istWaffenlos(): boolean {
+    return this.name === WAFFENLOS
+  }
+
   static waffenlos(): Waffe {
-    return new Waffe({ name: 'Waffenlos', fertigkeit: FERTIGKEIT.KAEMPFEN, schaden: 'Stä' })
+    return new Waffe({ name: WAFFENLOS, fertigkeit: FERTIGKEIT.KAEMPFEN, schaden: 'Stä' })
   }
 
   toJSON(): WaffenDaten {
@@ -634,6 +850,7 @@ export class Waffe {
 // Kämpfer (Entity)
 // ------------------------------------------------------------------
 
+
 /** Serialisierbare Kämpferdaten, z. B. aus /spiellogik/kampfprofil. */
 export interface KaempferDaten {
   name: string
@@ -646,8 +863,11 @@ export interface KaempferDaten {
   panzerung?: number
   waffen?: WaffenDaten[]
   talente?: string[]
+  /** Handicaps, bei Stufen-Handicaps mit Stufe ("Dünnhäutig (schwer)"). */
   handicaps?: string[]
   bennys?: number
+  /** Größe (0 = Mensch); bestimmt Größenkategorie und zusätzliche Wunden. */
+  groesse?: number
   /** Bestiarium: Wunden, die ein Statist einstecken kann (Widerstandsfähig). */
   widerstandsfaehig?: number
   /** Bestiarium: zweites Angeschlagen verursacht keine Wunde (Zäh). */
@@ -660,6 +880,24 @@ export interface KaempferDaten {
   machtpunkte?: number
   /** Namen der beherrschten Mächte (siehe kampf/maechte.ts). */
   maechte?: string[]
+}
+
+/** Festgehalten/Gebunden (S. 103) durch Ringen oder Verstricken. */
+export type Fessel = 'frei' | 'festgehalten' | 'gebunden'
+
+/** Eigenschaft senken: wirkt bis das Opfer sie am Ende seiner Züge abschüttelt. */
+export interface Senkung {
+  eigenschaft: string
+  stufen: number
+  /** Modifikator Stark: Abschütteln mit –2. */
+  stark: boolean
+  wirkerId: string
+}
+
+/** Blenden: Abzug auf Aktionen, die Sicht erfordern. */
+export interface Blendung {
+  malus: number
+  stark: boolean
 }
 
 let naechsteId = 1
@@ -678,6 +916,7 @@ export class Kaempfer {
   talente: Set<string>
   handicaps: Set<string>
   bennys: number
+  groesse: number
   widerstandsfaehig: number
   zaeh: boolean
   arkaneFertigkeit: string
@@ -689,13 +928,25 @@ export class Kaempfer {
   angeschlagen = false
   ausserGefecht = false
   karte: Aktionskarte | null = null
-  ruecksichtslosAktiv = false
   maechtigerHiebGenutzt = false
   volltrefferGenutzt = false
   machtpunkte = 0
   erschoepfung = 0
   effekte: AktiverEffekt[] = []
   betaeubt = false
+  /** Schlummer: schläft, bis er geweckt wird. */
+  schlaeft = false
+  /** Verteidigen: Parade +4 bis zum Beginn des nächsten eigenen Zugs. */
+  verteidigt = false
+  fessel: Fessel = 'frei'
+  /** Ringen: wer den Kämpfer festhält (null bei Verstricken). */
+  gehaltenVon: string | null = null
+  /** Ringer, dessen Opfer Gebunden ist – solange Verwundbar (S. 105). */
+  haeltGebunden = false
+  berserker = false
+  berserkerRunden = 0
+  blendung: Blendung | null = null
+  senkungen: Senkung[] = []
   /**
    * Abgelenkt/Verwundbar laufen „bis zum Ende des nächsten Zuges" des
    * Trägers. Gezählt werden die verbleibenden eigenen Zugenden: 1 = klingt
@@ -717,6 +968,7 @@ export class Kaempfer {
     talente?: Iterable<string>
     handicaps?: Iterable<string>
     bennys?: number
+    groesse?: number
     widerstandsfaehig?: number
     zaeh?: boolean
     arkaneFertigkeit?: string
@@ -736,6 +988,7 @@ export class Kaempfer {
     this.talente = new Set(d.talente ?? [])
     this.handicaps = new Set(d.handicaps ?? [])
     this.bennys = d.bennys ?? (this.wildcard ? 3 : 0)
+    this.groesse = d.groesse ?? 0
     this.widerstandsfaehig = Math.max(0, d.widerstandsfaehig ?? 0)
     this.zaeh = Boolean(d.zaeh)
     this.arkaneFertigkeit = d.arkaneFertigkeit ?? ''
@@ -754,34 +1007,64 @@ export class Kaempfer {
   }
 
   hatHandicap(name: string): boolean {
-    return Array.from(this.handicaps).some((h) => h === name || h.startsWith(`${name} `) || h.startsWith(`${name}_`))
+    return Array.from(this.handicaps).some((h) => handicapBasis(h) === name)
+  }
+
+  /**
+   * Stufe eines Handicaps; ohne Angabe gilt es als leicht. null, wenn der
+   * Kämpfer das Handicap nicht hat.
+   */
+  handicapStufe(name: string): HandicapStufe | null {
+    const eintrag = Array.from(this.handicaps).find((h) => handicapBasis(h) === name)
+    if (eintrag === undefined) return null
+    return handicapStufeAus(eintrag) ?? 'leicht'
   }
 
   get istKampffaehig(): boolean {
     return !this.ausserGefecht
   }
 
+  /** Betäubte und Schlafende können keine Aktionen ausführen. */
+  get handlungsunfaehig(): boolean {
+    return this.betaeubt || this.schlaeft
+  }
+
   get hatJoker(): boolean {
     return Boolean(this.karte && this.karte.joker)
+  }
+
+  get groessenKategorie(): number {
+    return groessenKategorie(this.groesse)
+  }
+
+  /**
+   * Gilt als bewaffnet (Unbewaffneter Verteidiger, S. 108): eine
+   * Nahkampfwaffe, Natürliche Waffen oder Kampfkünstler.
+   */
+  get istBewaffnet(): boolean {
+    return this.hatTalent(TALENT.KAMPFKUENSTLER) || this.waffen.some((w) => w.istNahkampf && !w.istWaffenlos)
   }
 
   /**
    * Wildcards stecken 3 Wunden weg (mehr mit Zäh wie Leder). Statisten
    * normalerweise keine — außer sie sind Widerstandsfähig (Bestiarium),
-   * dann so viele, wie die Spezialfähigkeit angibt.
+   * dann so viele, wie die Spezialfähigkeit angibt. Große, Riesige und
+   * Gigantische Kreaturen stecken 1/2/3 Wunden mehr weg.
    */
   get maxWunden(): number {
-    if (!this.wildcard) return this.widerstandsfaehig
-    if (this.hatTalent(TALENT.ZAEHER_ALS_LEDER)) return 5
-    if (this.hatTalent(TALENT.ZAEH_WIE_LEDER)) return 4
-    return 3
+    const groesse = groessenWunden(this.groesse)
+    if (!this.wildcard) return this.widerstandsfaehig + groesse
+    if (this.hatTalent(TALENT.ZAEHER_ALS_LEDER)) return 5 + groesse
+    if (this.hatTalent(TALENT.ZAEH_WIE_LEDER)) return 4 + groesse
+    return 3 + groesse
   }
 
-  /** Wundmalus (negativ), max. –3, reduziert durch Schmerzresistenz. */
+  /** Wundmalus (negativ), max. –3, reduziert durch Schmerzresistenz und Berserkerrausch. */
   get wundmalus(): number {
     let ignoriert = 0
     if (this.hatTalent(TALENT.STAERKERE_SCHMERZRESISTENZ)) ignoriert = 2
     else if (this.hatTalent(TALENT.SCHMERZRESISTENZ)) ignoriert = 1
+    if (this.berserker) ignoriert += BERSERKER_WUNDEN_IGNORIERT
     return -Math.max(0, Math.min(this.wunden, MAX_WUNDMALUS) - ignoriert)
   }
 
@@ -790,13 +1073,23 @@ export class Kaempfer {
     return -Math.min(this.erschoepfung, MAX_ERSCHOEPFUNG - 1)
   }
 
-  get istAbgelenkt(): boolean {
-    return this.abgelenktZuege > 0
+  /** Linderung (Abschwächen) hebt Wund- und Erschöpfungsabzüge teilweise auf. */
+  get linderungsbonus(): number {
+    return Math.min(this.effektSumme('linderung'), -(this.wundmalus + this.erschoepfungsmalus))
   }
 
-  /** Betäubte sind durchgehend Verwundbar, unabhängig vom Zähler. */
+  /** Abzug auf Aktionen, die Sicht erfordern (Blenden). */
+  get blendmalus(): number {
+    return this.blendung ? -this.blendung.malus : 0
+  }
+
+  get istAbgelenkt(): boolean {
+    return this.abgelenktZuege > 0 || this.fessel === 'gebunden'
+  }
+
+  /** Betäubte, Festgehaltene und Gebundene sind durchgehend Verwundbar. */
   get istVerwundbar(): boolean {
-    return this.betaeubt || this.verwundbarZuege > 0
+    return this.betaeubt || this.verwundbarZuege > 0 || this.fessel !== 'frei' || this.haeltGebunden
   }
 
   /** Abgelenkt: –2 auf alle Eigenschaftsproben. */
@@ -838,12 +1131,24 @@ export class Kaempfer {
     return this.effektSumme(istNahkampf ? 'abwehrNahkampf' : 'abwehrFernkampf')
   }
 
+  /**
+   * Abzug für feindliche Mächte gegen diesen Kämpfer und Verringerung
+   * magischen Schadens: Arkane Resistenz (2), Starke Arkane Resistenz (4)
+   * und Arkaner Schutz (2/4) sind kumulativ.
+   */
+  get arkaneAbwehr(): number {
+    let resistenz = 0
+    if (this.hatTalent(TALENT.STARKE_ARKANE_RESISTENZ)) resistenz = 4
+    else if (this.hatTalent(TALENT.ARKANE_RESISTENZ)) resistenz = 2
+    return resistenz + this.effektSumme('arkanerSchutz')
+  }
+
   get aktuelleParade(): number {
-    return this.parade - (this.ruecksichtslosAktiv ? RUECKSICHTSLOS_PARADE_MALUS : 0)
+    return this.parade + (this.verteidigt ? VERTEIDIGEN_BONUS : 0)
   }
 
   robustheitGegen(pb: number): number {
-    const basis = this.robustheit + this.effektSumme('robustheit')
+    const basis = this.robustheit + this.effektSumme('robustheit') + (this.berserker ? BERSERKER_ROBUSTHEIT : 0)
     return basis + Math.max(0, this.gesamtPanzerung - (pb || 0))
   }
 
@@ -851,8 +1156,8 @@ export class Kaempfer {
     return this.robustheitGegen(0)
   }
 
-  /** Würfel für Attribut oder Fertigkeit; ungeübt W4–2. */
-  wuerfelFuer(eigenschaft: string): { wuerfel: Wuerfel; ungeuebt: boolean } {
+  /** Grundwürfel ohne Mächte und Berserker; ungeübt W4–2. */
+  private grundwuerfel(eigenschaft: string): { wuerfel: Wuerfel; ungeuebt: boolean } {
     const attribut = this.attribute[eigenschaft]
     if (attribut) return { wuerfel: attribut, ungeuebt: false }
     const fertigkeit = this.fertigkeiten[eigenschaft]
@@ -861,8 +1166,34 @@ export class Kaempfer {
     return { wuerfel: Wuerfel.ungeuebt(), ungeuebt: true }
   }
 
+  /**
+   * Veränderung in Würfeltypen: höchste Erhöhung minus höchste Senkung
+   * (gleiche Eigenschaft ist nicht kumulativ), Berserker +1 Stärke.
+   */
+  stufenAenderung(eigenschaft: string): number {
+    const erhoehung = Math.max(0, ...this.effekte.filter((e) => e.eigenschaft === eigenschaft).map((e) => e.stufen ?? 0))
+    const senkung = Math.max(0, ...this.senkungen.filter((s) => s.eigenschaft === eigenschaft).map((s) => s.stufen))
+    const berserker = this.berserker && eigenschaft === ATTRIBUT.STAERKE ? 1 : 0
+    return erhoehung - senkung + berserker
+  }
+
+  /** Würfel für Attribut oder Fertigkeit inklusive Mächten; ungeübt W4–2. */
+  wuerfelFuer(eigenschaft: string): { wuerfel: Wuerfel; ungeuebt: boolean } {
+    const grund = this.grundwuerfel(eigenschaft)
+    const delta = this.stufenAenderung(eigenschaft)
+    if (!delta) return grund
+    const wuerfel = grund.wuerfel.stufe(delta)
+    return { wuerfel, ungeuebt: grund.ungeuebt && wuerfel.istUngeuebt }
+  }
+
   get staerke(): Wuerfel {
-    return this.attribute[ATTRIBUT.STAERKE] ?? new Wuerfel(4, 0)
+    return this.wuerfelFuer(ATTRIBUT.STAERKE).wuerfel
+  }
+
+  /** Festgehalten oder Gebunden setzen; „frei" löst auch den Ringer. */
+  setzeFessel(fessel: Fessel, von: string | null = null): void {
+    this.fessel = fessel
+    this.gehaltenVon = fessel === 'frei' ? null : von
   }
 
   /**
@@ -884,10 +1215,13 @@ export class Kaempfer {
     return abgelaufen
   }
 
-  /** Effekt hinzufügen; dieselbe Macht desselben Wirkers ersetzt sich. */
+  /**
+   * Effekt hinzufügen; dieselbe Macht desselben Wirkers ersetzt sich (bei
+   * Eigenschaft erhöhen nur auf derselben Eigenschaft).
+   */
   fuegeEffektHinzu(effekt: AktiverEffekt): void {
     this.effekte = this.effekte.filter(
-      (e) => !(e.macht === effekt.macht && e.wirkerId === effekt.wirkerId),
+      (e) => !(e.macht === effekt.macht && e.wirkerId === effekt.wirkerId && e.eigenschaft === effekt.eigenschaft),
     )
     this.effekte.push(effekt)
   }
@@ -896,12 +1230,17 @@ export class Kaempfer {
   beendeEffekteVon(wirkerId: string): string[] {
     const beendet = this.effekte.filter((e) => e.wirkerId === wirkerId)
     this.effekte = this.effekte.filter((e) => e.wirkerId !== wirkerId)
-    return beendet.map((e) => `${e.macht} auf ${this.name} endet.`)
+    const senkungen = this.senkungen.filter((s) => s.wirkerId === wirkerId)
+    this.senkungen = this.senkungen.filter((s) => s.wirkerId !== wirkerId)
+    return [
+      ...beendet.map((e) => `${e.macht} auf ${this.name} endet.`),
+      ...senkungen.map((s) => `Senkung von ${s.eigenschaft} auf ${this.name} endet.`),
+    ]
   }
 
   /** Zustand zu Beginn des eigenen Zuges. */
   zugBeginn(): void {
-    this.ruecksichtslosAktiv = false
+    this.verteidigt = false
   }
 
   /**
@@ -913,11 +1252,11 @@ export class Kaempfer {
     const beendet: string[] = []
     if (this.abgelenktZuege > 0) {
       this.abgelenktZuege -= 1
-      if (this.abgelenktZuege === 0) beendet.push(`${this.name} ist nicht mehr Abgelenkt.`)
+      if (this.abgelenktZuege === 0 && !this.istAbgelenkt) beendet.push(`${this.name} ist nicht mehr Abgelenkt.`)
     }
     if (this.verwundbarZuege > 0) {
       this.verwundbarZuege -= 1
-      if (this.verwundbarZuege === 0 && !this.betaeubt) {
+      if (this.verwundbarZuege === 0 && !this.istVerwundbar) {
         beendet.push(`${this.name} ist nicht mehr Verwundbar.`)
       }
     }
@@ -945,7 +1284,7 @@ export class Kaempfer {
       return `${this.name} bleibt unverletzt.`
     }
     // Statisten gehen beim ersten Treffer zu Boden — es sei denn, sie sind
-    // Widerstandsfähig und können wie Wildcards Wunden ansammeln.
+    // Widerstandsfähig oder groß und können wie Wildcards Wunden ansammeln.
     if (this.maxWunden === 0) {
       this.ausserGefecht = true
       this.angeschlagen = false
@@ -977,6 +1316,7 @@ export class Kaempfer {
       talente: Array.from(this.talente),
       handicaps: Array.from(this.handicaps),
       bennys: this.bennys,
+      groesse: this.groesse,
       widerstandsfaehig: this.widerstandsfaehig,
       zaeh: this.zaeh,
       arkane_fertigkeit: this.arkaneFertigkeit,
@@ -1000,7 +1340,7 @@ export class Kaempfer {
       return ergebnis
     }
     const waffen = (d.waffen ?? []).map((w) => new Waffe(w))
-    if (!waffen.some((w) => w.name === 'Waffenlos')) waffen.push(Waffe.waffenlos())
+    if (!waffen.some((w) => w.istWaffenlos)) waffen.push(Waffe.waffenlos())
     return new Kaempfer({
       ...d,
       attribute: wuerfelMap(d.attribute),

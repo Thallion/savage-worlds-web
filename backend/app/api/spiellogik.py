@@ -55,6 +55,7 @@ from app.services.setting_elemente import (
     speichere_element,
     wende_setting_overrides_an,
 )
+from app.services.kampfprofil import generiere_kampfprofil
 from app.services.statblock import generiere_statblock
 from app.services.steigerungs_journal import (
     journal_eintrag,
@@ -1520,6 +1521,19 @@ def statblock(req: SpiellogikRequest):
     setting = wende_setting_overrides_an(setting, daten)
     werte = berechne_abgeleitete_werte(req)
     return {"statblock": generiere_statblock(daten, setting, werte)}
+
+
+@router.post("/kampfprofil")
+def kampfprofil(req: SpiellogikRequest):
+    """Kampfrelevante Werte für den Kampfsimulator (Parade, Robustheit, Waffen, ...)."""
+    daten = req.charakter_daten
+    try:
+        setting = load_setting(daten.get("active_setting_name", ""))
+    except FileNotFoundError:
+        setting = {}
+    setting = wende_setting_overrides_an(setting, daten)
+    werte = berechne_abgeleitete_werte(req)
+    return generiere_kampfprofil(daten, setting, werte)
 
 
 @router.post("/charakterbogen")

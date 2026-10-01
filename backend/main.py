@@ -13,6 +13,7 @@ from app.db.database import engine
 from app.db.models import Base
 from app.api.auth import router as auth_router
 from app.api.archetypen import router as archetypen_router
+from app.api.bestiarium import router as bestiarium_router
 from app.api.charaktere import router as charaktere_router
 from app.api.einstellungen import router as einstellungen_router
 from app.api.ordner import router as ordner_router
@@ -56,6 +57,7 @@ app.include_router(auth_router)
 app.include_router(charaktere_router)
 app.include_router(ordner_router)
 app.include_router(archetypen_router)
+app.include_router(bestiarium_router)
 app.include_router(einstellungen_router)
 app.include_router(spiellogik_router)
 

@@ -48,6 +48,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/kampf',
+      name: 'kampfsimulator',
+      component: () => import('@/views/KampfsimulatorView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/charakter/:id',
       name: 'charakter-editor',
       component: () => import('@/views/CharakterEditorView.vue'),

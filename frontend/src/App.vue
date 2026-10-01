@@ -19,6 +19,7 @@
         <template v-if="authStore.isLoggedIn">
           <v-list-item to="/" prepend-icon="mdi-account-group" title="Charaktere" @click="drawer = false" />
           <v-list-item to="/settings" prepend-icon="mdi-book-cog" title="Settings" @click="drawer = false" />
+          <v-list-item to="/kampf" prepend-icon="mdi-sword-cross" title="Kampf" @click="drawer = false" />
         </template>
         <v-list-item to="/info" prepend-icon="mdi-information-outline" title="Info" @click="drawer = false" />
         <template v-if="authStore.isLoggedIn">
@@ -46,6 +47,7 @@
         <template v-if="authStore.isLoggedIn">
           <v-btn to="/" variant="text" prepend-icon="mdi-account-group">Charaktere</v-btn>
           <v-btn to="/settings" variant="text" prepend-icon="mdi-book-cog">Settings</v-btn>
+          <v-btn to="/kampf" variant="text" prepend-icon="mdi-sword-cross">Kampf</v-btn>
           <v-chip
             class="mr-2 ml-2"
             variant="outlined"

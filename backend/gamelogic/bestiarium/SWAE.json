@@ -1,0 +1,2354 @@
+{
+  "quelle": "Savage Worlds Abenteuer-Edition, Kapitel 6: Bestiarium (S. 180-191)",
+  "hinweise": [
+    "robustheit ist der gedruckte Gesamtwert INKLUSIVE Panzerung, panzerung der Wert in Klammern.",
+    "Das Kampfprofil zieht die Panzerung ab, damit PB (Panzerbrechend) verrechnet werden kann.",
+    "Bei abweichenden Parade-Angaben gilt der Wert, der zur gelisteten Ausrüstung passt (siehe parade_hinweis).",
+    "bewegungsweite null entspricht '-' im Buch (Kreatur bewegt sich nicht an Land)."
+  ],
+  "kreaturen": [
+    {
+      "id": "alligator-krokodil",
+      "name": "Alligator/Krokodil",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 180,
+      "beschreibung": "Alligatoren und Krokodile sind in den meisten Pulp-Abenteuern typische Gegner. Die hier angegebenen Spielwerte stehen für ein durchschnittliches Exemplar beider Spezies.",
+      "attribute": {
+        "Geschicklichkeit": "W4",
+        "Konstitution": "W10",
+        "Stärke": "W10",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W8"
+      },
+      "bewegungsweite": 3,
+      "parade": 6,
+      "robustheit": 11,
+      "panzerung": 2,
+      "groesse": 2,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 2",
+          "text": "Typische Alligatoren sind zwischen 1,80 und 2,10 m lang, kräftig und schwer und wiegen knappe 250 kg."
+        },
+        {
+          "name": "Panzerung +2",
+          "text": "Dicke Haut."
+        },
+        {
+          "name": "Todesrolle",
+          "text": "Trifft eines dieser großen Reptilien mit Steigerung, beträgt der Bonusschaden W10 statt W6."
+        },
+        {
+          "name": "Wasserwesen",
+          "text": "Bewegungsweite 5."
+        }
+      ]
+    },
+    {
+      "id": "baer",
+      "name": "Bär",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 180,
+      "beschreibung": "Diese Spielwerte beschreiben größere Bären wie Grizzlys, Kodiakbären und Eisbären. Eine beliebte Taktik all dieser Bären ist es, den Gegner niederzuringen und dann zuzubeißen.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W12",
+        "Stärke": "W12+2",
+        "Verstand": "W6",
+        "Willenskraft": "W8"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W8"
+      },
+      "bewegungsweite": 8,
+      "parade": 6,
+      "robustheit": 10,
+      "panzerung": 0,
+      "groesse": 2,
+      "talente": [
+        "Rohling"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 2",
+          "text": "Diese Tiere werden bis zu 2,40 m groß und wiegen über 500 kg."
+        }
+      ]
+    },
+    {
+      "id": "drache",
+      "name": "Drache",
+      "kategorie": "Monster",
+      "wildcard": true,
+      "seite": 180,
+      "beschreibung": "Drachen sind feuerspeiende Monster, die Unheil und Verzweiflung in die Dörfer bringen, über die sie herfallen. Diese Bestien sind ziemlich intelligent und nutzen all ihre Vorteile aus.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W12",
+        "Stärke": "W12+8",
+        "Verstand": "W8",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W6",
+        "Athletik": "W10",
+        "Einschüchtern": "W12",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W10",
+        "Überreden": "W10",
+        "Wahrnehmung": "W12"
+      },
+      "bewegungsweite": 8,
+      "parade": 7,
+      "robustheit": 20,
+      "panzerung": 4,
+      "groesse": 8,
+      "talente": [
+        "Blitzschneller Angriff",
+        "Kühler Kopf"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Schwanzhieb",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Feueratem",
+          "fertigkeit": "Schießen",
+          "schaden": "3W6",
+          "pb": 0,
+          "reichweite": "Kegelschablone"
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": true,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Feueratem",
+          "text": "Drachen speien Feuer für 3W6 Schaden (siehe Odemwaffen, S. 177)."
+        },
+        {
+          "name": "Fliegen",
+          "text": "Drachen haben eine Flugbewegungsrate von 24\"."
+        },
+        {
+          "name": "Furchterregend (-2)",
+          "text": "Jeder, der einen mächtigen Drachen sieht, muss eine Furchtprobe mit -2 ablegen."
+        },
+        {
+          "name": "Größe 8 (Riesig)",
+          "text": "Drachen sind gewaltige Kreaturen, über 12 m lang von der Schnauze bis zur Schwanzspitze, und wiegen über 15 Tonnen."
+        },
+        {
+          "name": "Panzerung +4",
+          "text": "Schuppenhaut."
+        },
+        {
+          "name": "Schwanzhieb",
+          "text": "Stärke+W4. Die Kreatur kann einen freien Angriff gegen bis zu zwei Feinde hinter oder neben ihr ablegen, ohne Abzüge."
+        },
+        {
+          "name": "Wegklatschen",
+          "text": "Drachen ignorieren bis zu 4 Punkte Größenkategorieabzüge, wenn sie mit ihren Klauen angreifen."
+        },
+        {
+          "name": "Zäh",
+          "text": "Wenn die Kreatur Angeschlagen ist, verursacht ein zweites Angeschlagen-Ergebnis keine Wunde."
+        }
+      ]
+    },
+    {
+      "id": "drachling",
+      "name": "Drachling",
+      "kategorie": "Monster",
+      "wildcard": false,
+      "seite": 181,
+      "beschreibung": "Drachlinge sind nicht flugfähige Drachen mit tierhafter Intelligenz. Sie sind im direkten Kampf allerdings viel aggressiver als ihre entfernten Vettern.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W12",
+        "Stärke": "W12+6",
+        "Verstand": "W6",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Einschüchtern": "W12",
+        "Heimlichkeit": "W6",
+        "Kämpfen": "W10",
+        "Wahrnehmung": "W8"
+      },
+      "bewegungsweite": 6,
+      "parade": 7,
+      "robustheit": 18,
+      "panzerung": 4,
+      "groesse": 6,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Schwanzhieb",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Feueratem",
+          "fertigkeit": "Schießen",
+          "schaden": "3W6",
+          "pb": 0,
+          "reichweite": "Kegelschablone"
+        }
+      ],
+      "widerstandsfaehig": 1,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Feueratem",
+          "text": "Drachlinge speien Feuer für 3W6 Schaden (siehe Odemwaffen, S. 177)."
+        },
+        {
+          "name": "Furchterregend",
+          "text": "Drachlinge sind ein furchterregender Anblick."
+        },
+        {
+          "name": "Größe 6 (Groß)",
+          "text": "Drachlinge sind über 7 m lang von der Schnauze bis zur Schwanzspitze."
+        },
+        {
+          "name": "Panzerung +4",
+          "text": "Schuppenhaut."
+        },
+        {
+          "name": "Schwanzhieb",
+          "text": "Stärke. Die Kreatur kann einen freien Angriff gegen bis zu zwei Feinde hinter oder neben ihr ablegen, ohne Abzüge."
+        },
+        {
+          "name": "Widerstandsfähig",
+          "text": "Drachlinge können eine Wunde einstecken, ehe sie Ausgeschaltet sind."
+        }
+      ]
+    },
+    {
+      "id": "erdelementar",
+      "name": "Erdelementar",
+      "kategorie": "Elementar",
+      "wildcard": false,
+      "seite": 181,
+      "beschreibung": "Erdelementare manifestieren sich als 1,50 m große, vage menschenähnliche Haufen aus Erde und Stein. Sie sind stark, aber auch langsam und schwerfällig.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W10",
+        "Stärke": "W12",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Heimlichkeit": "W6",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W4"
+      },
+      "bewegungsweite": 4,
+      "parade": 6,
+      "robustheit": 11,
+      "panzerung": 4,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Hieb",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 1,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Elementar",
+          "text": "Kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        },
+        {
+          "name": "Graben (10\")",
+          "text": "Erdelementare verschmelzen mit dem Boden und können sich darin bewegen."
+        },
+        {
+          "name": "Immunität",
+          "text": "Immun gegen erdbasierte Angriffe (beinhaltet geworfene Steine oder Mächte mit einer Ausprägung basierend auf Erde, Schlamm oder Sand)."
+        },
+        {
+          "name": "Panzerung +4",
+          "text": "Felsige Haut."
+        },
+        {
+          "name": "Widerstandsfähig",
+          "text": "Erdelementare können eine Wunde einstecken, ehe sie Ausgeschaltet sind."
+        }
+      ]
+    },
+    {
+      "id": "feuerelementar",
+      "name": "Feuerelementar",
+      "kategorie": "Elementar",
+      "wildcard": false,
+      "seite": 182,
+      "beschreibung": "Feuerelementare erscheinen als menschenförmige Flammen.",
+      "attribute": {
+        "Geschicklichkeit": "W12+1",
+        "Konstitution": "W6",
+        "Stärke": "W4",
+        "Verstand": "W8",
+        "Willenskraft": "W8"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Heimlichkeit": "W6",
+        "Kämpfen": "W10",
+        "Schießen": "W8",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 6,
+      "parade": 7,
+      "robustheit": 5,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Feurige Berührung",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Flammenschlag",
+          "fertigkeit": "Schießen",
+          "schaden": "3W6",
+          "pb": 0,
+          "reichweite": "Kegelschablone"
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Elementar",
+          "text": "Kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        },
+        {
+          "name": "Feurige Berührung",
+          "text": "Stä+W6, Ziel kann Feuer fangen (S. 116)."
+        },
+        {
+          "name": "Flammenschlag",
+          "text": "Kann eine sengende Flammenzunge in einer Kegelschablone mit der Schießen-Fertigkeit abfeuern. Charaktere in der Schablone erleiden 3W6 Schaden und können Feuer fangen. Wegspringen ist möglich."
+        },
+        {
+          "name": "Immunität",
+          "text": "Feuerelementare sind immun gegen Feuer- und Hitzeangriffe."
+        }
+      ]
+    },
+    {
+      "id": "luftelementar",
+      "name": "Luftelementar",
+      "kategorie": "Elementar",
+      "wildcard": false,
+      "seite": 182,
+      "beschreibung": "Luftelementare manifestieren sich als intelligente Wirbelwinde.",
+      "attribute": {
+        "Geschicklichkeit": "W12",
+        "Konstitution": "W6",
+        "Stärke": "W8",
+        "Verstand": "W6",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Athletik": "W10",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W8",
+        "Schießen": "W6",
+        "Wahrnehmung": "W8"
+      },
+      "bewegungsweite": null,
+      "parade": 6,
+      "robustheit": 5,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Elementar",
+          "text": "Kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        },
+        {
+          "name": "Fliegen",
+          "text": "Luftelementare fliegen mit Bewegungsweite 12\"."
+        },
+        {
+          "name": "Gasförmige Gestalt",
+          "text": "Kann sich durch jede nicht feste Oberfläche bewegen, durch Fugen in Türen oder Fenstern dringen, durch Wasser blubbern und so weiter."
+        },
+        {
+          "name": "Unverwundbarkeit",
+          "text": "Immun gegen nicht-magische Angriffe."
+        },
+        {
+          "name": "Windstoß",
+          "text": "Kann ein Ziel oder eine Kegelschablone mit der Schießen-Fertigkeit angreifen. Wer betroffen ist, legt eine Stärkeprobe ab (mit -2 bei einer Steigerung) und wird sonst 2W6\" weggeschleudert. Wer ein festes Objekt trifft, erleidet 2W4 Betäubungsschaden."
+        }
+      ]
+    },
+    {
+      "id": "wasserelementar",
+      "name": "Wasserelementar",
+      "kategorie": "Elementar",
+      "wildcard": false,
+      "seite": 182,
+      "beschreibung": "Diese Geister sind schäumende, menschenförmige Wesen aus Wasser.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W10",
+        "Stärke": "W10",
+        "Verstand": "W6",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W8",
+        "Schießen": "W8",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 6,
+      "parade": 6,
+      "robustheit": 7,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Hieb",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Wasserhose",
+          "fertigkeit": "Schießen",
+          "schaden": "2W6",
+          "pb": 0,
+          "reichweite": "Kegelschablone"
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Elementar",
+          "text": "Kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        },
+        {
+          "name": "Hieb",
+          "text": "Stä+W6, Betäubungsschaden."
+        },
+        {
+          "name": "Immunität",
+          "text": "Immun gegen wasserbasierte Angriffe."
+        },
+        {
+          "name": "Sickern",
+          "text": "Kann durch poröse Oberflächen wie durch Schwieriges Gelände dringen."
+        },
+        {
+          "name": "Wasserhose",
+          "text": "Kann einen Schwall Wasser in einer Kegelschablone mit der Schießen-Fertigkeit abfeuern. Charaktere im Wirkungsbereich erleiden 2W6 Betäubungsschaden. Wegspringen ist möglich."
+        },
+        {
+          "name": "Wasserwesen",
+          "text": "Bewegungsweite 12."
+        }
+      ]
+    },
+    {
+      "id": "geist",
+      "name": "Geist",
+      "kategorie": "Untot",
+      "wildcard": false,
+      "seite": 182,
+      "beschreibung": "Geister, Schreckgespenster und Phantome kehren manchmal von den Toten zurück, um die Lebenden heimzusuchen und unerledigte Aufgaben zu erfüllen.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W6",
+        "Stärke": "W6",
+        "Verstand": "W6",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W8",
+        "Athletik": "W6",
+        "Einschüchtern": "W12",
+        "Heimlichkeit": "W12",
+        "Kämpfen": "W6",
+        "Provozieren": "W10",
+        "Wahrnehmung": "W12"
+      },
+      "bewegungsweite": 6,
+      "parade": 5,
+      "robustheit": 5,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "geworfener Gegenstand (Stä+W4)",
+      "waffen": [
+        {
+          "name": "Geworfener Gegenstand",
+          "fertigkeit": "Schießen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Ätherisch",
+          "text": "Geister können willentlich unsichtbar und körperlos werden und können nur mit magischen Angriffen verletzt werden."
+        },
+        {
+          "name": "Furchterregend (-2)",
+          "text": "Geister verursachen Furchtproben mit -2, wenn sie sich zeigen."
+        }
+      ]
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin",
+      "kategorie": "Humanoid",
+      "wildcard": false,
+      "seite": 182,
+      "beschreibung": "Goblins aus Mythen und Legenden sind finstere Kreaturen, die sich in der Mitte der Nacht in die Häuser stahlen und unartige Kinder fraßen.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W6",
+        "Stärke": "W4",
+        "Verstand": "W6",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W10",
+        "Athletik": "W6",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W6",
+        "Provozieren": "W10",
+        "Schießen": "W8",
+        "Überreden": "W4",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 5,
+      "parade": 5,
+      "robustheit": 4,
+      "panzerung": 0,
+      "groesse": -1,
+      "talente": [],
+      "handicaps": [
+        "Gierig (schwer)"
+      ],
+      "ausruestung": "Kurzspeere (Stä+W4), Bogen (12/24/48, Schaden 2W6)",
+      "waffen": [
+        {
+          "name": "Kurzspeer",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Bogen",
+          "fertigkeit": "Schießen",
+          "schaden": "2W6",
+          "pb": 0,
+          "reichweite": "12/24/48"
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe -1",
+          "text": "Goblins sind zwischen 90 cm und 120 cm groß."
+        },
+        {
+          "name": "Wärmesicht",
+          "text": "Halbiere Beleuchtungsabzüge bei Angriffen auf warme Ziele."
+        }
+      ]
+    },
+    {
+      "id": "hai",
+      "name": "Hai",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 183,
+      "beschreibung": "Diese Spielwerte beschreiben Bullenhaie und Weißspitzen-Hochseehaie. Für einen Bullenhai Stärke W10 verwenden.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W8",
+        "Stärke": "W8",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W12"
+      },
+      "bewegungsweite": null,
+      "parade": 6,
+      "robustheit": 7,
+      "panzerung": 0,
+      "groesse": 1,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 1",
+          "text": "Haie wiegen bis zu 250 kg."
+        },
+        {
+          "name": "Wasserwesen",
+          "text": "Bewegungsweite 10."
+        }
+      ]
+    },
+    {
+      "id": "hai-weisser-hai",
+      "name": "Hai, Weißer Hai",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 183,
+      "beschreibung": "Diese Spielwerte beschreiben Weiße Haie mit 6 bis 8 m Länge.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W12",
+        "Stärke": "W12+4",
+        "Verstand": "W4",
+        "Willenskraft": "W8"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Heimlichkeit": "W12",
+        "Kämpfen": "W10",
+        "Wahrnehmung": "W12"
+      },
+      "bewegungsweite": null,
+      "parade": 7,
+      "robustheit": 12,
+      "panzerung": 0,
+      "groesse": 4,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": true,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 4 (Groß)",
+          "text": "Weiße Haie können bis zu 8 m lang werden."
+        },
+        {
+          "name": "Wasserwesen",
+          "text": "Bewegungsweite 10."
+        },
+        {
+          "name": "Zäh",
+          "text": "Wenn die Kreatur Angeschlagen ist, verursacht ein zweites Angeschlagen-Ergebnis keine Wunde."
+        }
+      ]
+    },
+    {
+      "id": "hund-wolf",
+      "name": "Hund/Wolf",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 183,
+      "beschreibung": "Die Werte bilden einen großen Kampfhund ab, wie einen Rottweiler oder Dobermann, sowie Wölfe, Hyänen und dergleichen.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W6",
+        "Stärke": "W6",
+        "Verstand": "W6",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W6",
+        "Wahrnehmung": "W10"
+      },
+      "bewegungsweite": 8,
+      "parade": 5,
+      "robustheit": 4,
+      "panzerung": 0,
+      "groesse": -1,
+      "talente": [
+        "Aufmerksamkeit"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Geschwindigkeit",
+          "text": "Sprintwürfel W10."
+        },
+        {
+          "name": "Größe -1",
+          "text": "Der Kopf eines solchen Hundes reicht einem durchschnittlichen Menschen bis zur Taille, und er wiegt ungefähr 30 kg."
+        }
+      ]
+    },
+    {
+      "id": "katze-klein",
+      "name": "Katze, klein",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 184,
+      "beschreibung": "Dies ist eine gewöhnliche Hauskatze, beispielsweise ein Vertrauter eines Zauberers, der Tiergefährte eines Tiermeisters oder als Gestalt für den Zauber Gestaltwandeln.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W6",
+        "Stärke": "W4-3",
+        "Verstand": "W6",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Heimlichkeit": "W8",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 6,
+      "parade": 2,
+      "robustheit": 2,
+      "panzerung": 0,
+      "groesse": -3,
+      "talente": [
+        "Akrobat"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe -3 (Sehr klein)",
+          "text": "Katzen sind normalerweise kleiner als 30 cm."
+        },
+        {
+          "name": "Nachtsicht",
+          "text": "Katzen ignorieren Abzüge für Düstere und Dunkle Beleuchtung."
+        }
+      ]
+    },
+    {
+      "id": "lich",
+      "name": "Lich",
+      "kategorie": "Untot",
+      "wildcard": true,
+      "seite": 184,
+      "beschreibung": "Der Lich ist vielleicht die diabolischste Kreatur des Fantasy-Genres - ein Nekromant, der so von den schwarzen Künsten verzehrt wird, dass er schließlich selbst ein Untoter wird.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W10",
+        "Stärke": "W10",
+        "Verstand": "W12+2",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W8",
+        "Athletik": "W6",
+        "Einschüchtern": "W12",
+        "Kämpfen": "W8",
+        "Okkultismus": "W12+2",
+        "Überreden": "W8",
+        "Wahrnehmung": "W10",
+        "Zaubern": "W12"
+      },
+      "bewegungsweite": 6,
+      "parade": 6,
+      "robustheit": 15,
+      "panzerung": 6,
+      "groesse": 0,
+      "talente": [
+        "Konzentration",
+        "Kühler Kopf",
+        "Zauberer"
+      ],
+      "handicaps": [],
+      "ausruestung": "magische Rüstung (+6), andere magische Gegenstände",
+      "waffen": [
+        {
+          "name": "Todesberührung",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Todesberührung",
+          "text": "Statt eines normalen Angriffs kann ein Lich einen Berührungsangriff (S. 99) ausführen. Jede Steigerung beim Kämpfenwurf verursacht beim Ziel eine automatische Wunde."
+        },
+        {
+          "name": "Untot",
+          "text": "+2 Robustheit, +2 auf Erholungsproben gegen Angeschlagen; kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        },
+        {
+          "name": "Zauber",
+          "text": "Lichs haben 50 Machtpunkte und kennen so gut wie jeden verfügbaren Zauber."
+        },
+        {
+          "name": "Zombie",
+          "text": "Die Untoten, die Lichs mit dem Zauber Zombie erheben, sind permanent; sie können auch Skelette auf die gleiche Art erschaffen."
+        }
+      ],
+      "arkane_fertigkeit": "Zaubern",
+      "machtpunkte": 50,
+      "maechte": [
+        "Geschoss",
+        "Schutz",
+        "Abwehren",
+        "Waffe verbessern",
+        "Heilung",
+        "Betäuben"
+      ]
+    },
+    {
+      "id": "loewe",
+      "name": "Löwe",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 185,
+      "beschreibung": "Die Könige der Savanne sind wilde Raubtiere.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W8",
+        "Stärke": "W12",
+        "Verstand": "W6",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W10",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W8"
+      },
+      "bewegungsweite": 8,
+      "parade": 6,
+      "robustheit": 7,
+      "panzerung": 0,
+      "groesse": 1,
+      "talente": [
+        "Blitzschneller Angriff"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Anspringen",
+          "text": "Wenn ein Löwe einen Rücksichtslosen Angriff ausführt, addiert er +4 auf den Schaden anstelle von +2."
+        },
+        {
+          "name": "Größe 1",
+          "text": "Typische Männchen wiegen ungefähr 200 kg."
+        },
+        {
+          "name": "Nachtsicht",
+          "text": "Löwen ignorieren Abzüge für Düstere und Dunkle Beleuchtung."
+        }
+      ]
+    },
+    {
+      "id": "maultier",
+      "name": "Maultier",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 185,
+      "beschreibung": "Maultiere sind eine Kreuzung aus Esel und Pferd und werden normalerweise verwendet, um schwere Lasten zu transportieren oder Wagen zu ziehen.",
+      "attribute": {
+        "Geschicklichkeit": "W4",
+        "Konstitution": "W8",
+        "Stärke": "W8",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W4",
+        "Wahrnehmung": "W4"
+      },
+      "bewegungsweite": 6,
+      "parade": 2,
+      "robustheit": 8,
+      "panzerung": 0,
+      "groesse": 2,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Tritt",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 2",
+          "text": "Maultiere sind kräftig und wiegen normalerweise knappe 500 kg."
+        },
+        {
+          "name": "Starrsinnig",
+          "text": "Charaktere müssen -1 von ihren Reitenproben abziehen, wenn sie auf ihnen reiten."
+        }
+      ]
+    },
+    {
+      "id": "mech",
+      "name": "Mech",
+      "kategorie": "Konstrukt",
+      "wildcard": false,
+      "seite": 185,
+      "beschreibung": "Diese Werte gelten für 3,60 m hohe mechanisierte Wachroboter, wie man sie in Hard-Sci-Fi-Welten finden kann. Dies ist eine leichte Patrouillen-Plattform mit ordentlicher Intelligenz, einem Sensorpaket und hoher Beweglichkeit.",
+      "attribute": {
+        "Geschicklichkeit": "W4",
+        "Konstitution": "W8",
+        "Stärke": "W12+4",
+        "Verstand": "W6",
+        "Willenskraft": "W4"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Kämpfen": "W6",
+        "Schießen": "W8",
+        "Wahrnehmung": "W10"
+      },
+      "bewegungsweite": 10,
+      "parade": 5,
+      "robustheit": 14,
+      "panzerung": 4,
+      "groesse": 4,
+      "talente": [
+        "Aufmerksamkeit"
+      ],
+      "handicaps": [],
+      "ausruestung": "typischerweise ein Maschinengewehr oder Flammenwerfer (Werte je nach Setting)",
+      "waffen": [],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Furchtlos",
+          "text": "Mechs sind immun gegen Furcht und Einschüchtern, können aber intelligent genug sein, um angemessen auf furchterregende Stimuli zu reagieren."
+        },
+        {
+          "name": "Größe 4 (Groß)",
+          "text": "Der Mech ist 3,6 m groß."
+        },
+        {
+          "name": "Konstrukt",
+          "text": "+2 auf Erholungsproben gegen Angeschlagen; ignoriert 1 Punkt Wundabzüge; atmet nicht und leidet nicht unter Giften und Krankheiten."
+        },
+        {
+          "name": "Nachtsicht",
+          "text": "Sensorpakete ignorieren Abzüge für Beleuchtung."
+        },
+        {
+          "name": "Panzerung +4",
+          "text": "Panzerplatten."
+        }
+      ]
+    },
+    {
+      "id": "minotaurus",
+      "name": "Minotaurus",
+      "kategorie": "Humanoid",
+      "wildcard": false,
+      "seite": 185,
+      "beschreibung": "Minotauren sind über 2 m groß und haben gewaltige, stierartige Köpfe und Hörner. In vielen Fantasywelten werden sie als Wächter für Labyrinthe verwendet.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W12",
+        "Stärke": "W12+3",
+        "Verstand": "W6",
+        "Willenskraft": "W8"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W6",
+        "Athletik": "W8",
+        "Einschüchtern": "W12",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W10",
+        "Überreden": "W4",
+        "Wahrnehmung": "W10"
+      },
+      "bewegungsweite": 8,
+      "parade": 8,
+      "parade_hinweis": "7 ohne Speer, 8 mit Speer (+1 Parade)",
+      "robustheit": 12,
+      "panzerung": 1,
+      "groesse": 3,
+      "talente": [
+        "Flink"
+      ],
+      "handicaps": [],
+      "ausruestung": "Lederrüstung (+1), Speer (Stä+W6, Nahkampfreichweite 1, Parade +1)",
+      "waffen": [
+        {
+          "name": "Speer",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Hörner",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 1,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 3",
+          "text": "Minotauren sind über 2 m groß und haben die Masse eines Stiers."
+        },
+        {
+          "name": "Widerstandsfähig",
+          "text": "Minotauren können eine Wunde einstecken, ehe sie Ausgeschaltet sind."
+        }
+      ]
+    },
+    {
+      "id": "oger",
+      "name": "Oger",
+      "kategorie": "Humanoid",
+      "wildcard": false,
+      "seite": 185,
+      "beschreibung": "Oger sind Verwandte von Orks und niederen Riesen. Sie werden oft von Orkklans aufgenommen, die die dummen Rohlinge für ihre Wildheit und Stärke respektieren.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W12",
+        "Stärke": "W12+2",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W6",
+        "Athletik": "W6",
+        "Einschüchtern": "W8",
+        "Kämpfen": "W8",
+        "Überreden": "W4",
+        "Wahrnehmung": "W4"
+      },
+      "bewegungsweite": 7,
+      "parade": 6,
+      "robustheit": 11,
+      "panzerung": 1,
+      "groesse": 2,
+      "talente": [
+        "Rohling",
+        "Rundumschlag"
+      ],
+      "handicaps": [],
+      "ausruestung": "dicke Felle (+1), große Keule (Stä+W8)",
+      "waffen": [
+        {
+          "name": "Große Keule",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 1,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 2",
+          "text": "Die meisten Oger sind über 2,40 m groß, mit Kugelbauch und kräftigen Armen und Beinen."
+        },
+        {
+          "name": "Widerstandsfähig",
+          "text": "Oger können eine Wunde einstecken, ehe sie Ausgeschaltet sind."
+        }
+      ]
+    },
+    {
+      "id": "ork",
+      "name": "Ork",
+      "kategorie": "Humanoid",
+      "wildcard": false,
+      "seite": 186,
+      "beschreibung": "Orks sind wilde, grünhäutige Humanoide mit schweineartigen Gesichtern. Sie haben ein reizbares Gemüt und nehmen selten Gefangene.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W8",
+        "Stärke": "W8",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W6",
+        "Athletik": "W6",
+        "Einschüchtern": "W8",
+        "Heimlichkeit": "W6",
+        "Kämpfen": "W6",
+        "Schießen": "W6",
+        "Überreden": "W4",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 6,
+      "parade": 5,
+      "robustheit": 8,
+      "panzerung": 1,
+      "groesse": 1,
+      "talente": [
+        "Rohling"
+      ],
+      "handicaps": [],
+      "ausruestung": "Lederrüstung (+1), Krummschwert (Stä+W8)",
+      "waffen": [
+        {
+          "name": "Krummschwert",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 1",
+          "text": "Orks sind etwas größer als Menschen."
+        },
+        {
+          "name": "Wärmesicht",
+          "text": "Halbiere Beleuchtungsabzüge bei Angriffen auf warme Ziele."
+        }
+      ]
+    },
+    {
+      "id": "ork-haeuptling",
+      "name": "Ork, Häuptling",
+      "kategorie": "Humanoid",
+      "wildcard": true,
+      "seite": 186,
+      "beschreibung": "Der Anführer eines kleinen Orkklans ist immer der tödlichste Rohling in der Truppe. Orkhäuptlinge haben meistens ein oder zwei magische Gegenstände.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W10",
+        "Stärke": "W10",
+        "Verstand": "W6",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W8",
+        "Athletik": "W8",
+        "Einschüchtern": "W10",
+        "Heimlichkeit": "W6",
+        "Kämpfen": "W12",
+        "Schießen": "W8",
+        "Überreden": "W6",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 6,
+      "parade": 7,
+      "parade_hinweis": "8 ohne Zweihandaxt, 7 mit Zweihandaxt",
+      "robustheit": 12,
+      "panzerung": 4,
+      "groesse": 1,
+      "talente": [
+        "Rohling",
+        "Rundumschlag"
+      ],
+      "handicaps": [],
+      "ausruestung": "Brustpanzer (+4), Arm- und Beinrüstung aus Kette (+3), Zweihandaxt (Stä+W10)",
+      "waffen": [
+        {
+          "name": "Zweihandaxt",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W10",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 1",
+          "text": "Orks sind etwas größer als Menschen."
+        },
+        {
+          "name": "Wärmesicht",
+          "text": "Halbiere Beleuchtungsabzüge bei Angriffen auf warme Ziele."
+        }
+      ]
+    },
+    {
+      "id": "pferd",
+      "name": "Pferd",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 186,
+      "beschreibung": "Reitpferde stellen einen Kompromiss aus Geschwindigkeit und Tragkraft dar.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W8",
+        "Stärke": "W12",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Kämpfen": "W4",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 12,
+      "parade": 4,
+      "robustheit": 8,
+      "panzerung": 0,
+      "groesse": 2,
+      "talente": [
+        "Flink"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Tritt",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 2",
+          "text": "Typisches Pferd mit ungefähr 500 kg Gewicht."
+        },
+        {
+          "name": "Tritt",
+          "text": "Stä+W4 nach vorne oder hinten."
+        }
+      ]
+    },
+    {
+      "id": "pferd-streitross",
+      "name": "Pferd, Streitross",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 186,
+      "beschreibung": "Streitrösser sind große Tiere, die auf Aggression trainiert wurden. Sie wurden dazu ausgebildet, mit beiden Hufen zu kämpfen, entweder nach hinten oder nach vorn.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W10",
+        "Stärke": "W12+2",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 8,
+      "parade": 6,
+      "robustheit": 10,
+      "panzerung": 0,
+      "groesse": 3,
+      "talente": [
+        "Flink"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Tritt",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 3",
+          "text": "Streitrösser sind große Kreaturen, die für ihre Kraft und Statur gezüchtet wurden."
+        },
+        {
+          "name": "Tritt",
+          "text": "Stä+W4 nach vorne oder hinten."
+        }
+      ]
+    },
+    {
+      "id": "raubvogel",
+      "name": "Raubvogel",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 186,
+      "beschreibung": "Adler, Falken und große Greifvögel werden oft kollektiv als Raubvögel bezeichnet.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W6",
+        "Stärke": "W4-2",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W6",
+        "Wahrnehmung": "W10"
+      },
+      "bewegungsweite": 3,
+      "parade": 5,
+      "robustheit": 2,
+      "panzerung": 0,
+      "groesse": -3,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Fliegen",
+          "text": "Raubvögel fliegen mit einer Bewegungsweite von 48\"."
+        },
+        {
+          "name": "Größe -3 (Sehr klein)",
+          "text": "Raubvögel sind leicht und ungefähr 60 cm groß."
+        }
+      ]
+    },
+    {
+      "id": "riesenspinne",
+      "name": "Riesenspinne",
+      "kategorie": "Monster",
+      "wildcard": false,
+      "seite": 186,
+      "beschreibung": "Riesenspinnen sind ungefähr so groß wie große Hunde und leben in Nestern von 1W6+2 Tieren. Sie jagen oft in Rudeln, wenn Beute in ihrem Heimatbau knapp ist.",
+      "attribute": {
+        "Geschicklichkeit": "W10",
+        "Konstitution": "W6",
+        "Stärke": "W10",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W10",
+        "Einschüchtern": "W10",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W8",
+        "Schießen": "W10",
+        "Wahrnehmung": "W8"
+      },
+      "bewegungsweite": 8,
+      "parade": 6,
+      "robustheit": 4,
+      "panzerung": 0,
+      "groesse": -1,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Gift (-4)",
+          "text": "Normalerweise leichtes oder tödliches Gift (S. 117)."
+        },
+        {
+          "name": "Größe -1",
+          "text": "Diese Spinnen sind so groß wie ein Hund."
+        },
+        {
+          "name": "Netze",
+          "text": "Schießenprobe mit Reichweite 6\". Ein Treffer bedeutet, dass das Opfer Festgehalten ist, oder Gebunden mit einer Steigerung (S. 103)."
+        },
+        {
+          "name": "Wandkrabbler",
+          "text": "Diese Kreaturen bewegen sich mit voller Bewegungsweite an Wänden und Decke."
+        }
+      ]
+    },
+    {
+      "id": "riesenwurm",
+      "name": "Riesenwurm",
+      "kategorie": "Monster",
+      "wildcard": true,
+      "seite": 187,
+      "beschreibung": "Gewaltige Würmer graben sich unter die Erde und verschlingen arglose Abenteurer. Diese Monster spüren Vibrationen durch die Erde und hören eine Person auf ungefähr 200 Meter Entfernung.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W12",
+        "Stärke": "W12+9",
+        "Verstand": "W6",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W6",
+        "Wahrnehmung": "W10"
+      },
+      "bewegungsweite": 6,
+      "parade": 5,
+      "robustheit": 21,
+      "panzerung": 4,
+      "groesse": 9,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": true,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Graben (20\")",
+          "text": "Riesenwürmer graben sich durch die Erde und werden nur von festem Grundgestein aufgehalten."
+        },
+        {
+          "name": "Größe 9 (Riesig)",
+          "text": "Riesenwürmer sind normalerweise über 15 m lang und haben 3 m Durchmesser."
+        },
+        {
+          "name": "Panzerung +4",
+          "text": "Schuppenhaut."
+        },
+        {
+          "name": "Zäh",
+          "text": "Wenn die Kreatur Angeschlagen ist, verursacht ein zweites Angeschlagen-Ergebnis keine Wunde."
+        },
+        {
+          "name": "Zermalmen",
+          "text": "Drei kleine Flächenschablonen nebeneinander. Alle darin müssen den Athletik-Wurf des Wurms in einer vergleichenden Probe mit Geschicklichkeit schlagen, um nicht Stärke Schaden zu erleiden. Größenkategorie-Modifikatoren werden ignoriert."
+        }
+      ]
+    },
+    {
+      "id": "wuergeschlange",
+      "name": "Schlange, Würgeschlange",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 187,
+      "beschreibung": "Pythons, Boas und andere Schlangen über 4,50 m Länge sind in der echten Welt selten gefährlich für Menschen, weil sie nicht besonders aggressiv sind. Im Spiel können sie provoziert, unter Drogen gesetzt oder einfach gemein sein.",
+      "attribute": {
+        "Geschicklichkeit": "W4",
+        "Konstitution": "W6",
+        "Stärke": "W6",
+        "Verstand": "W4",
+        "Willenskraft": "W8"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Heimlichkeit": "W6",
+        "Kämpfen": "W6",
+        "Wahrnehmung": "W10"
+      },
+      "bewegungsweite": 4,
+      "parade": 5,
+      "robustheit": 5,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Würgen",
+          "text": "+2 auf Athletik- und Stärkeproben für Ringen."
+        }
+      ]
+    },
+    {
+      "id": "giftschlange",
+      "name": "Schlange, Giftschlange",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 187,
+      "beschreibung": "Diese Spielwerte stehen für Taipane, Kobras und ähnliche mittelgroße Schlangen mit extrem tödlichem Gift.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W6",
+        "Stärke": "W4-2",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W12"
+      },
+      "bewegungsweite": 4,
+      "parade": 6,
+      "robustheit": 2,
+      "panzerung": 0,
+      "groesse": -3,
+      "talente": [
+        "Schnell"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+2",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Gift",
+          "text": "Die SL entscheidet, welche Art Gift die Schlange injiziert (S. 117)."
+        },
+        {
+          "name": "Größe -3 (Sehr klein)",
+          "text": "Die meisten Giftschlangen sind zwischen 1,20 und 1,80 m lang, aber nicht dicker als einige Zentimeter."
+        }
+      ]
+    },
+    {
+      "id": "schreckenswolf",
+      "name": "Schreckenswolf",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 188,
+      "beschreibung": "Schreckenswölfe sind sehr große und wilde Hundeartige, die von Orks als Kampfhunde verwendet werden. Man findet sie auch in Rudeln in tiefen, dunklen Wäldern.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W8",
+        "Stärke": "W8",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Einschüchtern": "W8",
+        "Heimlichkeit": "W8",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 10,
+      "parade": 6,
+      "robustheit": 6,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [
+        "Aufmerksamkeit"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Geschwindigkeit",
+          "text": "Sprintwürfel W10."
+        }
+      ]
+    },
+    {
+      "id": "schwarm",
+      "name": "Schwarm",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 188,
+      "beschreibung": "Der hier beschriebene Schwarm kann aus so gut wie allem bestehen - von beißenden Ameisen über stechende Wespen bis hin zu dreckigen Ratten. Sie decken ein Gebiet gleich einer Flächenschablone ab und greifen alles in ihrem Gebiet in jeder Runde an.",
+      "attribute": {
+        "Geschicklichkeit": "W10",
+        "Konstitution": "W10",
+        "Stärke": "W8",
+        "Verstand": "W4",
+        "Willenskraft": "W12"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 10,
+      "parade": 4,
+      "parade_hinweis": "Der gedruckte Wert enthält bereits die +2 aus der Spezialfähigkeit Schwarm.",
+      "robustheit": 7,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss oder Stich",
+          "fertigkeit": "Kämpfen",
+          "schaden": "2W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Aufteilen",
+          "text": "Einige Schwärme teilen sich in zwei kleinere Schwärme auf, wenn sie eine Wunde erleiden. Verringere die Flächenschablone nach einer Wunde um eine Größenkategorie; kleine Schwärme werden zerstört."
+        },
+        {
+          "name": "Biss oder Stich",
+          "text": "Schwärme treffen automatisch und verursachen am Ende ihres Zuges 2W4 Schaden bei jedem innerhalb der Schablone. Der Schaden wird an der am schlechtesten gepanzerten Körperzone verursacht."
+        },
+        {
+          "name": "Schwarm",
+          "text": "Parade +2. Schnitt- und Stichwaffen verursachen keinen wirklichen Schaden. Flächenangriffe funktionieren normal; ein Charakter kann stampfen, um jede Runde seine Stärke in Schaden zu verursachen. Schwärme sind nicht intelligent und nutzen keine Mehrfachaktionen."
+        }
+      ]
+    },
+    {
+      "id": "skelett",
+      "name": "Skelett",
+      "kategorie": "Untot",
+      "wildcard": false,
+      "seite": 188,
+      "beschreibung": "Die Haut ist bereits von diesen erweckten Toten gefault, sodass sie etwas schneller sind als die mit Fleisch behangenen Zombies. Man findet sie oft in großen Gruppen in den Legionen verdorbener Nekromanten.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W6",
+        "Stärke": "W6",
+        "Verstand": "W4",
+        "Willenskraft": "W4"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Athletik": "W6",
+        "Einschüchtern": "W6",
+        "Kämpfen": "W6",
+        "Schießen": "W6",
+        "Wahrnehmung": "W4"
+      },
+      "bewegungsweite": 7,
+      "parade": 5,
+      "robustheit": 7,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "unterschiedlich",
+      "waffen": [
+        {
+          "name": "Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Furchtlos",
+          "text": "Skelette sind immun gegen Furcht und Einschüchtern."
+        },
+        {
+          "name": "Untot",
+          "text": "+2 Robustheit (bereits enthalten), +2 auf Erholungsproben gegen Angeschlagen; kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        }
+      ]
+    },
+    {
+      "id": "soldat",
+      "name": "Soldat",
+      "kategorie": "Humanoid",
+      "wildcard": false,
+      "seite": 189,
+      "beschreibung": "Schläger, Infanteristen, Wachen oder andere mit Grundausbildung dienen als Fußsoldaten für mächtigere Charaktere. Sie sollten für ihre individuelle Rolle angepasst und ausgerüstet werden.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W6",
+        "Stärke": "W6",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W6",
+        "Athletik": "W6",
+        "Einschüchtern": "W6",
+        "Heimlichkeit": "W4",
+        "Kämpfen": "W6",
+        "Schießen": "W6",
+        "Überreden": "W6",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 6,
+      "parade": 5,
+      "robustheit": 5,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [
+        "Soldat"
+      ],
+      "handicaps": [],
+      "ausruestung": "je nach Rolle auszurüsten",
+      "waffen": [],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": []
+    },
+    {
+      "id": "stier",
+      "name": "Stier",
+      "kategorie": "Tier",
+      "wildcard": false,
+      "seite": 189,
+      "beschreibung": "Stiere sind Menschen gegenüber normalerweise nur dann aggressiv, wenn sie wütend werden.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W12",
+        "Stärke": "W12+3",
+        "Verstand": "W4",
+        "Willenskraft": "W8"
+      },
+      "tierischer_verstand": true,
+      "fertigkeiten": {
+        "Athletik": "W8",
+        "Kämpfen": "W4",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 7,
+      "parade": 4,
+      "robustheit": 11,
+      "panzerung": 0,
+      "groesse": 3,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Hörner",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W6",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 3",
+          "text": "Die meisten Stiere wiegen eine knappe Tonne."
+        }
+      ]
+    },
+    {
+      "id": "troll",
+      "name": "Troll",
+      "kategorie": "Monster",
+      "wildcard": false,
+      "seite": 189,
+      "beschreibung": "Trolle in Mythen und Legenden sind grässliche, fleischfressende Kreaturen, die in tiefen Wäldern, unter Brücken oder in verborgenen Gebirgshöhlen leben. In modernen Geschichten sind Trolle Monster mit der Fähigkeit, Schaden zu regenerieren, der nicht durch Feuer verursacht wurde.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W10",
+        "Stärke": "W12+2",
+        "Verstand": "W4",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W8",
+        "Athletik": "W6",
+        "Einschüchtern": "W10",
+        "Heimlichkeit": "W4",
+        "Kämpfen": "W8",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 7,
+      "parade": 6,
+      "robustheit": 9,
+      "panzerung": 1,
+      "groesse": 1,
+      "talente": [
+        "Rohling",
+        "Kontrollierter Rundumschlag"
+      ],
+      "handicaps": [],
+      "ausruestung": "Stachelkeule (Stä+W8)",
+      "waffen": [
+        {
+          "name": "Stachelkeule",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        },
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 1,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Größe 1",
+          "text": "Trolle sind große, schlaksige Kreaturen, die über 2,40 m groß sind."
+        },
+        {
+          "name": "Panzerung +1",
+          "text": "Gummiartige Haut."
+        },
+        {
+          "name": "Schnelle Regeneration",
+          "text": "Trolle können jede Runde auf Natürliche Heilung würfeln, auch wenn sie Ausgeschaltet sind, es sei denn, ihre Wunden wurden von Feuer verursacht."
+        },
+        {
+          "name": "Widerstandsfähig",
+          "text": "Trolle können eine Wunde einstecken, ehe sie Ausgeschaltet sind."
+        }
+      ]
+    },
+    {
+      "id": "vampir",
+      "name": "Vampir",
+      "kategorie": "Untot",
+      "wildcard": true,
+      "seite": 189,
+      "beschreibung": "Die Bluttrinker der Sagen sind in vielen Fantasyspielen verbreitet. Dies ist ein relativ junger Vampirscherge; für noch schwächere Vampire ignoriere die Spezialfähigkeit Unverwundbarkeit.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W10",
+        "Stärke": "W12+1",
+        "Verstand": "W8",
+        "Willenskraft": "W8"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W8",
+        "Athletik": "W8",
+        "Einschüchtern": "W8",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W8",
+        "Schießen": "W6",
+        "Überreden": "W8",
+        "Wahrnehmung": "W6"
+      },
+      "bewegungsweite": 6,
+      "parade": 6,
+      "robustheit": 9,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [
+        "Kühler Kopf",
+        "Schneller Angriff"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Erschaffer",
+          "text": "Jeder, der von einem Vampir erschlagen wird, erhebt sich mit einer Wahrscheinlichkeit von 50% innerhalb von 1W4 Tagen als Vampir."
+        },
+        {
+          "name": "Schwäche (Heiliges Symbol)",
+          "text": "Ein Charakter mit einem heiligen Symbol kann einen Vampir in Schach halten. Ein Vampir, der das Opfer direkt angreifen will, muss es in einer vergleichenden Willenskraftprobe besiegen."
+        },
+        {
+          "name": "Schwäche (Nur mit Einladung)",
+          "text": "Vampire können eine private Behausung nur mit Einladung betreten. Öffentliche Bereiche können sie betreten, wie sie wollen."
+        },
+        {
+          "name": "Schwäche (Pflock durchs Herz)",
+          "text": "Ein Vampir, der durch eine hölzerne Waffe einen Angriff mit Angesagtem Ziel ins Herz (-4) erleidet, muss eine Konstitutionsprobe gegen den Schaden ablegen. Misslingt der Wurf, zerfällt er zu Staub."
+        },
+        {
+          "name": "Schwäche (Sonnenlicht)",
+          "text": "Vampire erleiden im Sonnenlicht jede Runde 2W4 Schaden, bis sie Asche sind. Rüstung schützt normal."
+        },
+        {
+          "name": "Schwäche (Weihwasser)",
+          "text": "Ein Vampir, der mit Weihwasser übergossen wird, ist Erschöpft. Untergetaucht geht er in Flammen auf wie in direktem Sonnenlicht."
+        },
+        {
+          "name": "Untot",
+          "text": "+2 Robustheit (bereits enthalten), +2 auf Erholungsproben gegen Angeschlagen; kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        },
+        {
+          "name": "Unverwundbarkeit",
+          "text": "Vampire können nur mit Sonnenlicht oder einem Pflock durchs Herz getötet werden. Sie können durch andere Angriffe Angeschlagen werden, aber niemals eine Wunde erleiden."
+        }
+      ]
+    },
+    {
+      "id": "vampir-uralt",
+      "name": "Vampir, uralt",
+      "kategorie": "Untot",
+      "wildcard": true,
+      "seite": 190,
+      "beschreibung": "Diese Spielwerte stehen für einen Vampir etwas unter der Macht des legendären Dracula, aber weit über den Blutsaugern, die frisch aus ihrem Grab auferstanden sind.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W12",
+        "Stärke": "W12+3",
+        "Verstand": "W10",
+        "Willenskraft": "W10"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W10",
+        "Athletik": "W8",
+        "Einschüchtern": "W12",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W10",
+        "Schießen": "W8",
+        "Überreden": "W12",
+        "Wahrnehmung": "W8"
+      },
+      "bewegungsweite": 6,
+      "parade": 7,
+      "robustheit": 10,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [
+        "Blitzschneller Angriff",
+        "Kühler Kopf"
+      ],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W4",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Bezaubern",
+          "text": "Vampire können die Macht Marionette auf jene anwenden, die sich von ihnen angezogen fühlen, indem sie Verstand als arkane Fertigkeit verwenden. Nur auf ein Opfer auf einmal."
+        },
+        {
+          "name": "Erschaffer",
+          "text": "Jeder, der von einem Vampir erschlagen wird, erhebt sich mit einer Wahrscheinlichkeit von 50% innerhalb von 1W4 Tagen als Vampir."
+        },
+        {
+          "name": "Gestaltwandeln",
+          "text": "Als Aktion kann sich ein Vampir mit einer Verstandsprobe mit -2 in einen Wolf oder eine Fledermaus verwandeln."
+        },
+        {
+          "name": "Kinder der Nacht",
+          "text": "Aktion und Verstandsprobe mit -2. Bei Erfolg erscheinen 1W6 Wölfe oder 1W6 Rattenschwärme innerhalb von 1W6+2 Runden."
+        },
+        {
+          "name": "Nebel",
+          "text": "Aktion und Verstandsprobe mit -2, um sich in Nebel zu verwandeln (ebenso für die Rückverwandlung)."
+        },
+        {
+          "name": "Schwäche (Heiliges Symbol)",
+          "text": "Ein Charakter mit einem heiligen Symbol kann einen Vampir in Schach halten. Ein Vampir, der das Opfer direkt angreifen will, muss es in einer vergleichenden Willenskraftprobe besiegen."
+        },
+        {
+          "name": "Schwäche (Nur mit Einladung)",
+          "text": "Vampire können eine private Behausung nur mit Einladung betreten."
+        },
+        {
+          "name": "Schwäche (Pflock durchs Herz)",
+          "text": "Ein Vampir, der durch eine hölzerne Waffe einen Angriff mit Angesagtem Ziel ins Herz (-4) erleidet, muss eine Konstitutionsprobe gegen den Schaden ablegen. Misslingt der Wurf, zerfällt er zu Staub."
+        },
+        {
+          "name": "Schwäche (Sonnenlicht)",
+          "text": "Vampire erleiden im Sonnenlicht jede Runde 2W4 Schaden, bis sie Asche sind. Rüstung schützt normal."
+        },
+        {
+          "name": "Schwäche (Weihwasser)",
+          "text": "Ein Vampir, der mit Weihwasser übergossen wird, ist Erschöpft. Untergetaucht geht er in Flammen auf wie in direktem Sonnenlicht."
+        },
+        {
+          "name": "Untot",
+          "text": "+2 Robustheit (bereits enthalten), +2 auf Erholungsproben gegen Angeschlagen; kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        },
+        {
+          "name": "Unverwundbarkeit",
+          "text": "Uralte Vampire können nur durch Enthauptung, mit Sonnenlicht oder einem Pflock durchs Herz getötet werden. Sie können Angeschlagen werden, aber niemals eine Wunde erleiden."
+        }
+      ]
+    },
+    {
+      "id": "werwolf",
+      "name": "Werwolf",
+      "kategorie": "Monster",
+      "wildcard": false,
+      "seite": 190,
+      "beschreibung": "Wenn der Vollmond scheint, verlieren Menschen, die mit Lykanthropie infiziert sind, die Kontrolle und werden zu reißenden Bestien, die nur auf Mord aus sind.",
+      "attribute": {
+        "Geschicklichkeit": "W8",
+        "Konstitution": "W10",
+        "Stärke": "W12+2",
+        "Verstand": "W6",
+        "Willenskraft": "W6"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Allgemeinwissen": "W8",
+        "Athletik": "W8",
+        "Einschüchtern": "W10",
+        "Heimlichkeit": "W10",
+        "Kämpfen": "W12+2",
+        "Überleben": "W10",
+        "Wahrnehmung": "W12"
+      },
+      "bewegungsweite": 8,
+      "parade": 9,
+      "robustheit": 8,
+      "panzerung": 0,
+      "groesse": 1,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä+W8",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Furchterregend (-2)",
+          "text": "Werwölfe lassen das Blut in den Adern all derer gefrieren, die sie erblicken."
+        },
+        {
+          "name": "Größe 1",
+          "text": "Werwölfe sind kräftig gebaute Kreaturen."
+        },
+        {
+          "name": "Infektion",
+          "text": "Jeder, der von einem Werwolf erschlagen wird, erhebt sich mit einer Wahrscheinlichkeit von 50% innerhalb von 1W4 Tagen als Werwolf."
+        },
+        {
+          "name": "Schnelle Regeneration",
+          "text": "Werwölfe können jede Runde einen Wurf auf Natürliche Heilung ablegen, wenn die Wunden nicht von versilberten Gegenständen verursacht wurden."
+        },
+        {
+          "name": "Wärmesicht",
+          "text": "Halbiere Beleuchtungsabzüge bei Angriffen auf warme Ziele."
+        }
+      ]
+    },
+    {
+      "id": "zombie",
+      "name": "Zombie",
+      "kategorie": "Untot",
+      "wildcard": false,
+      "seite": 191,
+      "beschreibung": "Diese wandelnden Toten sind die typischen stöhnenden Unholde, die auf frisches Fleisch aus sind.",
+      "attribute": {
+        "Geschicklichkeit": "W6",
+        "Konstitution": "W6",
+        "Stärke": "W6",
+        "Verstand": "W4",
+        "Willenskraft": "W4"
+      },
+      "tierischer_verstand": false,
+      "fertigkeiten": {
+        "Athletik": "W4",
+        "Einschüchtern": "W6",
+        "Kämpfen": "W6",
+        "Schießen": "W6",
+        "Wahrnehmung": "W4"
+      },
+      "bewegungsweite": 4,
+      "parade": 5,
+      "robustheit": 7,
+      "panzerung": 0,
+      "groesse": 0,
+      "talente": [],
+      "handicaps": [],
+      "ausruestung": "",
+      "waffen": [
+        {
+          "name": "Biss/Klauen",
+          "fertigkeit": "Kämpfen",
+          "schaden": "Stä",
+          "pb": 0,
+          "reichweite": ""
+        }
+      ],
+      "widerstandsfaehig": 0,
+      "zaeh": false,
+      "spezialfaehigkeiten": [
+        {
+          "name": "Furchtlos",
+          "text": "Zombies sind immun gegen Furcht und Einschüchtern."
+        },
+        {
+          "name": "Schwäche (Kopf)",
+          "text": "Angesagte Ziele-Angriffe gegen den Kopf des Zombies verursachen +4 Schaden."
+        },
+        {
+          "name": "Untot",
+          "text": "+2 Robustheit (bereits enthalten), +2 auf Erholungsproben gegen Angeschlagen; kein zusätzlicher Schaden durch Angriffe auf Angesagte Ziele; ignoriert 1 Punkt Wundabzüge; atmet nicht; immun gegen Gifte und Krankheiten."
+        }
+      ]
+    }
+  ]
+}

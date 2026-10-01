@@ -18,3 +18,9 @@ scripts/export_chars.sh
 
 # Lokales Nutzer-Feedback
 feedback/
+
+# Regelwerk-Volltexte (urheberrechtlich geschützt, nur lokale Quelle)
+Texte/
+
+deploy.sh
+start.sh

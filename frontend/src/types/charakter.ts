@@ -218,3 +218,71 @@ export interface ArchetypOrdner {
   setting: string
   anzahl: number
 }
+
+// Kampfrelevante Werte für den Kampfsimulator (/spiellogik/kampfprofil).
+// Robustheit ohne Panzerung, damit Panzerbrechend (PB) verrechnet werden kann.
+export interface KampfprofilWaffe {
+  name: string
+  fertigkeit: string
+  schaden: string
+  pb: number
+  mindeststaerke: number
+  reichweite: string
+}
+
+export interface Kampfprofil {
+  name: string
+  attribute: Record<string, string>
+  fertigkeiten: Record<string, string>
+  parade: number
+  robustheit: number
+  panzerung: number
+  bennys: number
+  waffen: KampfprofilWaffe[]
+  talente: string[]
+  handicaps: string[]
+  // Nur aus dem Bestiarium; Charaktere liefern diese Felder nicht.
+  widerstandsfaehig?: number
+  zaeh?: boolean
+  // Mächte: leer bei Kämpfern ohne Arkanen Hintergrund.
+  arkane_fertigkeit?: string
+  machtpunkte?: number
+  maechte?: string[]
+}
+
+// Bestiarium (/api/bestiarium): schreibgeschützte Kreaturen-Bibliothek.
+// Anders als im Kampfprofil ist robustheit hier der gedruckte Gesamtwert
+// inklusive Panzerung, genau wie im Regelwerk.
+export interface BestiariumEintrag {
+  id: string
+  name: string
+  kategorie: string
+  setting: string
+  wildcard: boolean
+  parade: number
+  robustheit: number
+  panzerung: number
+  groesse: number
+  seite: number | null
+}
+
+export interface Spezialfaehigkeit {
+  name: string
+  text: string
+}
+
+export interface BestiariumKreatur extends BestiariumEintrag {
+  beschreibung: string
+  attribute: Record<string, string>
+  fertigkeiten: Record<string, string>
+  tierischer_verstand: boolean
+  bewegungsweite: number | null
+  parade_hinweis?: string
+  talente: string[]
+  handicaps: string[]
+  ausruestung: string
+  waffen: KampfprofilWaffe[]
+  widerstandsfaehig: number
+  zaeh: boolean
+  spezialfaehigkeiten: Spezialfaehigkeit[]
+}

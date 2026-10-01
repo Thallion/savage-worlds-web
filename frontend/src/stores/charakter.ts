@@ -5,9 +5,12 @@ import type {
   AbgeleiteteWerte,
   Archetyp,
   ArchetypOrdner,
+  BestiariumEintrag,
+  BestiariumKreatur,
   CharakterDaten,
   CharakterDetail,
   CharakterListItem,
+  Kampfprofil,
   Ordner,
 } from '@/types/charakter'
 
@@ -16,6 +19,7 @@ export const useCharakterStore = defineStore('charakter', () => {
   const ordnerListe = ref<Ordner[]>([])
   const archetypen = ref<Archetyp[]>([])
   const archetypenOrdner = ref<ArchetypOrdner[]>([])
+  const bestiarium = ref<BestiariumEintrag[]>([])
   const aktuellerCharakter = ref<CharakterDetail | null>(null)
   const abgeleiteteWerte = ref<AbgeleiteteWerte | null>(null)
   const loading = ref(false)
@@ -172,6 +176,39 @@ export const useCharakterStore = defineStore('charakter', () => {
     await Promise.all([ladeListe(), ladeOrdner()])
   }
 
+  // ---- Kampfsimulator ----
+  // Lädt nur das Kampfprofil; der im Editor geöffnete Charakter bleibt unberührt.
+
+  async function ladeKampfprofil(daten: CharakterDaten) {
+    return api.post<Kampfprofil>('/spiellogik/kampfprofil', { charakter_daten: daten })
+  }
+
+  async function ladeKampfprofilCharakter(id: number) {
+    const charakter = await api.get<CharakterDetail>(`/charaktere/${id}`)
+    return ladeKampfprofil(charakter.charakter_daten)
+  }
+
+  async function ladeKampfprofilArchetyp(id: string) {
+    const daten = await api.get<CharakterDaten>(`/archetypen/${encodeURIComponent(id)}`)
+    return ladeKampfprofil(daten)
+  }
+
+  // Kreaturen bringen ihre Kampfwerte fertig mit (Parade/Robustheit stehen im
+  // Buch), deshalb kommt das Profil direkt vom Bestiarium statt aus /berechne.
+  async function ladeKampfprofilKreatur(id: string) {
+    return api.get<Kampfprofil>(`/bestiarium/${encodeURIComponent(id)}/kampfprofil`)
+  }
+
+  // ---- Bestiarium (schreibgeschützte Kreaturen-Bibliothek) ----
+
+  async function ladeBestiarium() {
+    bestiarium.value = await api.get<BestiariumEintrag[]>('/bestiarium')
+  }
+
+  async function ladeKreatur(id: string) {
+    return api.get<BestiariumKreatur>(`/bestiarium/${encodeURIComponent(id)}`)
+  }
+
   // ---- Archetypen (schreibgeschützte Bibliothek) ----
 
   async function ladeArchetypen() {
@@ -287,6 +324,12 @@ export const useCharakterStore = defineStore('charakter', () => {
     benenneOrdner,
     loescheOrdner,
     verschiebeCharakter,
+    ladeKampfprofilCharakter,
+    ladeKampfprofilArchetyp,
+    ladeKampfprofilKreatur,
+    bestiarium,
+    ladeBestiarium,
+    ladeKreatur,
     ladeArchetypen,
     dupliziereArchetyp,
     spiellogikAktion,

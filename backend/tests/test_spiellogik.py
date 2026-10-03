@@ -990,6 +990,21 @@ def test_charakterbogen_html_hebt_modifikatoren_und_auspraegungen_hervor(aventur
     assert "Wundsegen" not in html
 
 
+def test_charakterbogen_pdf_bricht_lange_machtbeschreibungen_um(aventurien):
+    """Viele Ausprägungen dürfen keine Zelle höher als eine Seite erzeugen."""
+    from app.services.charakter_init import load_setting
+    from app.services.charakterbogen_pdf import generiere_charakterbogen_pdf
+
+    setting = load_setting("Savage Aventurien")
+    aventurien["selected_maechte"] = list(setting["maechte"])
+    aventurien["macht_auspraegungen"] = {
+        name: [a["name"] for a in macht["auspraegungen"]]
+        for name, macht in setting["maechte"].items() if macht.get("auspraegungen")
+    }
+    pdf = generiere_charakterbogen_pdf(aventurien, setting, {})
+    assert pdf.startswith(b"%PDF")
+
+
 # --- Abgeleitete Werte ---
 
 def berechne(daten: dict) -> dict:

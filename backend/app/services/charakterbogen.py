@@ -488,42 +488,49 @@ def _maechte_sektion(daten: dict, setting: dict) -> str | None:
     return "<h2>Mächte</h2>\n" + _tabelle(["Name", "Rang", "MP", "Reichweite", "Dauer"], rows)
 
 
-def _eintrag_html(zeile: str) -> str:
-    """'Name (+1): Text' bzw. 'Name: Text' als Eintrag mit fettem Namen."""
-    name, trenner, text = zeile.partition(": ")
-    if not trenner:
-        return f'<div class="eintrag">{_esc(zeile)}</div>\n'
-    return f'<div class="eintrag"><strong>{_esc(name)}:</strong> {_esc(text)}</div>\n'
+def _gliedere_macht_beschreibung(daten: dict, macht_name: str, macht: dict) -> list[tuple[str, str, str]]:
+    """Zerlegt Regeltext und gewählte Ausprägungen in (art, name, text).
 
-
-def _regeltext_html(text: str) -> str:
-    """Regeltext mit Absätzen; eingerückte Zeilen (Modifikatoren) als Einträge."""
-    teile = ""
-    for zeile in text.split("\n"):
+    art: "absatz" (Fließtext), "titel" (z. B. Modifikatoren) oder "eintrag"
+    (eingerückte Zeile 'Name (+1): Text' bzw. Ausprägung). Gemeinsame
+    Grundlage für HTML- und PDF-Bogen.
+    """
+    teile = []
+    for zeile in (macht.get("beschreibung") or "").split("\n"):
         if not zeile.strip():
             continue
         if zeile[:1].isspace():
-            teile += _eintrag_html(zeile.strip())
+            name, trenner, text = zeile.strip().partition(": ")
+            teile.append(("eintrag", name, text) if trenner else ("eintrag", "", zeile.strip()))
         elif zeile.rstrip().endswith(":"):
-            teile += f'<div class="block-titel">{_esc(zeile.strip().rstrip(":"))}</div>\n'
+            teile.append(("titel", "", zeile.strip().rstrip(":")))
         else:
-            teile += f'<div class="absatz">{_esc(zeile.strip())}</div>\n'
+            teile.append(("absatz", "", zeile.strip()))
+
+    gewaehlt = set(gewaehlte_auspraegungen(daten, macht_name))
+    auspraegungen = [a for a in verfuegbare_auspraegungen(macht) if a["name"] in gewaehlt]
+    if auspraegungen:
+        teile.append(("titel", "", "Ausprägungen"))
+        for a in auspraegungen:
+            teile.append(("eintrag", a["name"], a.get("beschreibung") or ""))
     return teile
 
 
 def _macht_beschreibung_html(daten: dict, macht_name: str, macht: dict) -> str:
     """Wie macht_beschreibung(), aber mit abgesetzten Modifikatoren und Ausprägungen."""
-    teile = _regeltext_html(macht.get("beschreibung") or "")
-    gewaehlt = set(gewaehlte_auspraegungen(daten, macht_name))
-    auspraegungen = [a for a in verfuegbare_auspraegungen(macht) if a["name"] in gewaehlt]
-    if auspraegungen:
-        teile += '<div class="block-titel">Ausprägungen</div>\n'
-        for a in auspraegungen:
-            if a.get("beschreibung"):
-                teile += _eintrag_html(f"{a['name']}: {a['beschreibung']}")
-            else:
-                teile += f'<div class="eintrag"><strong>{_esc(a["name"])}</strong></div>\n'
-    return teile
+    html_teile = ""
+    for art, name, text in _gliedere_macht_beschreibung(daten, macht_name, macht):
+        if art == "titel":
+            html_teile += f'<div class="block-titel">{_esc(text)}</div>\n'
+        elif art == "absatz":
+            html_teile += f'<div class="absatz">{_esc(text)}</div>\n'
+        elif name and text:
+            html_teile += f'<div class="eintrag"><strong>{_esc(name)}:</strong> {_esc(text)}</div>\n'
+        elif name:
+            html_teile += f'<div class="eintrag"><strong>{_esc(name)}</strong></div>\n'
+        else:
+            html_teile += f'<div class="eintrag">{_esc(text)}</div>\n'
+    return html_teile
 
 
 def _superkraefte_sektion(daten: dict, setting: dict, werte: dict) -> str | None:

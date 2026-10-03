@@ -35,7 +35,7 @@
           :key="name"
           closable
           color="secondary"
-          class="mr-2 mb-2"
+          class="mr-2 mb-2 talent-chip"
           @click:close="entferneTalent(name)"
         >
           {{ name }}{{ anzahl > 1 ? ` ×${anzahl}` : '' }}
@@ -105,6 +105,7 @@
         <v-list-item
           v-for="(talent, name) in gefilterteTalente"
           :key="name"
+          class="talent-eintrag"
           @click="waehleTalent(String(name))"
         >
           <template #prepend>
@@ -306,3 +307,39 @@ async function entferneTalent(name: string) {
   }
 }
 </script>
+
+<style scoped>
+/* Hochformat (Smartphone): Aktions-Buttons unter den Text statt daneben,
+   damit Name, Kennzeichnungen und Beschreibung die volle Breite nutzen. */
+@media (max-width: 599.98px) {
+  .talent-eintrag {
+    --v-list-prepend-gap: 12px;
+    grid-template-areas:
+      'prepend content'
+      'prepend append';
+    grid-template-columns: max-content 1fr;
+  }
+
+  .talent-eintrag :deep(.v-list-item__prepend) {
+    align-self: start;
+    padding-top: 2px;
+  }
+
+  .talent-eintrag :deep(.v-list-item__append) {
+    justify-self: end;
+  }
+
+  .talent-eintrag :deep(.v-list-item-title) {
+    white-space: normal;
+  }
+
+  /* Lange Namen im Chip umbrechen statt abschneiden */
+  .talent-chip {
+    height: auto;
+    min-height: 32px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    white-space: normal;
+  }
+}
+</style>

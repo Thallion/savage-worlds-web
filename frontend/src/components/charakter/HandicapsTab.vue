@@ -56,7 +56,7 @@
             :key="h.key"
             class="d-flex align-center ga-2 flex-wrap"
           >
-            <v-chip :color="h.stufe === 'schwer' ? 'error' : 'accent'" size="small" label>
+            <v-chip :color="h.stufe === 'schwer' ? 'error' : 'accent'" size="small" label class="handicap-chip">
               {{ h.anzeige }}
               <span class="ml-1 text-caption">({{ h.stufe }})</span>
             </v-chip>
@@ -123,6 +123,7 @@
         <v-list-item
           v-for="(handicap, name) in gefilterteHandicaps"
           :key="name"
+          class="handicap-eintrag"
           @click="
             !selectedHandicaps.includes(String(name)) && waehleHandicap(String(name))
           "
@@ -335,3 +336,39 @@ async function zuruecknehmen(option: EinloeseOption) {
   }
 }
 </script>
+
+<style scoped>
+/* Hochformat (Smartphone): Aktions-Buttons unter den Text statt daneben,
+   damit Name, Kennzeichnungen und Beschreibung die volle Breite nutzen. */
+@media (max-width: 599.98px) {
+  .handicap-eintrag {
+    --v-list-prepend-gap: 12px;
+    grid-template-areas:
+      'prepend content'
+      'prepend append';
+    grid-template-columns: max-content 1fr;
+  }
+
+  .handicap-eintrag :deep(.v-list-item__prepend) {
+    align-self: start;
+    padding-top: 2px;
+  }
+
+  .handicap-eintrag :deep(.v-list-item__append) {
+    justify-self: end;
+  }
+
+  .handicap-eintrag :deep(.v-list-item-title) {
+    white-space: normal;
+  }
+
+  /* Lange Namen im Chip umbrechen statt abschneiden */
+  .handicap-chip {
+    height: auto;
+    min-height: 24px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    white-space: normal;
+  }
+}
+</style>

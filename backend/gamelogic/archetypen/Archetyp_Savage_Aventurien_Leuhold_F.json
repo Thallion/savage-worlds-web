@@ -1,0 +1,615 @@
+{
+  "profil_daten": {
+    "Name": "Leuhold von Eschenfurt",
+    "Konzept": "Rondrageweihter Schwertbruder – ehrenvoll, tapfer, naiv und treu",
+    "Alter": "24",
+    "Geschlecht": "männlich",
+    "Sprachen": "Garethi"
+  },
+  "active_setting_name": "Savage Aventurien",
+  "char_gen_completed": true,
+  "attribute": {
+    "Geschicklichkeit": {
+      "attribut_name": "Geschicklichkeit",
+      "wert": 6,
+      "modifier": 0
+    },
+    "Verstand": {
+      "attribut_name": "Verstand",
+      "wert": 4,
+      "modifier": 0
+    },
+    "Stärke": {
+      "attribut_name": "Stärke",
+      "wert": 10,
+      "modifier": 0
+    },
+    "Konstitution": {
+      "attribut_name": "Konstitution",
+      "wert": 6,
+      "modifier": 0
+    },
+    "Willenskraft": {
+      "attribut_name": "Willenskraft",
+      "wert": 8,
+      "modifier": 0
+    }
+  },
+  "fertigkeiten": {
+    "Allgemeinwissen": {
+      "fertigkeit_name": "Allgemeinwissen",
+      "grundfertigkeit": true,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Athletik": {
+      "fertigkeit_name": "Athletik",
+      "grundfertigkeit": true,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 6,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Heimlichkeit": {
+      "fertigkeit_name": "Heimlichkeit",
+      "grundfertigkeit": true,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Überreden": {
+      "fertigkeit_name": "Überreden",
+      "grundfertigkeit": true,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Willenskraft"
+    },
+    "Wahrnehmung": {
+      "fertigkeit_name": "Wahrnehmung",
+      "grundfertigkeit": true,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Kämpfen": {
+      "fertigkeit_name": "Kämpfen",
+      "grundfertigkeit": false,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 10,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Schießen": {
+      "fertigkeit_name": "Schießen",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Diebeskunst": {
+      "fertigkeit_name": "Diebeskunst",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Überleben": {
+      "fertigkeit_name": "Überleben",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Reiten": {
+      "fertigkeit_name": "Reiten",
+      "grundfertigkeit": false,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Fahren": {
+      "fertigkeit_name": "Fahren",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Seefahrt": {
+      "fertigkeit_name": "Seefahrt",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Fliegen": {
+      "fertigkeit_name": "Fliegen",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Geschicklichkeit"
+    },
+    "Darbietung": {
+      "fertigkeit_name": "Darbietung",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Willenskraft"
+    },
+    "Einschüchtern": {
+      "fertigkeit_name": "Einschüchtern",
+      "grundfertigkeit": false,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 8,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Willenskraft"
+    },
+    "Glaube": {
+      "fertigkeit_name": "Glaube",
+      "grundfertigkeit": false,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 8,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Willenskraft"
+    },
+    "Heilen": {
+      "fertigkeit_name": "Heilen",
+      "grundfertigkeit": false,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Provozieren": {
+      "fertigkeit_name": "Provozieren",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Reparieren": {
+      "fertigkeit_name": "Reparieren",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Kriegskunst": {
+      "fertigkeit_name": "Kriegskunst",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Zaubern (VER)": {
+      "fertigkeit_name": "Zaubern (VER)",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Zaubern (WIL)": {
+      "fertigkeit_name": "Zaubern (WIL)",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Willenskraft"
+    },
+    "Alchemie": {
+      "fertigkeit_name": "Alchemie",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Recherche": {
+      "fertigkeit_name": "Recherche",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Sprache": {
+      "fertigkeit_name": "Sprache",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Geschichtswissen & Geographie": {
+      "fertigkeit_name": "Geschichtswissen & Geographie",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Götter & Kulte": {
+      "fertigkeit_name": "Götter & Kulte",
+      "grundfertigkeit": false,
+      "ausgewaehlt": true,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": 0,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Sagen & Legenden": {
+      "fertigkeit_name": "Sagen & Legenden",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    },
+    "Magie & Sphärenkunde": {
+      "fertigkeit_name": "Magie & Sphärenkunde",
+      "grundfertigkeit": false,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "wuerfel": {
+        "value": 4,
+        "modifier": -2,
+        "typ": "fertigkeit"
+      },
+      "attribut": "Verstand"
+    }
+  },
+  "selected_handicaps": [
+    "Ehrenkodex",
+    "Loyal",
+    "Idealistisch",
+    "Schwur_schwer"
+  ],
+  "selected_talente": [
+    "AH (Wunder: Rondra)",
+    "Mutig",
+    "Heldenhafter Widerstand",
+    "Rundumschlag",
+    "Neue Mächte"
+  ],
+  "selected_maechte": [
+    "Waffe verbessern",
+    "Schutz",
+    "Eigenschaft erhöhen/senken",
+    "Einfluss",
+    "Empathie"
+  ],
+  "voelker_selected": {
+    "Mensch": {
+      "name": "Mensch",
+      "handicaps": [],
+      "talente": [],
+      "besonderheiten": [
+        "Anpassungsfähig (Freies Anfängertalent nach Wahl)"
+      ],
+      "sprachen": [
+        "Gemeinsprache"
+      ],
+      "altersspanne": "Erwachsen mit 18, Alt mit 55, maximales Alter 70-110",
+      "groesse_maennlich": "1,60-1,95m, 60-100kg (Durchschnitt 1,77m, 80kg)",
+      "groesse_weiblich": "1,50-1,85m, 45-85kg (Durchschnitt 1,67m, 65kg)",
+      "aktiv": true,
+      "custom": false,
+      "effects": {
+        "attribute_bonuses": {},
+        "robustheit_bonus": 0,
+        "bewegungsweite_bonus": 0,
+        "fertigkeits_startboni": {},
+        "auto_talente": [],
+        "auto_handicaps": [],
+        "spezielle_effekte": {},
+        "wahlmoeglichkeiten": {
+          "freies_talent": true
+        }
+      }
+    }
+  },
+  "ausruestung_selected": {
+    "Zweihandschwert": {
+      "anzahl": 1,
+      "angelegt": false
+    },
+    "Dolch": {
+      "anzahl": 1,
+      "angelegt": false
+    },
+    "Kettenhemd": {
+      "anzahl": 1,
+      "angelegt": true
+    },
+    "Kettenhaube": {
+      "anzahl": 1,
+      "angelegt": true
+    },
+    "Kettenbeinlinge": {
+      "anzahl": 1,
+      "angelegt": true
+    }
+  },
+  "ausruestung_ausgegeben": 655,
+  "startgeld_bonus_punkte": 0,
+  "geld_angepasst": 0,
+  "cyberware_installationen": {},
+  "cyberware_inaktiv": [],
+  "cyberware_ausgegeben": 0,
+  "cyberware_nebenwirkungen": [],
+  "selected_superkraefte": {},
+  "verbleibende_attributsteigerungen": 0,
+  "maximale_attributsteigerungen": 6,
+  "verbleibende_fertigkeitssteigerungen": 0,
+  "maximale_fertigkeitssteigerungen": 12,
+  "gesamt_handicap_punkte": 4,
+  "verbleibende_handicap_punkte": 0,
+  "handicap_punkte_gewaehrt": {
+    "Ehrenkodex": 2,
+    "Loyal": 1,
+    "Idealistisch": 1
+  },
+  "handicap_einloesungen": {
+    "attribut": 1,
+    "talent": 1
+  },
+  "verbleibende_talente": 0,
+  "pathfinder_kostenlose_talente_gewaehlt": 0,
+  "aufstiege_gesamt": 4,
+  "verbleibende_aufstiege": 0.0,
+  "volk_effekte": {
+    "attribute": {},
+    "fertigkeiten": {},
+    "talente": [],
+    "handicaps": [],
+    "wahl": {
+      "typ": "talent"
+    }
+  },
+  "talent_zahlungen": {
+    "AH (Wunder: Rondra)": [
+      "slot"
+    ],
+    "Rundumschlag": [
+      "slot"
+    ],
+    "Neue Mächte": [
+      "aufstieg"
+    ]
+  },
+  "talent_effekte": {
+    "AH (Wunder: Rondra)": [
+      {
+        "handicaps": [
+          "Schwur_schwer"
+        ],
+        "talente": [
+          "Mutig",
+          "Heldenhafter Widerstand"
+        ]
+      }
+    ]
+  },
+  "steigerungs_journal": {
+    "entries": [
+      {
+        "timestamp": "2026-10-03 19:41:02",
+        "type": "attribut_steigerung",
+        "rang": "Anfänger",
+        "details": {
+          "name": "Willenskraft",
+          "von": "6",
+          "nach": "8",
+          "kosten": 1,
+          "kosten_typ": "Aufstieg"
+        }
+      },
+      {
+        "timestamp": "2026-10-03 19:41:02",
+        "type": "talent_hinzugefuegt",
+        "rang": "Anfänger",
+        "details": {
+          "name": "Neue Mächte",
+          "kosten": 1,
+          "kosten_typ": "Aufstieg"
+        }
+      },
+      {
+        "timestamp": "2026-10-03 19:41:02",
+        "type": "macht_hinzugefuegt",
+        "rang": "Anfänger",
+        "details": {
+          "name": "Einfluss"
+        }
+      },
+      {
+        "timestamp": "2026-10-03 19:41:02",
+        "type": "macht_hinzugefuegt",
+        "rang": "Anfänger",
+        "details": {
+          "name": "Empathie"
+        }
+      },
+      {
+        "timestamp": "2026-10-03 19:41:02",
+        "type": "fertigkeit_steigerung",
+        "rang": "Anfänger",
+        "details": {
+          "name": "Kämpfen",
+          "von": "8",
+          "nach": "10",
+          "kosten": 1.0,
+          "kosten_typ": "Aufstieg"
+        }
+      },
+      {
+        "timestamp": "2026-10-03 19:41:02",
+        "type": "fertigkeit_steigerung",
+        "rang": "Anfänger",
+        "details": {
+          "name": "Glaube",
+          "von": "6",
+          "nach": "8",
+          "kosten": 0.5,
+          "kosten_typ": "Aufstieg"
+        }
+      },
+      {
+        "timestamp": "2026-10-03 19:41:02",
+        "type": "fertigkeit_steigerung",
+        "rang": "Fortgeschritten",
+        "details": {
+          "name": "Einschüchtern",
+          "von": "6",
+          "nach": "8",
+          "kosten": 0.5,
+          "kosten_typ": "Aufstieg"
+        }
+      }
+    ]
+  },
+  "macht_auspraegungen": {
+    "Waffe verbessern": [
+      "Göttliche Klinge"
+    ],
+    "Schutz": [
+      "Rondras wundersame Rüstung"
+    ],
+    "Eigenschaft erhöhen/senken": [
+      "Opfergang"
+    ],
+    "Einfluss": [
+      "Ehrenhafter Zweikampf"
+    ],
+    "Empathie": [
+      "Bann der Furcht"
+    ]
+  }
+}

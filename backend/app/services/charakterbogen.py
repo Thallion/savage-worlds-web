@@ -23,7 +23,11 @@ import html
 from pathlib import Path
 
 from app.services.aufstiege import rang_fuer_aufstiege
-from app.services.macht_auspraegungen import macht_anzeigename, macht_beschreibung
+from app.services.macht_auspraegungen import (
+    gewaehlte_auspraegungen,
+    macht_anzeigename,
+    verfuegbare_auspraegungen,
+)
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 from app.services.volk_effekte import gewaehltes_volk
 
@@ -242,6 +246,27 @@ td.beschreibung {{
     border-top: none;
     padding-top: 0;
 }}
+td.beschreibung .absatz {{
+    margin: 0 0 6px 0;
+}}
+td.beschreibung .block-titel {{
+    font-style: normal;
+    font-weight: bold;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: {tinte};
+    margin: 8px 0 3px 0;
+}}
+td.beschreibung .eintrag {{
+    margin: 0 0 5px 0;
+    padding-left: 10px;
+    border-left: 2px solid {linie};
+}}
+td.beschreibung .eintrag strong {{
+    font-style: normal;
+    color: {tinte};
+}}
 .two-column {{
     display: flex;
     gap: 26px;
@@ -285,6 +310,16 @@ td.beschreibung {{
     }}
     .two-column {{
         flex-direction: column;
+    }}
+    td, th {{
+        padding-left: 6px;
+        padding-right: 6px;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }}
+    th {{
+        font-size: 7.5pt;
+        letter-spacing: 0.02em;
     }}
 }}
 </style>
@@ -446,11 +481,56 @@ def _maechte_sektion(daten: dict, setting: dict) -> str | None:
             f"<td>{_esc(macht.get('machtpunkte', ''))}</td><td>{_esc(macht.get('reichweite', ''))}</td>"
             f"<td>{_esc(macht.get('dauer', ''))}</td></tr>\n"
         )
-        beschreibung = macht_beschreibung(daten, name, macht)
+        beschreibung = _macht_beschreibung_html(daten, name, macht)
         if beschreibung:
-            rows += f'<tr><td colspan="5" class="beschreibung">{_esc(beschreibung)}</td></tr>\n'
+            rows += f'<tr><td colspan="5" class="beschreibung">{beschreibung}</td></tr>\n'
 
     return "<h2>Mächte</h2>\n" + _tabelle(["Name", "Rang", "MP", "Reichweite", "Dauer"], rows)
+
+
+def _gliedere_macht_beschreibung(daten: dict, macht_name: str, macht: dict) -> list[tuple[str, str, str]]:
+    """Zerlegt Regeltext und gewählte Ausprägungen in (art, name, text).
+
+    art: "absatz" (Fließtext), "titel" (z. B. Modifikatoren) oder "eintrag"
+    (eingerückte Zeile 'Name (+1): Text' bzw. Ausprägung). Gemeinsame
+    Grundlage für HTML- und PDF-Bogen.
+    """
+    teile = []
+    for zeile in (macht.get("beschreibung") or "").split("\n"):
+        if not zeile.strip():
+            continue
+        if zeile[:1].isspace():
+            name, trenner, text = zeile.strip().partition(": ")
+            teile.append(("eintrag", name, text) if trenner else ("eintrag", "", zeile.strip()))
+        elif zeile.rstrip().endswith(":"):
+            teile.append(("titel", "", zeile.strip().rstrip(":")))
+        else:
+            teile.append(("absatz", "", zeile.strip()))
+
+    gewaehlt = set(gewaehlte_auspraegungen(daten, macht_name))
+    auspraegungen = [a for a in verfuegbare_auspraegungen(macht) if a["name"] in gewaehlt]
+    if auspraegungen:
+        teile.append(("titel", "", "Ausprägungen"))
+        for a in auspraegungen:
+            teile.append(("eintrag", a["name"], a.get("beschreibung") or ""))
+    return teile
+
+
+def _macht_beschreibung_html(daten: dict, macht_name: str, macht: dict) -> str:
+    """Wie macht_beschreibung(), aber mit abgesetzten Modifikatoren und Ausprägungen."""
+    html_teile = ""
+    for art, name, text in _gliedere_macht_beschreibung(daten, macht_name, macht):
+        if art == "titel":
+            html_teile += f'<div class="block-titel">{_esc(text)}</div>\n'
+        elif art == "absatz":
+            html_teile += f'<div class="absatz">{_esc(text)}</div>\n'
+        elif name and text:
+            html_teile += f'<div class="eintrag"><strong>{_esc(name)}:</strong> {_esc(text)}</div>\n'
+        elif name:
+            html_teile += f'<div class="eintrag"><strong>{_esc(name)}</strong></div>\n'
+        else:
+            html_teile += f'<div class="eintrag">{_esc(text)}</div>\n'
+    return html_teile
 
 
 def _superkraefte_sektion(daten: dict, setting: dict, werte: dict) -> str | None:

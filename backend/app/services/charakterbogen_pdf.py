@@ -37,10 +37,11 @@ from app.services.charakterbogen import (
     _ICON_NAMES,
     _STEIGERUNGS_TYPEN,
     _gekaufte_items,
+    _gliedere_macht_beschreibung,
     _kosten_text,
     _wuerfel,
 )
-from app.services.macht_auspraegungen import macht_anzeigename, macht_beschreibung
+from app.services.macht_auspraegungen import macht_anzeigename
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 from app.services.volk_effekte import gewaehltes_volk
 
@@ -100,6 +101,15 @@ class _Bogen:
         self.beschreibung = ParagraphStyle(
             "beschreibung", fontName="Times-Italic", fontSize=8, leading=11,
             textColor=f["gedeckt"],
+        )
+        # Gegliederte Machtbeschreibung (wie td.beschreibung .block-titel /
+        # .eintrag im HTML-Bogen)
+        self.block_titel = ParagraphStyle(
+            "block_titel", fontName="Times-Bold", fontSize=7.5, leading=10,
+            textColor=f["tinte"], spaceBefore=4, spaceAfter=1.5,
+        )
+        self.eintrag = ParagraphStyle(
+            "eintrag", parent=self.beschreibung, leftIndent=8, spaceAfter=2.5,
         )
         self.band = ParagraphStyle(
             "band", fontName="Times-Roman", fontSize=9.5, leading=13,
@@ -352,25 +362,47 @@ def _daten_tabelle(bogen: _Bogen, zeilen: list, col_widths: list, kopf: bool = F
 def _tabelle_mit_beschreibung(bogen: _Bogen, kopf: list, eintraege: list, col_widths: list) -> list:
     """Tabelle, deren Einträge optional eine Beschreibungszeile (span) haben.
 
-    ``eintraege``: Liste von (zellen: list[str], beschreibung: str | None).
+    ``eintraege``: Liste von (zellen: list[str], beschreibung). ``beschreibung``
+    ist ein Text, eine fertige Liste von Flowables (gegliederte Mächte) oder None.
     """
     if not eintraege:
         return [bogen.p("Keine Einträge.", bogen.hinweis)]
 
     zeilen = [[bogen.p(k.upper(), bogen.kopfzelle) for k in kopf]]
     span_zeilen = []
+    folge_zeilen = []
     for zellen, beschreibung in eintraege:
         zeilen.append([bogen.p(z, bogen.text) for z in zellen])
         if beschreibung:
-            span_zeilen.append(len(zeilen))
-            zeilen.append([bogen.p(beschreibung, bogen.beschreibung)] +
-                          [""] * (len(kopf) - 1))
+            # Gegliederte Beschreibung: ein Absatz pro Zeile, damit die Tabelle
+            # auch innerhalb langer Beschreibungen über Seiten umbrechen kann
+            teile = (beschreibung if isinstance(beschreibung, list)
+                     else [bogen.p(beschreibung, bogen.beschreibung)])
+            for i, teil in enumerate(teile):
+                span_zeilen.append(len(zeilen))
+                if i:
+                    folge_zeilen.append(len(zeilen))
+                zeilen.append([teil] + [""] * (len(kopf) - 1))
 
     t = Table(zeilen, colWidths=col_widths)
     stil = bogen._basis_tabellenstil()
     stil.append(("BACKGROUND", (0, 0), (-1, 0), bogen.f["hervor"]))
     for zi in span_zeilen:
         stil.append(("SPAN", (0, zi), (-1, zi)))
+    if folge_zeilen:
+        # Folgeabsätze optisch in derselben Zelle: keine waagerechte Linie
+        # davor, Abstand wie im HTML aus den Absatzstilen (spaceBefore/-After
+        # wirken in Tabellenzellen nicht, daher als Zell-Padding)
+        linie = bogen.f["linie"]
+        stil = [e for e in stil if e[0] != "INNERGRID"]
+        stil.append(("LINEAFTER", (0, 0), (-2, -1), 0.5, linie))
+        for zi in range(len(zeilen) - 1):
+            if zi + 1 not in folge_zeilen:
+                stil.append(("LINEBELOW", (0, zi), (-1, zi), 0.5, linie))
+        for zi in folge_zeilen:
+            stil.append(("TOPPADDING", (0, zi), (-1, zi), zeilen[zi][0].style.spaceBefore))
+            stil.append(("BOTTOMPADDING", (0, zi - 1), (-1, zi - 1),
+                         zeilen[zi - 1][0].style.spaceAfter))
     t.setStyle(TableStyle(stil))
     return [t]
 
@@ -419,7 +451,7 @@ def _maechte(bogen: _Bogen, daten: dict, setting: dict) -> list | None:
         eintraege.append((
             [macht_anzeigename(daten, name), macht.get("rang", ""), macht.get("machtpunkte", ""),
              macht.get("reichweite", ""), macht.get("dauer", "")],
-            macht_beschreibung(daten, name, macht) or None,
+            _macht_beschreibung_flowables(bogen, daten, name, macht) or None,
         ))
 
     rest = INHALT_BREITE - 4 * (18 * mm)
@@ -428,6 +460,28 @@ def _maechte(bogen: _Bogen, daten: dict, setting: dict) -> list | None:
         [rest, 18 * mm, 18 * mm, 18 * mm, 18 * mm],
     )
     return _sektion(bogen, "Mächte", inhalt)
+
+
+def _macht_beschreibung_flowables(bogen: _Bogen, daten: dict, macht_name: str,
+                                  macht: dict) -> list:
+    """Regeltext, Modifikatoren und Ausprägungen als abgesetzte Absätze.
+
+    Gleiche Gliederung wie im HTML-Bogen: Zwischenüberschriften in Kapitälchen,
+    Einträge eingerückt mit fettem (nicht kursivem) Namen.
+    """
+    namensfarbe = "#" + bogen.f["tinte"].hexval()[2:]
+    absaetze = []
+    for art, name, text in _gliedere_macht_beschreibung(daten, macht_name, macht):
+        if art == "titel":
+            absaetze.append(bogen.p(text.upper(), bogen.block_titel))
+        elif art == "absatz":
+            absaetze.append(bogen.p(text, bogen.beschreibung))
+        elif name:
+            fett = f'<font name="Times-Bold" color="{namensfarbe}">{_xml_escape(name)}{":" if text else ""}</font>'
+            absaetze.append(Paragraph(f"{fett} {_xml_escape(text)}".rstrip(), bogen.eintrag))
+        else:
+            absaetze.append(bogen.p(text, bogen.eintrag))
+    return absaetze
 
 
 def _superkraefte(bogen: _Bogen, daten: dict, setting: dict, werte: dict) -> list | None:

@@ -1,5 +1,5 @@
 <template>
-  <div class="d-flex align-center ga-2 mb-2">
+  <div class="d-flex flex-wrap align-center ga-2 mb-2">
     <v-btn size="small" variant="tonal" prepend-icon="mdi-plus" @click="formDialog?.oeffneNeu()">
       {{ label }} hinzufügen
     </v-btn>

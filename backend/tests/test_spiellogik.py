@@ -975,6 +975,36 @@ def test_charakterbogen_zeigt_nur_gewaehlte_auspraegungen(aventurien):
     assert macht_beschreibung(aventurien, "Strahl", strahl) == strahl["beschreibung"]
 
 
+def test_charakterbogen_html_hebt_modifikatoren_und_auspraegungen_hervor(aventurien):
+    from app.services.charakter_init import load_setting
+    from app.services.charakterbogen import _macht_beschreibung_html
+
+    heilung = load_setting("Savage Aventurien")["maechte"]["Heilung"]
+    aventurien["selected_maechte"].append("Heilung")
+    d = aktion("macht/auspraegungen", aventurien, "Heilung", auswahl=["Heilsegen"])["charakter_daten"]
+    html = _macht_beschreibung_html(d, "Heilung", heilung)
+    assert '<div class="block-titel">Modifikatoren</div>' in html
+    assert "<strong>Mächtige Heilung (+10):</strong>" in html
+    assert '<div class="block-titel">Ausprägungen</div>' in html
+    assert "<strong>Heilsegen:</strong>" in html
+    assert "Wundsegen" not in html
+
+
+def test_charakterbogen_pdf_bricht_lange_machtbeschreibungen_um(aventurien):
+    """Viele Ausprägungen dürfen keine Zelle höher als eine Seite erzeugen."""
+    from app.services.charakter_init import load_setting
+    from app.services.charakterbogen_pdf import generiere_charakterbogen_pdf
+
+    setting = load_setting("Savage Aventurien")
+    aventurien["selected_maechte"] = list(setting["maechte"])
+    aventurien["macht_auspraegungen"] = {
+        name: [a["name"] for a in macht["auspraegungen"]]
+        for name, macht in setting["maechte"].items() if macht.get("auspraegungen")
+    }
+    pdf = generiere_charakterbogen_pdf(aventurien, setting, {})
+    assert pdf.startswith(b"%PDF")
+
+
 # --- Abgeleitete Werte ---
 
 def berechne(daten: dict) -> dict:

@@ -34,7 +34,7 @@
           :key="name"
           closable
           color="secondary"
-          class="mr-2 mb-2"
+          class="mr-2 mb-2 macht-chip"
           :title="hatAuspraegungen(name) ? 'Ausprägungen wählen' : undefined"
           @click="hatAuspraegungen(name) && oeffneAuspraegungen(name)"
           @click:close="entferneMacht(name)"
@@ -86,6 +86,7 @@
         <v-list-item
           v-for="(macht, name) in gefilterteMaechte"
           :key="name"
+          class="macht-eintrag"
           @click="!selectedMaechte.includes(String(name)) && waehleMacht(String(name))"
         >
           <template #prepend>
@@ -267,3 +268,39 @@ async function entferneMacht(name: string) {
   }
 }
 </script>
+
+<style scoped>
+/* Hochformat (Smartphone): Aktions-Buttons unter den Text statt daneben,
+   damit Name, Beschreibung und Ausprägungen die volle Breite nutzen. */
+@media (max-width: 599.98px) {
+  .macht-eintrag {
+    --v-list-prepend-gap: 12px;
+    grid-template-areas:
+      'prepend content'
+      'prepend append';
+    grid-template-columns: max-content 1fr;
+  }
+
+  .macht-eintrag :deep(.v-list-item__prepend) {
+    align-self: start;
+    padding-top: 2px;
+  }
+
+  .macht-eintrag :deep(.v-list-item__append) {
+    justify-self: end;
+  }
+
+  .macht-eintrag :deep(.v-list-item-title) {
+    white-space: normal;
+  }
+
+  /* Lange Ausprägungslisten im Chip umbrechen statt abschneiden */
+  .macht-chip {
+    height: auto;
+    min-height: 32px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    white-space: normal;
+  }
+}
+</style>

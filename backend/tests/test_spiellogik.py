@@ -975,6 +975,21 @@ def test_charakterbogen_zeigt_nur_gewaehlte_auspraegungen(aventurien):
     assert macht_beschreibung(aventurien, "Strahl", strahl) == strahl["beschreibung"]
 
 
+def test_charakterbogen_html_hebt_modifikatoren_und_auspraegungen_hervor(aventurien):
+    from app.services.charakter_init import load_setting
+    from app.services.charakterbogen import _macht_beschreibung_html
+
+    heilung = load_setting("Savage Aventurien")["maechte"]["Heilung"]
+    aventurien["selected_maechte"].append("Heilung")
+    d = aktion("macht/auspraegungen", aventurien, "Heilung", auswahl=["Heilsegen"])["charakter_daten"]
+    html = _macht_beschreibung_html(d, "Heilung", heilung)
+    assert '<div class="block-titel">Modifikatoren</div>' in html
+    assert "<strong>Mächtige Heilung (+10):</strong>" in html
+    assert '<div class="block-titel">Ausprägungen</div>' in html
+    assert "<strong>Heilsegen:</strong>" in html
+    assert "Wundsegen" not in html
+
+
 # --- Abgeleitete Werte ---
 
 def berechne(daten: dict) -> dict:

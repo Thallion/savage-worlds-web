@@ -20,6 +20,7 @@ ergänzt sind die Abstammungs-Zeilen: Volks-Handicaps und -Besonderheiten stehen
 nicht in selected_handicaps/selected_talente und fehlten sonst im Export.
 """
 
+from app.services.macht_auspraegungen import macht_anzeigename
 from app.services.volk_effekte import gewaehltes_volk
 
 # Anzeige-Reihenfolge nach SWADE-Statblock (Agility, Smarts, Spirit, Strength, Vigor)
@@ -98,7 +99,7 @@ def _volk_zeilen(daten: dict, setting: dict) -> list[tuple[str, str]]:
 
 
 def _maechte(daten: dict, werte: dict) -> str:
-    maechte = ", ".join(daten.get("selected_maechte", []))
+    maechte = ", ".join(macht_anzeigename(daten, m) for m in daten.get("selected_maechte", []))
     if maechte and werte.get("machtpunkte"):
         maechte += f" ({werte['machtpunkte']} Machtpunkte)"
     return maechte

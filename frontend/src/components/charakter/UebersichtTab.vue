@@ -153,6 +153,9 @@
             color="primary"
           >
             {{ m }}
+            <span v-if="daten.macht_auspraegungen?.[m]?.length" class="ml-1 text-medium-emphasis">
+              ({{ daten.macht_auspraegungen[m].join(', ') }})
+            </span>
           </v-chip>
           <p v-if="!daten.selected_maechte?.length" class="text-grey">Keine</p>
           <p v-else-if="abgeleiteteWerte.machtpunkte" class="text-caption mt-1">

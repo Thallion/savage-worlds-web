@@ -26,6 +26,8 @@ class SpiellogikRequest(BaseModel):
     # Cyberware installieren: Wahl konfigurierbarer Implantate,
     # z. B. {"attribut": "Stärke"} oder {"fertigkeit": "Schießen"}
     konfiguration: dict[str, str] | None = None
+    # Ausprägungen einer Macht festlegen (Savage Aventurien: DSA-Zauber/Liturgien)
+    auswahl: list[str] | None = None
 
 
 class CharakterbogenRequest(SpiellogikRequest):

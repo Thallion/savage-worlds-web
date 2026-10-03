@@ -3782,13 +3782,13 @@
       "aktiv": true
     },
     "Stur_schwer": {
-        "name": "Stur",
-        "stufe": "schwer",
-        "punkte": 2,
-        "beschreibung": "Der Charakter will seinen Willen durchsetzen und gibt nie Fehler zu.",
-        "ausgewaehlt": false,
-        "aktiv": true,
-        "custom": false
+      "name": "Stur",
+      "stufe": "schwer",
+      "punkte": 2,
+      "beschreibung": "Der Charakter will seinen Willen durchsetzen und gibt nie Fehler zu.",
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "custom": false
     },
     "Tick (leicht)": {
       "name": "Tick",
@@ -3831,7 +3831,7 @@
       "reichweite": "Willenskraft",
       "dauer": "Bis zum nächsten Sonnenaufgang/Sonnenuntergang",
       "effekt": "",
-      "beschreibung": "Verbessert die Einstellung des Ziels um 1 Stufe (2 bei Steigerung). Das Ziel verliebt sich in die Hexe und versucht, ihr zu gefallen.",
+      "beschreibung": "Verbessert die Einstellung des Ziels um 1 Stufe (2 bei Steigerung). Das Ziel verliebt sich in die Hexe und versucht, ihr zu gefallen.\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3843,7 +3843,7 @@
       "reichweite": "Willenskraft",
       "dauer": "Ein Tag",
       "effekt": "",
-      "beschreibung": "Erhöht die Furchtstufe eines Bereichs von 25\" Durchmesser um 1 (2 bei Steigerung).",
+      "beschreibung": "Erhöht die Furchtstufe eines Bereichs von 25\" Durchmesser um 1 (2 bei Steigerung).\n\nModifikatoren:\n  Flächeneffekt (+3): Wirkungsbereich ca. 50\" (100 m) Durchmesser.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3855,7 +3855,7 @@
       "reichweite": "Berührung",
       "dauer": "Eine Stunde",
       "effekt": "",
-      "beschreibung": "Verwandelt ein Ziel in ein gewöhnliches Tier (Größe –2 bis –3). Kann durch Aufheben oder Tod der Hexe gebrochen werden.",
+      "beschreibung": "Verwandelt ein Ziel in ein gewöhnliches Tier (Größe –2 bis –3). Kann durch Aufheben oder Tod der Hexe gebrochen werden.\n\nModifikatoren:\n  Wahrer Fluch (+0): Dauerhafte Verwandlung; Reichweite 1,5 km mit persönlichem Gegenstand, Verwandlung über 13 Stunden.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3867,7 +3867,7 @@
       "reichweite": "Selbst",
       "dauer": "Eine Stunde",
       "effekt": "",
-      "beschreibung": "Lässt die Voodoopraktikerin einen Rada-Loa einladen, um spezifische Boni und Effekte zu erhalten.",
+      "beschreibung": "Lässt die Voodoopraktikerin einen Rada-Loa einladen, um spezifische Boni und Effekte zu erhalten.\n\nModifikatoren:\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3879,7 +3879,7 @@
       "reichweite": "Selbst",
       "dauer": "5",
       "effekt": "",
-      "beschreibung": "Lädt einen Petro-Loa ein, um den Körper der Voodoopraktikerin zu besetzen, mit aggressiven und mächtigen Effekten.",
+      "beschreibung": "Lädt einen Petro-Loa ein, um den Körper der Voodoopraktikerin zu besetzen, mit aggressiven und mächtigen Effekten.\n\nModifikatoren:\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3891,7 +3891,7 @@
       "reichweite": "Verstand",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Erlaubt es, Schäden an Maschinen und Fahrzeugen zu reparieren. Eine erfolgreiche Probe auf Verrückte Wissenschaft heilt 1 Wunde, 2 bei einer Steigerung.",
+      "beschreibung": "Erlaubt es, Schäden an Maschinen und Fahrzeugen zu reparieren. Eine erfolgreiche Probe auf Verrückte Wissenschaft heilt 1 Wunde, 2 bei einer Steigerung.\n\nModifikatoren:\n  Kritische Treffer (+2): Repariert statt einer Wunde einen kritischen Treffer an einem Fahrzeug.\n  Gremlins austreiben (+1): Vertreibt einen Gremlin aus einer Maschine, mit Steigerung alle.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [
         "Metallmagier"
       ],
@@ -3905,7 +3905,7 @@
       "reichweite": "Verstand",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Lässt mechanische Geräte blockieren, ausfallen oder Fehlfunktionen verursachen. Bei einer Steigerung erleidet das Gerät sofort einen Ausfall.",
+      "beschreibung": "Lässt mechanische Geräte blockieren, ausfallen oder Fehlfunktionen verursachen. Bei einer Steigerung erleidet das Gerät sofort einen Ausfall.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein weiteres Gerät pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [
         "Metallmagier"
       ],
@@ -3919,7 +3919,7 @@
       "reichweite": "Willenskraft",
       "dauer": "5",
       "effekt": "",
-      "beschreibung": "Ermöglicht Verbündeten in Reichweite, 1 Punkt Abzug für Wunden oder Erschöpfung zu ignorieren (2 bei Steigerung). Temporäre Verletzungen der Tabelle werden aufgehoben.",
+      "beschreibung": "Ermöglicht Verbündeten in Reichweite, 1 Punkt Abzug für Wunden oder Erschöpfung zu ignorieren (2 bei Steigerung). Temporäre Verletzungen der Tabelle werden aufgehoben.\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3931,7 +3931,7 @@
       "reichweite": "Berührung",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Das Ziel erleidet jeden Tag bei Sonnenuntergang eine Stufe Erschöpfung, bis es Ausgeschaltet ist. Kann durch Aufheben oder Tod des Zaubernden beendet werden.",
+      "beschreibung": "Das Ziel erleidet jeden Tag bei Sonnenuntergang eine Stufe Erschöpfung, bis es Ausgeschaltet ist. Kann durch Aufheben oder Tod des Zaubernden beendet werden.\n\nModifikatoren:\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3943,7 +3943,7 @@
       "reichweite": "Selbst",
       "dauer": "5",
       "effekt": "",
-      "beschreibung": "Übernatürlich böse Kreaturen müssen eine Willenskraftprobe ablegen, um direkte Angriffe auszuführen (–2 bei Steigerung).",
+      "beschreibung": "Übernatürlich böse Kreaturen müssen eine Willenskraftprobe ablegen, um direkte Angriffe auszuführen (–2 bei Steigerung).\n\nModifikatoren:\n  Flächeneffekt (+2/+3): Schützt alle Verbündeten in mittlerer (+2) oder großer Flächenschablone (+3) um den Wirker.\n  Stark (+1): Willenskraftproben der Kreaturen mit –2 (–4 mit Steigerung).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3969,7 +3969,7 @@
       "reichweite": "Verstand",
       "dauer": "5",
       "effekt": "",
-      "beschreibung": "Beschwört einen kleinen Gegenstand (bis zu 0,5 kg) wie eine Spielkarte oder einen Spiegel. Bei Steigerung hält die Wirkung Minuten an.",
+      "beschreibung": "Beschwört einen kleinen Gegenstand (bis zu 0,5 kg) wie eine Spielkarte oder einen Spiegel. Bei Steigerung hält die Wirkung Minuten an.\n\nModifikatoren:\n  Gewicht (+2): Gegenstand darf bis zu 1 kg wiegen.\n  Vollständig (+1): Komplettes Set bzw. geladene Schusswaffe (z. B. ganzes Kartenspiel).\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -3981,7 +3981,7 @@
       "reichweite": "Verstand",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Vertreibt böse Wesen aus dieser Welt. Auf Gepeinigte angewendet macht es deren Manitou für eine Stunde träge.",
+      "beschreibung": "Vertreibt böse Wesen aus dieser Welt. Auf Gepeinigte angewendet macht es deren Manitou für eine Stunde träge.\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4005,7 +4005,7 @@
       "reichweite": "Selbst",
       "dauer": "1 Stunde",
       "effekt": "",
-      "beschreibung": "Reduziert Reiseaufwand in der Wildnis. 5 km zählen wie 1 km, bei Steigerung 8 km wie 1 km.",
+      "beschreibung": "Reduziert Reiseaufwand in der Wildnis. 5 km zählen wie 1 km, bei Steigerung 8 km wie 1 km.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4017,7 +4017,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "–2/–4 um Empfänger anzugreifen.",
+      "beschreibung": "–2/–4 um Empfänger anzugreifen.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4029,7 +4029,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Gegnerische Wirker ziehen –2 (–4 mit Steigerung) ab, wenn sie den Charakter mit Mächten angreifen; verringert Schaden um die gleiche Summe.",
+      "beschreibung": "Gegnerische Wirker ziehen –2 (–4 mit Steigerung) ab, wenn sie den Charakter mit Mächten angreifen; verringert Schaden um die gleiche Summe.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4041,7 +4041,7 @@
       "reichweite": "VER S",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Entdeckt Magie für Wirkungsdauer 5 oder verbirgt sie für eine Stunde.",
+      "beschreibung": "Entdeckt Magie für Wirkungsdauer 5 oder verbirgt sie für eine Stunde.\n\nModifikatoren:\n  Flächeneffekt (+1/+2): Nur Verbergen; mittlere (+1) oder große Flächenschablone (+2).\n  Stark (+1): Nur Verbergen; Entdecken-Würfe dagegen mit –2.\n  Zusätzliche Empfänger (+1): Weiterer Betrachter bzw. Gegenstand pro Punkt.\n  Geisterblick (+5): Nur Heroisch; Blick in die Jagdgründe – Furchtstufe, Geisterwesen, Wesen von Objekten und Kreaturen.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4053,7 +4053,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Negiert magische Effekte.",
+      "beschreibung": "Negiert magische Effekte.\n\nModifikatoren:\n  Entzaubern (+1): Magischen Gegenstand anvisieren; Kräfte 1 Runde (2 mit Steigerung) außer Kraft.\n  Mehrere Mächte (+3): Hebt alle aktiven Mächte des Ziels auf.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4065,7 +4065,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Erschafft Barriere mit 5“ (10 Meter) Länge, 1“ (2 Meter) Höhe und Härte 10.",
+      "beschreibung": "Erschafft Barriere mit 5“ (10 Meter) Länge, 1“ (2 Meter) Höhe und Härte 10.\n\nModifikatoren:\n  Geformt (+2): Kreis, Quadrat oder andere einfache Form.\n  Gehärtet (+1): Härte 12 (14 mit Steigerung).\n  Größe (+1): Länge und Höhe verdoppelt.\n  Schaden (+1): 2W4 Schaden bei Berührung.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Panzerbrechend (allg.) (+1 bis +3): PB 2 pro Punkt, maximal PB 6.\n  Schwere Waffe (allg.) (+2): Angriff zählt als Schwere Waffe.\n  Anhaltender Schaden (allg.) (+2): Im nächsten Zug erneut Grundschaden, einen Würfeltyp niedriger.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4077,7 +4077,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Ziel wird Betäubt.",
+      "beschreibung": "Ziel wird Betäubt.\n\nModifikatoren:\n  Flächeneffekt (+2/+3): Mittlere (+2) oder große Flächenschablone (+3).\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4089,7 +4089,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Verursacht bei Opfern Abzüge von –2/–4.",
+      "beschreibung": "Verursacht bei Opfern Abzüge von –2/–4.\n\nModifikatoren:\n  Flächeneffekt (+2/+3): Mittlere (+2) oder große Flächenschablone (+3).\n  Stark (+1): Konstitutionsprobe zum Abschütteln mit –2.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4101,7 +4101,7 @@
       "reichweite": "VER",
       "dauer": "1 Stunde",
       "effekt": "",
-      "beschreibung": "Ignoriere bis zu 4 Punkte Beleuchtungsabzüge, 6 mit Steigerung.",
+      "beschreibung": "Ignoriere bis zu 4 Punkte Beleuchtungsabzüge, 6 mit Steigerung.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4113,7 +4113,7 @@
       "reichweite": "VER 5",
       "dauer": "Sofort/5",
       "effekt": "",
-      "beschreibung": "Erhöht oder senkt Attribut oder Fertigkeit.",
+      "beschreibung": "Erhöht oder senkt Attribut oder Fertigkeit.\n\nModifikatoren:\n  Stark (+1): Nur Senken; Willenskraftprobe zum Abschütteln mit –2.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4125,7 +4125,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Erlaubt kleinere Manipulationen der Grundelemente.",
+      "beschreibung": "Erlaubt kleinere Manipulationen der Grundelemente.\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Panzerbrechend (allg.) (+1 bis +3): PB 2 pro Punkt, maximal PB 6.\n  Schwere Waffe (allg.) (+2): Angriff zählt als Schwere Waffe.\n  Anhaltender Schaden (allg.) (+2): Im nächsten Zug erneut Grundschaden, einen Würfeltyp niedriger.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4137,7 +4137,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Vergleichender Wurf gegen Willenskraft für +1/+2 auf Darbietung, Einschüchtern, Provozieren und Überreden gegen das Ziel.",
+      "beschreibung": "Vergleichender Wurf gegen Willenskraft für +1/+2 auf Darbietung, Einschüchtern, Provozieren und Überreden gegen das Ziel.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4149,7 +4149,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Sieht Details auf größere Entfernung; halbiert Entfernungsabzüge bei Steigerung.",
+      "beschreibung": "Sieht Details auf größere Entfernung; halbiert Entfernungsabzüge bei Steigerung.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4161,7 +4161,7 @@
       "reichweite": "VER×2",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "2W6 Schaden in mittlerer Flächenschablone.",
+      "beschreibung": "2W6 Schaden in mittlerer Flächenschablone.\n\nModifikatoren:\n  Flächeneffekt (+0/+1): Kleine Flächenschablone (+0) oder große (+1).\n  Schaden (+2): 3W6 Schaden (4W6 mit Steigerung).\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Panzerbrechend (allg.) (+1 bis +3): PB 2 pro Punkt, maximal PB 6.\n  Schwere Waffe (allg.) (+2): Angriff zählt als Schwere Waffe.\n  Anhaltender Schaden (allg.) (+2): Im nächsten Zug erneut Grundschaden, einen Würfeltyp niedriger.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4173,7 +4173,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Ziel fliegt mit Bewegungsweite 12“.",
+      "beschreibung": "Ziel fliegt mit Bewegungsweite 12“.\n\nModifikatoren:\n  Zusätzliche Empfänger (+2): Ein zusätzliches Ziel pro 2 Punkte.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4185,7 +4185,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Verursacht Furchtproben.",
+      "beschreibung": "Verursacht Furchtproben.\n\nModifikatoren:\n  Flächeneffekt (+2/+3): Kleine oder mittlere (+2) bzw. große Flächenschablone (+3).\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4197,7 +4197,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Entfernt oder verändert Erinnerungen.",
+      "beschreibung": "Entfernt oder verändert Erinnerungen.\n\nModifikatoren:\n  Schnelles Wirken (+2): Erinnerung mit einer Aktion auslöschen.\n  Verändern (+1): Erinnerungen verändern statt auslöschen.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4209,7 +4209,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Vergleichender Wurf gegen Verstand, um Gedanken zu lesen.",
+      "beschreibung": "Vergleichender Wurf gegen Verstand, um Gedanken zu lesen.\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4221,7 +4221,7 @@
       "reichweite": "VER 30m",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Geistige Verbindung auf 1,5 Kilometer (8 mit Steigerung).",
+      "beschreibung": "Geistige Verbindung auf 1,5 Kilometer (8 mit Steigerung).\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4233,7 +4233,7 @@
       "reichweite": "VERx5/VER",
       "dauer": "5/Sofort",
       "effekt": "",
-      "beschreibung": "Erzeugt oder dämpft Geräusche.",
+      "beschreibung": "Erzeugt oder dämpft Geräusche.\n\nModifikatoren:\n  Anvisiert (+0): Stille auf einzelne Ziele (1 Punkt je Ziel) statt auf eine Fläche.\n  Beweglich (+1): Flächeneffekt pro Zug um Würfel der arkanen Fertigkeit in Zoll bewegen.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4245,7 +4245,7 @@
       "reichweite": "VER×2",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Fernkampfangriff mit 2W6.",
+      "beschreibung": "Fernkampfangriff mit 2W6.\n\nModifikatoren:\n  Schaden (+2): 3W6 Schaden (4W6 mit Steigerung).\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Panzerbrechend (allg.) (+1 bis +3): PB 2 pro Punkt, maximal PB 6.\n  Schwere Waffe (allg.) (+2): Angriff zählt als Schwere Waffe.\n  Anhaltender Schaden (allg.) (+2): Im nächsten Zug erneut Grundschaden, einen Würfeltyp niedriger.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4257,7 +4257,7 @@
       "reichweite": "Selbst",
       "dauer": "5",
       "effekt": "",
-      "beschreibung": "Wirker nimmt die Gestalt verschiedener Wesen an.",
+      "beschreibung": "Wirker nimmt die Gestalt verschiedener Wesen an.\n\nModifikatoren:\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4269,7 +4269,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Ziel gräbt sich durch die Erde.",
+      "beschreibung": "Ziel gräbt sich durch die Erde.\n\nModifikatoren:\n  Macht (+1): Graben durch Stein, Zement und Ähnliches.\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4281,7 +4281,7 @@
       "reichweite": "B",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Stellt Wunden wieder her, die weniger als eine Stunde alt sind.",
+      "beschreibung": "Stellt Wunden wieder her, die weniger als eine Stunde alt sind.\n\nModifikatoren:\n  Gift oder Krankheit neutralisieren (+1): Negiert alle Gifte oder Krankheiten.\n  Mächtige Heilung (+10): Heilt auch Wunden, die älter als eine Stunde sind.\n  Permanente Verletzungen (+20): Heilt eine permanente Verletzung; eine Stunde Vorbereitung.\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4293,7 +4293,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Erzeugt illusionäre Bilder.",
+      "beschreibung": "Erzeugt illusionäre Bilder.\n\nModifikatoren:\n  Geräusche (+1): Illusion erzeugt passende Geräusche.\n  Stark (+2): Verstandsproben zum Anzweifeln mit –2.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4305,7 +4305,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Gewährt Ziel ein Kampftalent.",
+      "beschreibung": "Gewährt Ziel ein Kampftalent.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4317,7 +4317,7 @@
       "reichweite": "VER 10m",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Erschafft oder verbannt Beleuchtung.",
+      "beschreibung": "Erschafft oder verbannt Beleuchtung.\n\nModifikatoren:\n  Beweglich (+1): Gebiet pro Runde um Würfel der arkanen Fertigkeit in Zoll bewegen oder an Gegenstand heften.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4329,7 +4329,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Entfernt Erschöpfung und Angeschlagen; Betäubt mit Steigerung.",
+      "beschreibung": "Entfernt Erschöpfung und Angeschlagen; Betäubt mit Steigerung.\n\nModifikatoren:\n  Betäubt (+1): Erholen entfernt auch Betäubt.\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4341,7 +4341,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Vergleichender Wurf gegen Willenskraft, um Ziel zu kontrollieren.",
+      "beschreibung": "Vergleichender Wurf gegen Willenskraft, um Ziel zu kontrollieren.\n\nModifikatoren:\n  Zusätzliche Empfänger (+2): Ein zusätzliches Ziel pro 2 Punkte.\n  Geistesband (+1): Kommunikation und Wahrnehmung durch jedes kontrollierte Ziel.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4365,7 +4365,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Erschafft Aura, die 2W4 Schaden verursacht.",
+      "beschreibung": "Erschafft Aura, die 2W4 Schaden verursacht.\n\nModifikatoren:\n  Schaden (+2): 2W6 Schaden.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Panzerbrechend (allg.) (+1 bis +3): PB 2 pro Punkt, maximal PB 6.\n  Schwere Waffe (allg.) (+2): Angriff zählt als Schwere Waffe.\n  Anhaltender Schaden (allg.) (+2): Im nächsten Zug erneut Grundschaden, einen Würfeltyp niedriger.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4377,7 +4377,7 @@
       "reichweite": "VER",
       "dauer": "1 Stunde",
       "effekt": "",
-      "beschreibung": "Schläfert Opfer ein.",
+      "beschreibung": "Schläfert Opfer ein.\n\nModifikatoren:\n  Flächeneffekt (+2/+3): Mittlere (+2) oder große Flächenschablone (+3).\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4389,7 +4389,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Gewährt Panzerung +2/+4.",
+      "beschreibung": "Gewährt Panzerung +2/+4.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4401,7 +4401,7 @@
       "reichweite": "VER",
       "dauer": "1 Stunde",
       "effekt": "",
-      "beschreibung": "Beschützt Ziel vor schädlichen Umwelteinflüssen.",
+      "beschreibung": "Beschützt Ziel vor schädlichen Umwelteinflüssen.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4413,7 +4413,7 @@
       "reichweite": "VER 10m",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Wirker kann Sprachen sprechen und verstehen.",
+      "beschreibung": "Wirker kann Sprachen sprechen und verstehen.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4425,7 +4425,7 @@
       "reichweite": "Kegel",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Kegelförmiger Angriff mit 2W6 Schaden.",
+      "beschreibung": "Kegelförmiger Angriff mit 2W6 Schaden.\n\nModifikatoren:\n  Schaden (+2): 3W6 Schaden (4W6 mit Steigerung).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Panzerbrechend (allg.) (+1 bis +3): PB 2 pro Punkt, maximal PB 6.\n  Schwere Waffe (allg.) (+2): Angriff zählt als Schwere Waffe.\n  Anhaltender Schaden (allg.) (+2): Im nächsten Zug erneut Grundschaden, einen Würfeltyp niedriger.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4437,7 +4437,7 @@
       "reichweite": "VER×2",
       "dauer": "5",
       "effekt": "",
-      "beschreibung": "Bewegt Gegenstände mit Stärke W10 (W12 mit Steigerung).",
+      "beschreibung": "Bewegt Gegenstände mit Stärke W10 (W12 mit Steigerung).\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4449,7 +4449,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Charakter teleportiert sich bis zu 12“ weit.",
+      "beschreibung": "Charakter teleportiert sich bis zu 12“ weit.\n\nModifikatoren:\n  Feind teleportieren (+2): Berührungsangriff; Feind bis 12\" (24\" mit Steigerung) wegteleportieren.\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4461,7 +4461,7 @@
       "reichweite": "VER 10m",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Kontrolliert Tiere.",
+      "beschreibung": "Kontrolliert Tiere.\n\nModifikatoren:\n  Geistesband (+1): Kommunikation und Wahrnehmung durch kontrollierte Tiere.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4473,7 +4473,7 @@
       "reichweite": "VER",
       "dauer": "Sofort/5",
       "effekt": "",
-      "beschreibung": "Erhöht oder verlangsamt Bewegung.",
+      "beschreibung": "Erhöht oder verlangsamt Bewegung.\n\nModifikatoren:\n  Flächeneffekt (+2/+3): Nur Trägheit; mittlere (+2) oder große Flächenschablone (+3).\n  Schnelligkeit (+2): Nur Beschleunigung; Mehrfachaktionsabzug um 2 verringert.\n  Stark (+1): Nur Trägheit; Willenskraftprobe zum Abschütteln mit –2.\n  Zusätzliche Empfänger (+1): Nur Beschleunigung; ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4485,7 +4485,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Ziel wird körperlos.",
+      "beschreibung": "Ziel wird körperlos.\n\nModifikatoren:\n  Zusätzliche Empfänger (+3): Ein zusätzliches Ziel pro 3 Punkte.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4497,7 +4497,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Ziel wird unsichtbar (–4/–6 um es zu beeinflussen).",
+      "beschreibung": "Ziel wird unsichtbar (–4/–6 um es zu beeinflussen).\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4509,7 +4509,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Beschwört verschiedene Verbündete.",
+      "beschreibung": "Beschwört verschiedene Verbündete.\n\nModifikatoren:\n  Biss/Klaue (+1): Verbündeter verursacht Stä+W6 Schaden.\n  Fliegen (+2): Verbündeter fliegt mit Bewegungsweite 12.\n  Geistesband (+1): Kommunikation und Wahrnehmung durch den Verbündeten.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4521,7 +4521,7 @@
       "reichweite": "VER 10m",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Ziel sieht aus wie jemand anderes.",
+      "beschreibung": "Ziel sieht aus wie jemand anderes.\n\nModifikatoren:\n  Größe (+1): Gestalt bis zu zwei Größenstufen größer oder kleiner.\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4533,7 +4533,7 @@
       "reichweite": "VER",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Feind wird Gebunden oder Festgehalten.",
+      "beschreibung": "Feind wird Gebunden oder Festgehalten.\n\nModifikatoren:\n  Flächeneffekt (+2/+3): Mittlere (+2) oder große Flächenschablone bzw. Strahlschablone (+3).\n  Zäh (+1): Härte des Materials steigt auf 10.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4545,7 +4545,7 @@
       "reichweite": "VER",
       "dauer": "S",
       "effekt": "",
-      "beschreibung": "Ziel wird Abgelenkt und Verwundbar.",
+      "beschreibung": "Ziel wird Abgelenkt und Verwundbar.\n\nModifikatoren:\n  Flächeneffekt (+0/+1): Kleine Flächenschablone (+0) oder große (+1).\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Selektiv (allg.) (+1): Wirker bestimmt, wer im Wirkungsbereich betroffen ist.\n  Erschöpfung (allg.) (+2): Betroffenes Ziel erleidet zusätzlich Erschöpfung (nicht bis Ausgeschaltet).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4557,7 +4557,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Erhöht oder verringert Größe.",
+      "beschreibung": "Erhöht oder verringert Größe.\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4569,7 +4569,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Erhöht Schaden einer Waffe um +2/+4.",
+      "beschreibung": "Erhöht Schaden einer Waffe um +2/+4.\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4581,7 +4581,7 @@
       "reichweite": "VER 5",
       "dauer": "—",
       "effekt": "",
-      "beschreibung": "Charakter kann mit halber Bewegungsweite an Wänden laufen (volle Bewegungsweite bei einer Steigerung).",
+      "beschreibung": "Charakter kann mit halber Bewegungsweite an Wänden laufen (volle Bewegungsweite bei einer Steigerung).\n\nModifikatoren:\n  Zusätzliche Empfänger (+1): Ein zusätzliches Ziel pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).\n  Leuchten/Verschleiern (allg.) (+1): Ziel leuchtet (–2 Heimlichkeit) oder wird verschleiert (Angriffe –1, +1 Heimlichkeit).\n  Bremsen/Beschleunigen (allg.) (+1): Bewegungsweite des Ziels –2 bzw. +2.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4593,7 +4593,7 @@
       "reichweite": "B",
       "dauer": "Sofort",
       "effekt": "",
-      "beschreibung": "Erweckt Tote zum Leben.",
+      "beschreibung": "Erweckt Tote zum Leben.\n\nModifikatoren:\n  Mächtig (+5): Leiche darf bis zu ein Jahrzehnt alt sein.",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4605,7 +4605,7 @@
       "reichweite": "VER",
       "dauer": "1 Stunde",
       "effekt": "",
-      "beschreibung": "Erhebt und kontrolliert Untote.",
+      "beschreibung": "Erhebt und kontrolliert Untote.\n\nModifikatoren:\n  Bewaffnet (+1 pro Zombie): Handwaffe (Stä+W6) oder Fernkampfwaffe (12/24/48, 2W6).\n  Panzerung (+1 pro Zombie): Zombies tragen Panzerung +2.\n  Geistesband (+1): Kommunikation und Wahrnehmung durch einen erschaffenen Untoten.\n  Permanent (+0): Zombie bleibt bis zum Ausschalten belebt; Machtpunkte bleiben investiert.\n  Zusätzliche Zombies (+1): Ein weiterer Zombie pro Punkt.\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true
@@ -4618,6 +4618,18 @@
       "dauer": "5m",
       "effekt": "",
       "beschreibung": "Wirker kann andersweltlichen Wesenheit Fragen stellen.",
+      "voraussetzungen": [],
+      "ausgewaehlt": false,
+      "aktiv": true
+    },
+    "Portal öffnen": {
+      "name": "Portal öffnen",
+      "rang": "H",
+      "machtpunkte": 20,
+      "reichweite": "Willenskraft",
+      "dauer": "1 Minute",
+      "effekt": "",
+      "beschreibung": "Öffnet einen Riss zwischen den Ebenen: Reise aus der physischen Welt in die Jagdgründe oder zurück, oder innerhalb der Jagdgründe zu einem anderen Ort (nicht in Himmel oder Hölle). Keine Reise zwischen Welten (z. B. Hölle auf Erden, Verlorene Kolonie). Arkane Hintergründe: alle außer Chi-Meister.\n\nModifikatoren:\n  Reichweite (allg.) (+1/+2): Reichweite verdoppelt (+1) oder verdreifacht (+2).",
       "voraussetzungen": [],
       "ausgewaehlt": false,
       "aktiv": true

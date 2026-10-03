@@ -13,6 +13,28 @@
           {{ element.beschreibung }}
         </div>
         <div v-else class="text-body-2 text-medium-emphasis">Keine Beschreibung vorhanden.</div>
+
+        <!-- Ausprägungen (Savage Aventurien): gewählte ausgeschrieben, Rest eingeklappt -->
+        <template v-if="auspraegungen.length">
+          <div v-if="gewaehlte.length" class="mt-4">
+            <div class="text-subtitle-2 mb-1">Gewählte Ausprägungen</div>
+            <div v-for="a in gewaehlte" :key="a.name" class="text-body-2 mb-1">
+              <strong>{{ a.name }}</strong><template v-if="a.beschreibung">: {{ a.beschreibung }}</template>
+            </div>
+          </div>
+          <v-expansion-panels variant="accordion" class="mt-4">
+            <v-expansion-panel>
+              <v-expansion-panel-title class="text-body-2">
+                {{ gewaehlte.length ? 'Weitere' : 'Mögliche' }} Ausprägungen ({{ uebrige.length }})
+              </v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <div v-for="a in uebrige" :key="a.name" class="text-body-2 mb-1">
+                  <strong>{{ a.name }}</strong><template v-if="a.beschreibung">: {{ a.beschreibung }}</template>
+                </div>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </template>
       </v-card-text>
       <v-card-actions>
         <v-spacer />
@@ -36,6 +58,13 @@ const RANG_NAMEN: Record<string, string> = {
 const sichtbar = ref(false)
 const element = ref<Record<string, any> | null>(null)
 const fallbackName = ref('')
+const auswahl = ref<string[]>([])
+
+const auspraegungen = computed<{ name: string; beschreibung?: string }[]>(
+  () => element.value?.auspraegungen ?? [],
+)
+const gewaehlte = computed(() => auspraegungen.value.filter((a) => auswahl.value.includes(a.name)))
+const uebrige = computed(() => auspraegungen.value.filter((a) => !auswahl.value.includes(a.name)))
 
 const titel = computed(() => element.value?.name || fallbackName.value)
 
@@ -52,9 +81,10 @@ const chips = computed(() => {
   return werte
 })
 
-function oeffne(el: Record<string, any>, name = '') {
+function oeffne(el: Record<string, any>, name = '', gewaehlteAuspraegungen: string[] = []) {
   element.value = el
   fallbackName.value = name
+  auswahl.value = gewaehlteAuspraegungen
   sichtbar.value = true
 }
 

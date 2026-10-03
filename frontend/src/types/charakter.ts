@@ -70,6 +70,8 @@ export interface CharakterDaten {
   selected_handicaps: string[]
   selected_talente: string[]
   selected_maechte: string[]
+  // gewählte Ausprägungen je Macht (Savage Aventurien: DSA-Zauber/Liturgien)
+  macht_auspraegungen?: Record<string, string[]>
   voelker_selected: Record<string, any>
   // Ausrüstung: {name: {anzahl, angelegt}}; Geld wird in /berechne hergeleitet
   ausruestung_selected?: Record<string, { anzahl: number; angelegt?: boolean }>

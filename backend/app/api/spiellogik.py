@@ -21,6 +21,7 @@ from app.services.charakter_init import (
     load_setting,
 )
 from app.services.handicap_effekte import wende_handicap_punkte_effekte_an
+from app.services.macht_auspraegungen import entferne_auspraegungen, setze_auspraegungen
 from app.services.kompatibilitaet import handicap_konflikt, talent_konflikt
 from app.services.aufstiege import (
     AUFSTIEG_KOSTEN_ATTRIBUT,
@@ -1093,8 +1094,28 @@ def macht_entfernen(req: SpiellogikRequest):
 
     selected.remove(macht_name)
     daten["selected_maechte"] = selected
+    entferne_auspraegungen(daten, macht_name)
     if daten.get("char_gen_completed"):
         journal_eintrag_entfernen(daten, "macht_hinzugefuegt", macht_name)
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/macht/auspraegungen", response_model=SpiellogikResponse)
+def macht_auspraegungen(req: SpiellogikRequest):
+    """Legt fest, welche Ausprägungen (z. B. DSA-Zauber) eine gewählte Macht hat.
+
+    Jederzeit änderbar; ersetzt die bisherige Auswahl vollständig."""
+    daten = req.charakter_daten
+    macht_name = req.element_name
+    if macht_name not in daten.get("selected_maechte", []):
+        return SpiellogikResponse(success=False, message=f"'{macht_name}' ist nicht ausgewählt")
+
+    setting = _setting_oder_none(daten)
+    macht = ((setting or {}).get("maechte") or {}).get(macht_name)
+    if not macht:
+        return SpiellogikResponse(success=False, message=f"Macht '{macht_name}' nicht gefunden")
+
+    setze_auspraegungen(daten, macht, macht_name, req.auswahl or [])
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 

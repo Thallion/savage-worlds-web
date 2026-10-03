@@ -924,6 +924,57 @@ def test_macht_entfernen(daten):
     assert d["selected_maechte"] == []
 
 
+# --- Ausprägungen von Mächten (Savage Aventurien) ---
+
+@pytest.fixture
+def aventurien():
+    d = initialisiere_charakter_daten("Magierin", "Savage Aventurien")
+    d["selected_maechte"] = ["Strahl"]
+    return d
+
+
+def test_auspraegungen_waehlen_filtert_und_sortiert(aventurien):
+    r = aktion("macht/auspraegungen", aventurien, "Strahl",
+               auswahl=["Ignifaxius", "Gibt es nicht", "Aquafaxius"])
+    assert r["success"]
+    # Reihenfolge wie im Setting, Unbekanntes verworfen
+    assert r["charakter_daten"]["macht_auspraegungen"] == {"Strahl": ["Aquafaxius", "Ignifaxius"]}
+
+
+def test_auspraegungen_nachtraeglich_aenderbar(aventurien):
+    d = aktion("macht/auspraegungen", aventurien, "Strahl", auswahl=["Ignifaxius"])["charakter_daten"]
+    d = aktion("macht/auspraegungen", d, "Strahl", auswahl=["Frigifaxius"])["charakter_daten"]
+    assert d["macht_auspraegungen"]["Strahl"] == ["Frigifaxius"]
+    d = aktion("macht/auspraegungen", d, "Strahl", auswahl=[])["charakter_daten"]
+    assert "Strahl" not in d["macht_auspraegungen"]
+
+
+def test_auspraegungen_nur_fuer_gewaehlte_macht(aventurien):
+    r = aktion("macht/auspraegungen", aventurien, "Geschoss", auswahl=["Feuerpfeil"])
+    assert not r["success"]
+
+
+def test_macht_entfernen_entfernt_auspraegungen(aventurien):
+    d = aktion("macht/auspraegungen", aventurien, "Strahl", auswahl=["Ignifaxius"])["charakter_daten"]
+    d = aktion("macht/entfernen", d, "Strahl")["charakter_daten"]
+    assert d["macht_auspraegungen"] == {}
+
+
+def test_charakterbogen_zeigt_nur_gewaehlte_auspraegungen(aventurien):
+    from app.services.charakter_init import load_setting
+    from app.services.macht_auspraegungen import macht_anzeigename, macht_beschreibung
+
+    strahl = load_setting("Savage Aventurien")["maechte"]["Strahl"]
+    d = aktion("macht/auspraegungen", aventurien, "Strahl", auswahl=["Ignifaxius"])["charakter_daten"]
+    text = macht_beschreibung(d, "Strahl", strahl)
+    assert text.startswith(strahl["beschreibung"])
+    assert "Ignifaxius:" in text
+    assert "Frigifaxius" not in text
+    assert macht_anzeigename(d, "Strahl") == "Strahl (Ignifaxius)"
+    # ohne Auswahl: nur der Regeltext
+    assert macht_beschreibung(aventurien, "Strahl", strahl) == strahl["beschreibung"]
+
+
 # --- Abgeleitete Werte ---
 
 def berechne(daten: dict) -> dict:

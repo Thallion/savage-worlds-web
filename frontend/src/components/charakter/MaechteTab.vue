@@ -35,9 +35,14 @@
           closable
           color="secondary"
           class="mr-2 mb-2"
+          :title="hatAuspraegungen(name) ? 'Ausprägungen wählen' : undefined"
+          @click="hatAuspraegungen(name) && oeffneAuspraegungen(name)"
           @click:close="entferneMacht(name)"
         >
           {{ name }}
+          <span v-if="gewaehlteAuspraegungen(name).length" class="ml-1 text-medium-emphasis">
+            ({{ gewaehlteAuspraegungen(name).join(', ') }})
+          </span>
         </v-chip>
       </div>
 
@@ -98,13 +103,31 @@
           <v-list-item-subtitle v-if="macht.beschreibung" class="text-wrap">
             {{ macht.beschreibung?.substring(0, 120) }}{{ macht.beschreibung?.length > 120 ? '...' : '' }}
           </v-list-item-subtitle>
+          <div
+            v-if="selectedMaechte.includes(String(name)) && hatAuspraegungen(String(name))"
+            class="text-caption mt-1"
+          >
+            <template v-if="gewaehlteAuspraegungen(String(name)).length">
+              <v-icon size="x-small" class="mr-1">mdi-auto-fix</v-icon>
+              {{ gewaehlteAuspraegungen(String(name)).join(', ') }}
+            </template>
+            <span v-else class="text-warning">Noch keine Ausprägung gewählt</span>
+          </div>
           <template #append>
+            <v-btn
+              v-if="selectedMaechte.includes(String(name)) && hatAuspraegungen(String(name))"
+              icon="mdi-format-list-checks"
+              size="x-small"
+              variant="text"
+              :title="`Ausprägungen wählen (${gewaehlteAuspraegungen(String(name)).length}/${macht.auspraegungen.length})`"
+              @click.stop="oeffneAuspraegungen(String(name))"
+            />
             <v-btn
               icon="mdi-information-outline"
               size="x-small"
               variant="text"
               title="Beschreibung"
-              @click.stop="beschreibungDialog?.oeffne(macht, String(name))"
+              @click.stop="beschreibungDialog?.oeffne(macht, String(name), gewaehlteAuspraegungen(String(name)))"
             />
             <v-btn
               icon="mdi-pencil"
@@ -125,6 +148,7 @@
       </v-list>
 
       <BeschreibungDialog ref="beschreibungDialog" />
+      <AuspraegungenDialog ref="auspraegungenDialog" @fehler="zeigeMeldung" />
     </v-card-text>
   </v-card>
 </template>
@@ -135,6 +159,7 @@ import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import ElementEditor from '@/components/charakter/ElementEditor.vue'
 import BeschreibungDialog from '@/components/charakter/BeschreibungDialog.vue'
+import AuspraegungenDialog from '@/components/charakter/AuspraegungenDialog.vue'
 import { mergeKatalog } from '@/utils/settingElemente'
 import { RANG_ORDNUNG, sortiertesObjekt } from '@/utils/sortierung'
 
@@ -142,6 +167,7 @@ const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
 const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
 const beschreibungDialog = ref<InstanceType<typeof BeschreibungDialog> | null>(null)
+const auspraegungenDialog = ref<InstanceType<typeof AuspraegungenDialog> | null>(null)
 const suche = ref('')
 const sortOption = ref('Name')
 const sortAbsteigend = ref(false)
@@ -176,7 +202,8 @@ const gefilterteMaechte = computed(() => {
       s &&
       !key.toLowerCase().includes(s) &&
       !m.name?.toLowerCase().includes(s) &&
-      !m.beschreibung?.toLowerCase().includes(s)
+      !m.beschreibung?.toLowerCase().includes(s) &&
+      !m.auspraegungen?.some((a: any) => a.name?.toLowerCase().includes(s))
     )
       continue
     if (nurGewaehlte.value && !selectedMaechte.value.includes(key)) continue
@@ -189,9 +216,29 @@ const gefilterteMaechte = computed(() => {
   return sortiertesObjekt(result, schluessel, sortAbsteigend.value)
 })
 
+// Ausprägungen (Savage Aventurien: DSA-Zauber/Liturgien) einer Macht
+function hatAuspraegungen(name: string): boolean {
+  return (maechte.value[name]?.auspraegungen?.length ?? 0) > 0
+}
+
+function gewaehlteAuspraegungen(name: string): string[] {
+  return daten.value.macht_auspraegungen?.[name] ?? []
+}
+
+function oeffneAuspraegungen(name: string) {
+  auspraegungenDialog.value?.oeffne(name, maechte.value[name])
+}
+
+function zeigeMeldung(text: string) {
+  meldung.value = text
+  meldungSichtbar.value = true
+}
+
 async function waehleMacht(name: string) {
   const result = await store.spiellogikAktion('macht/waehlen', name)
-  if (!result.success && result.bestaetigung_moeglich) {
+  if (result.success && hatAuspraegungen(name)) {
+    oeffneAuspraegungen(name)
+  } else if (!result.success && result.bestaetigung_moeglich) {
     bestaetigungMacht.value = name
     bestaetigungMeldung.value = `${result.message}. Trotzdem auswählen?`
     bestaetigungSichtbar.value = true
@@ -204,7 +251,9 @@ async function waehleMacht(name: string) {
 async function trotzdemWaehlen() {
   bestaetigungSichtbar.value = false
   const result = await store.spiellogikAktion('macht/waehlen', bestaetigungMacht.value, true)
-  if (!result.success && result.message) {
+  if (result.success && hatAuspraegungen(bestaetigungMacht.value)) {
+    oeffneAuspraegungen(bestaetigungMacht.value)
+  } else if (!result.success && result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true
   }

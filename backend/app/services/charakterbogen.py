@@ -23,6 +23,7 @@ import html
 from pathlib import Path
 
 from app.services.aufstiege import rang_fuer_aufstiege
+from app.services.macht_auspraegungen import macht_anzeigename, macht_beschreibung
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 from app.services.volk_effekte import gewaehltes_volk
 
@@ -441,12 +442,13 @@ def _maechte_sektion(daten: dict, setting: dict) -> str | None:
     for name in maechte:
         macht = setting_maechte.get(name) or {}
         rows += (
-            f"<tr><td>{_esc(name)}</td><td>{_esc(macht.get('rang', ''))}</td>"
+            f"<tr><td>{_esc(macht_anzeigename(daten, name))}</td><td>{_esc(macht.get('rang', ''))}</td>"
             f"<td>{_esc(macht.get('machtpunkte', ''))}</td><td>{_esc(macht.get('reichweite', ''))}</td>"
             f"<td>{_esc(macht.get('dauer', ''))}</td></tr>\n"
         )
-        if macht.get("beschreibung"):
-            rows += f'<tr><td colspan="5" class="beschreibung">{_esc(macht["beschreibung"])}</td></tr>\n'
+        beschreibung = macht_beschreibung(daten, name, macht)
+        if beschreibung:
+            rows += f'<tr><td colspan="5" class="beschreibung">{_esc(beschreibung)}</td></tr>\n'
 
     return "<h2>Mächte</h2>\n" + _tabelle(["Name", "Rang", "MP", "Reichweite", "Dauer"], rows)
 

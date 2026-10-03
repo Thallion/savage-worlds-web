@@ -40,6 +40,7 @@ from app.services.charakterbogen import (
     _kosten_text,
     _wuerfel,
 )
+from app.services.macht_auspraegungen import macht_anzeigename, macht_beschreibung
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
 from app.services.volk_effekte import gewaehltes_volk
 
@@ -416,9 +417,9 @@ def _maechte(bogen: _Bogen, daten: dict, setting: dict) -> list | None:
     for name in maechte:
         macht = setting_maechte.get(name) or {}
         eintraege.append((
-            [name, macht.get("rang", ""), macht.get("machtpunkte", ""),
+            [macht_anzeigename(daten, name), macht.get("rang", ""), macht.get("machtpunkte", ""),
              macht.get("reichweite", ""), macht.get("dauer", "")],
-            macht.get("beschreibung"),
+            macht_beschreibung(daten, name, macht) or None,
         ))
 
     rest = INHALT_BREITE - 4 * (18 * mm)

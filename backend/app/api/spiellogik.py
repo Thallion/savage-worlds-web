@@ -1,6 +1,9 @@
+from typing import Any
 from urllib.parse import quote
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Body, HTTPException, Response
+
+from app.schemas.charakter import CharakterCreate
 
 from app.schemas.spiellogik import (
     CharakterbogenRequest,
@@ -11,6 +14,8 @@ from app.schemas.spiellogik import (
 from app.services.charakter_init import (
     START_ATTRIBUTSTEIGERUNGEN,
     START_FERTIGKEITSSTEIGERUNGEN,
+    entpacke_charakter_export,
+    ergaenze_fehlende_eigenschaften,
     initialisiere_charakter_daten,
     load_config,
     load_setting,
@@ -78,6 +83,32 @@ def _load_setting(setting_name: str, daten: dict | None = None) -> dict:
     if daten is not None:
         setting = wende_setting_overrides_an(setting, daten)
     return setting
+
+
+# --- Gastmodus: Charaktere ohne Konto (im Browser gespeichert) ---
+# Beide Endpunkte sind zustandslos wie die übrige Spiellogik; sie ersetzen
+# für Gäste POST /api/charaktere bzw. das Lazy-Init beim Laden/Import.
+
+
+@router.post("/charakter/neu")
+def charakter_neu(data: CharakterCreate):
+    try:
+        daten = initialisiere_charakter_daten(data.char_name, data.active_setting_name)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=404, detail=f"Setting '{data.active_setting_name}' nicht gefunden"
+        )
+    return {"charakter_daten": daten}
+
+
+@router.post("/charakter/normalisieren")
+def charakter_normalisieren(charakter_daten: dict[str, Any] = Body(...)):
+    """Füllt fehlende Felder nach (Alt-Exporte, ältere Browser-Stände) und
+    entpackt Voll-Exporte mit DB-Wrapper — wie /api/charaktere/import."""
+    if not isinstance(charakter_daten, dict) or not charakter_daten:
+        raise HTTPException(status_code=422, detail="Kein gültiges Charakter-JSON")
+    daten, _ = ergaenze_fehlende_eigenschaften(entpacke_charakter_export(charakter_daten))
+    return {"charakter_daten": daten}
 
 
 def _setting_oder_none(daten: dict) -> dict | None:
@@ -423,6 +454,39 @@ def fertigkeit_entfernen(req: SpiellogikRequest):
     )
 
 
+MAX_HANDICAP_PUNKTE = 4
+
+
+def _handicap_punkte_voll(stufe: str) -> int:
+    return 1 if stufe == "leicht" else 2
+
+
+def _handicap_punkte_gewaehrt(daten: dict, handicap_name: str, stufe: str) -> int:
+    """Tatsächlich gutgeschriebene Punkte; Bestandscharaktere ohne Eintrag
+    haben immer die vollen Punkte erhalten."""
+    return daten.get("handicap_punkte_gewaehrt", {}).get(handicap_name, _handicap_punkte_voll(stufe))
+
+
+def _handicap_punkte_nachruecken(daten: dict, setting: dict) -> None:
+    """Füllt frei gewordenes Budget mit Handicaps auf, die über dem Maximum
+    gewählt wurden (in Auswahlreihenfolge)."""
+    gewaehrt_map = daten.get("handicap_punkte_gewaehrt", {})
+    handicaps = setting.get("handicaps", {})
+    for name in daten.get("selected_handicaps", []):
+        frei = MAX_HANDICAP_PUNKTE - daten.get("gesamt_handicap_punkte", 0)
+        if frei <= 0:
+            return
+        if name not in gewaehrt_map:
+            continue
+        stufe = handicaps.get(name, {}).get("stufe", "leicht").lower()
+        nachschlag = min(_handicap_punkte_voll(stufe) - gewaehrt_map[name], frei)
+        if nachschlag <= 0:
+            continue
+        gewaehrt_map[name] += nachschlag
+        daten["gesamt_handicap_punkte"] = daten.get("gesamt_handicap_punkte", 0) + nachschlag
+        daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + nachschlag
+
+
 @router.post("/handicap/waehlen", response_model=SpiellogikResponse)
 def handicap_waehlen(req: SpiellogikRequest):
     daten = req.charakter_daten
@@ -447,21 +511,30 @@ def handicap_waehlen(req: SpiellogikRequest):
         return SpiellogikResponse(success=False, message=konflikt)
 
     stufe = handicap_data.get("stufe", "leicht").lower()
-    punkte = 1 if stufe == "leicht" else 2
+    punkte = _handicap_punkte_voll(stufe)
     gesamt = daten.get("gesamt_handicap_punkte", 0)
-    if gesamt + punkte > 4:
-        return SpiellogikResponse(success=False, message="Maximale Handicap-Punkte (4) erreicht")
+    # Über dem Maximum bleibt das Handicap wählbar, bringt aber keine (bzw.
+    # nur die restlichen) Punkte
+    gewaehrt = min(punkte, max(0, MAX_HANDICAP_PUNKTE - gesamt))
 
     selected.append(handicap_name)
     daten["selected_handicaps"] = selected
-    daten["gesamt_handicap_punkte"] = gesamt + punkte
-    daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + punkte
+    daten.setdefault("handicap_punkte_gewaehrt", {})[handicap_name] = gewaehrt
+    daten["gesamt_handicap_punkte"] = gesamt + gewaehrt
+    daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + gewaehrt
     # Spezialeffekte wie "Alt" (+5 Fertigkeitspunkte) oder "Jung" (weniger Steigerungen)
     wende_handicap_punkte_effekte_an(daten, handicap_name, stufe)
     journal_eintrag(
-        daten, "handicap_hinzugefuegt", {"name": handicap_name, "stufe": stufe, "punkte": punkte}
+        daten, "handicap_hinzugefuegt", {"name": handicap_name, "stufe": stufe, "punkte": gewaehrt}
     )
-    return SpiellogikResponse(success=True, charakter_daten=daten)
+    message = ""
+    if gewaehrt < punkte:
+        message = (
+            f"Maximale Handicap-Punkte ({MAX_HANDICAP_PUNKTE}) erreicht — "
+            f"'{handicap_name}' bringt {'keine' if gewaehrt == 0 else 'nur ' + str(gewaehrt)} "
+            f"{'Punkte' if gewaehrt != 1 else 'Punkt'}"
+        )
+    return SpiellogikResponse(success=True, message=message, charakter_daten=daten)
 
 
 @router.post("/handicap/entfernen", response_model=SpiellogikResponse)
@@ -494,7 +567,7 @@ def handicap_entfernen(req: SpiellogikRequest):
 
     handicap_data = setting.get("handicaps", {}).get(handicap_name, {})
     stufe = handicap_data.get("stufe", "leicht").lower()
-    punkte = 1 if stufe == "leicht" else 2
+    punkte = _handicap_punkte_gewaehrt(daten, handicap_name, stufe)
 
     # Nach der Erschaffung wird ein Handicap per Aufstieg ganz abgekauft
     # (SWADE-Aufstiegsoption). Die Erschaffungs-Punkte-Buchhaltung bleibt dabei
@@ -515,6 +588,7 @@ def handicap_entfernen(req: SpiellogikRequest):
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_HANDICAP
         selected.remove(handicap_name)
         daten["selected_handicaps"] = selected
+        daten.get("handicap_punkte_gewaehrt", {}).pop(handicap_name, None)
         journal_eintrag(
             daten,
             "handicap_entfernt",
@@ -531,9 +605,11 @@ def handicap_entfernen(req: SpiellogikRequest):
 
     selected.remove(handicap_name)
     daten["selected_handicaps"] = selected
+    daten.get("handicap_punkte_gewaehrt", {}).pop(handicap_name, None)
     daten["gesamt_handicap_punkte"] = max(0, daten.get("gesamt_handicap_punkte", 0) - punkte)
     daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) - punkte
     wende_handicap_punkte_effekte_an(daten, handicap_name, stufe, vorzeichen=-1)
+    _handicap_punkte_nachruecken(daten, setting)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -611,8 +687,12 @@ def handicap_reduzieren(req: SpiellogikRequest):
             )
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_HANDICAP
     else:
-        # Differenz schwer (2) → leicht (1); das Budget muss noch frei sein
-        differenz = 2 - 1
+        # Differenz schwer (2) → leicht (1) bzw. der tatsächlich gewährten
+        # Punkte, falls das Handicap über dem Maximum gewählt wurde; das
+        # Budget muss noch frei sein
+        gewaehrt_alt = _handicap_punkte_gewaehrt(daten, handicap_name, "schwer")
+        gewaehrt_neu = min(1, gewaehrt_alt)
+        differenz = gewaehrt_alt - gewaehrt_neu
         if daten.get("verbleibende_handicap_punkte", 0) < differenz:
             return SpiellogikResponse(
                 success=False,
@@ -624,10 +704,15 @@ def handicap_reduzieren(req: SpiellogikRequest):
         # Spezial-Punkteeffekte umstellen (schwer zurücknehmen, leicht anwenden)
         wende_handicap_punkte_effekte_an(daten, handicap_name, "schwer", vorzeichen=-1)
         wende_handicap_punkte_effekte_an(daten, leicht_key, "leicht")
+        gewaehrt_map = daten.setdefault("handicap_punkte_gewaehrt", {})
+        gewaehrt_map.pop(handicap_name, None)
+        gewaehrt_map[leicht_key] = gewaehrt_neu
 
     selected.remove(handicap_name)
     selected.append(leicht_key)
     daten["selected_handicaps"] = selected
+    if not abgeschlossen:
+        _handicap_punkte_nachruecken(daten, setting)
     journal_eintrag(
         daten,
         "handicap_reduziert",

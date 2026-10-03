@@ -14,7 +14,7 @@
     </v-card-text>
     <v-card-actions>
       <!-- Verschieben -->
-      <v-menu>
+      <v-menu v-if="verschiebbar">
         <template #activator="{ props }">
           <v-btn icon="mdi-folder-move" size="small" v-bind="props" @click.stop />
         </template>
@@ -46,10 +46,15 @@
 <script setup lang="ts">
 import type { CharakterListItem, Ordner } from '@/types/charakter'
 
-defineProps<{
-  char: CharakterListItem
-  ordnerListe: Ordner[]
-}>()
+withDefaults(
+  defineProps<{
+    char: CharakterListItem
+    ordnerListe: Ordner[]
+    // Gast-Charaktere (nur im Browser) kennen keine Ordner
+    verschiebbar?: boolean
+  }>(),
+  { verschiebbar: true },
+)
 
 const emit = defineEmits<{
   oeffnen: []

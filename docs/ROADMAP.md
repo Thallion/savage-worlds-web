@@ -1,4 +1,4 @@
-# Savage Worlds Web — Roadmap
+claude# Savage Worlds Web — Roadmap
 
 Stand: 2026-07-07 · Abgleich mit dem Original (Kivy): https://github.com/Thallion/Savage-Worlds-Charakter-Generator-deutsch
 

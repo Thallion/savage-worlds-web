@@ -32,7 +32,21 @@
         >
           Erschaffung abschließen
         </v-btn>
-        <v-btn color="primary" prepend-icon="mdi-content-save" @click="speichern" :loading="saving">
+        <v-chip
+          v-if="store.aktuellIstGast"
+          prepend-icon="mdi-web"
+          variant="tonal"
+          title="Gastmodus: Änderungen werden automatisch nur in diesem Browser gespeichert"
+        >
+          Im Browser gespeichert
+        </v-chip>
+        <v-btn
+          v-else
+          color="primary"
+          prepend-icon="mdi-content-save"
+          @click="speichern"
+          :loading="saving"
+        >
           Speichern
         </v-btn>
       </v-col>
@@ -170,7 +184,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
@@ -215,12 +229,27 @@ const zeigeSuperkraefte = computed(() => store.abgeleiteteWerte?.superkraefte !=
 
 onMounted(async () => {
   const id = Number(route.params.id)
-  await store.ladeCharakter(id)
+  try {
+    await store.ladeCharakter(id)
+  } catch {
+    router.replace('/')
+    return
+  }
   if (store.aktuellerCharakter) {
     await einstellungenStore.ladeSetting(store.aktuellerCharakter.active_setting_name)
   }
   window.addEventListener('keydown', tastenkuerzel)
 })
+
+// Gastmodus: ohne Server gibt es keinen Grund für explizites Speichern —
+// jede Änderung landet sofort im localStorage
+watch(
+  () => store.aktuellerCharakter,
+  () => {
+    if (store.aktuellIstGast) store.speichereCharakter()
+  },
+  { deep: true },
+)
 
 onUnmounted(() => {
   window.removeEventListener('keydown', tastenkuerzel)

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { istGastId } from '@/utils/gastCharaktere'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -33,7 +34,6 @@ const router = createRouter({
       path: '/',
       name: 'charakterliste',
       component: () => import('@/views/CharakterListeView.vue'),
-      meta: { requiresAuth: true },
     },
     {
       path: '/konto',
@@ -51,20 +51,21 @@ const router = createRouter({
       path: '/kampf',
       name: 'kampfsimulator',
       component: () => import('@/views/KampfsimulatorView.vue'),
-      meta: { requiresAuth: true },
     },
     {
       path: '/charakter/:id',
       name: 'charakter-editor',
       component: () => import('@/views/CharakterEditorView.vue'),
-      meta: { requiresAuth: true },
+      // Gast-Charaktere (negative ID, im Browser gespeichert) gehen ohne Login
+      meta: { requiresAuth: true, gastCharakterErlaubt: true },
     },
   ],
 })
 
 router.beforeEach((to) => {
   const authStore = useAuthStore()
-  if (to.meta.requiresAuth && !authStore.isLoggedIn) {
+  const istGastCharakter = to.meta.gastCharakterErlaubt && istGastId(Number(to.params.id))
+  if (to.meta.requiresAuth && !istGastCharakter && !authStore.isLoggedIn) {
     return { name: 'login' }
   }
 })

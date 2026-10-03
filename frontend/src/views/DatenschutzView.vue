@@ -78,7 +78,11 @@
               Nach der Anmeldung wird ein Anmelde-Token (JWT) im lokalen Speicher
               (Local Storage) Ihres Browsers abgelegt, damit Sie angemeldet bleiben.
               Zusätzlich werden Ihre Anzeige-Einstellungen (z.&nbsp;B. das gewählte
-              Theme) lokal gespeichert. Diese Daten verbleiben in Ihrem Browser,
+              Theme) lokal gespeichert. Ohne Anmeldung (Gastmodus) werden auch Ihre
+              Charaktere ausschließlich dort abgelegt; zur Berechnung der Spielregeln
+              werden sie an den Server übermittelt, dort aber nicht gespeichert. Bei
+              einer späteren Anmeldung werden sie in Ihr Konto übernommen. Diese Daten
+              verbleiben in Ihrem Browser,
               werden nicht zu Analysezwecken ausgewertet und können jederzeit über
               die Abmeldung bzw. das Löschen der Browserdaten entfernt werden.
             </p>

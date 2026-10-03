@@ -8,7 +8,12 @@
         <v-btn variant="tonal" prepend-icon="mdi-upload" @click="importDatei?.click()">
           Importieren
         </v-btn>
-        <v-btn variant="tonal" prepend-icon="mdi-folder-plus" @click="ordnerDialogOeffnen()">
+        <v-btn
+          v-if="!store.istGast"
+          variant="tonal"
+          prepend-icon="mdi-folder-plus"
+          @click="ordnerDialogOeffnen()"
+        >
           Neuer Ordner
         </v-btn>
         <v-btn color="primary" prepend-icon="mdi-plus" @click="dialogOffen = true">
@@ -23,6 +28,25 @@
         />
       </v-col>
     </v-row>
+
+    <v-alert
+      v-if="store.istGast"
+      type="info"
+      variant="tonal"
+      class="mb-4"
+      icon="mdi-account-off-outline"
+      title="Gastmodus"
+    >
+      Du bist nicht angemeldet. Deine Charaktere werden automatisch, aber nur in diesem
+      Browser gespeichert — beim Löschen der Browserdaten oder auf einem anderen Gerät sind
+      sie nicht verfügbar. Mit einem kostenlosen Konto werden sie beim Anmelden übernommen.
+      <div class="d-flex flex-wrap ga-2 mt-3">
+        <v-btn color="primary" variant="flat" size="small" prepend-icon="mdi-account-plus" to="/register">
+          Konto anlegen
+        </v-btn>
+        <v-btn variant="outlined" size="small" prepend-icon="mdi-login" to="/login">Anmelden</v-btn>
+      </div>
+    </v-alert>
 
     <v-snackbar v-model="meldungSichtbar" :timeout="4000">{{ meldung }}</v-snackbar>
 
@@ -45,6 +69,7 @@
         <charakter-karte
           :char="char"
           :ordner-liste="store.ordnerListe"
+          :verschiebbar="!store.istGast"
           @oeffnen="router.push(`/charakter/${char.id}`)"
           @exportieren="store.exportiereCharakter(char.id, char.char_name)"
           @loeschen="deleteChar(char.id)"
@@ -93,6 +118,7 @@
               <charakter-karte
                 :char="char"
                 :ordner-liste="store.ordnerListe"
+                :verschiebbar="!store.istGast"
                 @oeffnen="router.push(`/charakter/${char.id}`)"
                 @exportieren="store.exportiereCharakter(char.id, char.char_name)"
                 @loeschen="deleteChar(char.id)"
@@ -199,7 +225,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import { ApiError } from '@/api/client'
@@ -207,6 +233,7 @@ import type { Archetyp, CharakterListItem } from '@/types/charakter'
 import CharakterKarte from '@/components/charakter/CharakterKarte.vue'
 
 const router = useRouter()
+const route = useRoute()
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
 
@@ -295,6 +322,16 @@ async function importiereDatei(event: Event) {
 }
 
 onMounted(async () => {
+  // Nach dem Login übernommene Gast-Charaktere melden (siehe LoginView)
+  const uebernommen = Number(route.query.uebernommen)
+  if (uebernommen > 0) {
+    meldung.value =
+      uebernommen === 1
+        ? 'Dein Gast-Charakter wurde in dein Konto übernommen.'
+        : `${uebernommen} Gast-Charaktere wurden in dein Konto übernommen.`
+    meldungSichtbar.value = true
+    router.replace({ query: {} })
+  }
   await Promise.all([
     store.ladeListe(),
     store.ladeOrdner(),

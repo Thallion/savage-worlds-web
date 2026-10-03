@@ -1,6 +1,15 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { api } from '@/api/client'
+import { useAuthStore } from '@/stores/auth'
+import {
+  istGastId,
+  ladeGastCharakter,
+  ladeGastCharaktere,
+  legeGastCharakterAn,
+  loescheGastCharakter,
+  speichereGastCharakter,
+} from '@/utils/gastCharaktere'
 import type {
   AbgeleiteteWerte,
   Archetyp,
@@ -23,6 +32,32 @@ export const useCharakterStore = defineStore('charakter', () => {
   const aktuellerCharakter = ref<CharakterDetail | null>(null)
   const abgeleiteteWerte = ref<AbgeleiteteWerte | null>(null)
   const loading = ref(false)
+
+  // Gastmodus: ohne Anmeldung liegen die Charaktere im Browser (negative IDs)
+  const authStore = useAuthStore()
+  const istGast = computed(() => !authStore.isLoggedIn)
+  const aktuellIstGast = computed(() =>
+    aktuellerCharakter.value ? istGastId(aktuellerCharakter.value.id) : false,
+  )
+
+  /** Füllt fehlende Felder nach (wie das Lazy-Init beim Laden vom Server). */
+  async function normalisiere(daten: unknown) {
+    const antwort = await api.post<{ charakter_daten: CharakterDaten }>(
+      '/spiellogik/charakter/normalisieren',
+      daten,
+    )
+    return antwort.charakter_daten
+  }
+
+  function ladeDateiHerunter(daten: unknown, name: string) {
+    const blob = new Blob([JSON.stringify(daten, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${name || 'charakter'}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   // ---- Undo/Redo (Original: undo_manager) ----
   // Der gesamte Charakter liegt in einem JSON-Blob und jede Spiellogik-Aktion
@@ -79,7 +114,9 @@ export const useCharakterStore = defineStore('charakter', () => {
   async function ladeListe() {
     loading.value = true
     try {
-      liste.value = await api.get<CharakterListItem[]>('/charaktere')
+      liste.value = istGast.value
+        ? ladeGastCharaktere()
+        : await api.get<CharakterListItem[]>('/charaktere')
     } finally {
       loading.value = false
     }
@@ -88,7 +125,14 @@ export const useCharakterStore = defineStore('charakter', () => {
   async function ladeCharakter(id: number) {
     loading.value = true
     try {
-      aktuellerCharakter.value = await api.get<CharakterDetail>(`/charaktere/${id}`)
+      if (istGastId(id)) {
+        const gast = ladeGastCharakter(id)
+        if (!gast) throw new Error('Charakter nicht gefunden')
+        gast.charakter_daten = await normalisiere(gast.charakter_daten)
+        aktuellerCharakter.value = gast
+      } else {
+        aktuellerCharakter.value = await api.get<CharakterDetail>(`/charaktere/${id}`)
+      }
       historieZuruecksetzen()
       await berechneWerte()
     } finally {
@@ -104,6 +148,15 @@ export const useCharakterStore = defineStore('charakter', () => {
   }
 
   async function erstelleCharakter(charName: string, settingName: string) {
+    if (istGast.value) {
+      const { charakter_daten } = await api.post<{ charakter_daten: CharakterDaten }>(
+        '/spiellogik/charakter/neu',
+        { char_name: charName, active_setting_name: settingName },
+      )
+      const charakter = legeGastCharakterAn(charakter_daten, charName)
+      await ladeListe()
+      return charakter
+    }
     const charakter = await api.post<CharakterDetail>('/charaktere', {
       char_name: charName,
       active_setting_name: settingName,
@@ -115,6 +168,12 @@ export const useCharakterStore = defineStore('charakter', () => {
   async function speichereCharakter() {
     if (!aktuellerCharakter.value) return
     const id = aktuellerCharakter.value.id
+    if (istGastId(id)) {
+      speichereGastCharakter(aktuellerCharakter.value)
+      const name = aktuellerCharakter.value.charakter_daten.profil_daten?.Name?.trim()
+      if (name) aktuellerCharakter.value.char_name = name
+      return
+    }
     const gespeichert = await api.put<CharakterDetail>(`/charaktere/${id}`, {
       char_name: aktuellerCharakter.value.char_name,
       active_setting_name: aktuellerCharakter.value.active_setting_name,
@@ -127,22 +186,32 @@ export const useCharakterStore = defineStore('charakter', () => {
   }
 
   async function loescheCharakter(id: number) {
+    if (istGastId(id)) {
+      loescheGastCharakter(id)
+      await ladeListe()
+      return
+    }
     await api.delete(`/charaktere/${id}`)
     await ladeListe()
   }
 
   async function exportiereCharakter(id: number, name: string) {
-    const daten = await api.get<CharakterDaten>(`/charaktere/${id}/export`)
-    const blob = new Blob([JSON.stringify(daten, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${name || 'charakter'}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    const daten = istGastId(id)
+      ? ladeGastCharakter(id)?.charakter_daten
+      : await api.get<CharakterDaten>(`/charaktere/${id}/export`)
+    if (daten) ladeDateiHerunter(daten, name)
   }
 
   async function importiereCharakter(daten: unknown) {
+    if (istGast.value) {
+      const normalisiert = await normalisiere(daten)
+      const charakter = legeGastCharakterAn(
+        normalisiert,
+        normalisiert.profil_daten?.Name?.trim() || 'Importierter Charakter',
+      )
+      await ladeListe()
+      return charakter
+    }
     const charakter = await api.post<CharakterDetail>('/charaktere/import', daten)
     await ladeListe()
     return charakter
@@ -150,7 +219,29 @@ export const useCharakterStore = defineStore('charakter', () => {
 
   // ---- Ordner ----
 
+  /**
+   * Übernimmt nach der Anmeldung die Gast-Charaktere aus dem Browser ins Konto.
+   * Erfolgreich importierte werden lokal gelöscht; gibt die Anzahl zurück.
+   */
+  async function uebernehmeGastCharaktere(): Promise<number> {
+    let anzahl = 0
+    for (const gast of ladeGastCharaktere()) {
+      try {
+        await api.post<CharakterDetail>('/charaktere/import', gast.charakter_daten)
+        loescheGastCharakter(gast.id)
+        anzahl++
+      } catch {
+        // bleibt im Browser und wird beim nächsten Login erneut versucht
+      }
+    }
+    return anzahl
+  }
+
   async function ladeOrdner() {
+    if (istGast.value) {
+      ordnerListe.value = []
+      return
+    }
     ordnerListe.value = await api.get<Ordner[]>('/ordner')
   }
 
@@ -184,6 +275,11 @@ export const useCharakterStore = defineStore('charakter', () => {
   }
 
   async function ladeKampfprofilCharakter(id: number) {
+    if (istGastId(id)) {
+      const gast = ladeGastCharakter(id)
+      if (!gast) throw new Error('Charakter nicht gefunden')
+      return ladeKampfprofil(await normalisiere(gast.charakter_daten))
+    }
     const charakter = await api.get<CharakterDetail>(`/charaktere/${id}`)
     return ladeKampfprofil(charakter.charakter_daten)
   }
@@ -221,6 +317,10 @@ export const useCharakterStore = defineStore('charakter', () => {
   }
 
   async function dupliziereArchetyp(id: string, ordnerId: number | null = null) {
+    if (istGast.value) {
+      const daten = await api.get<CharakterDaten>(`/archetypen/${encodeURIComponent(id)}`)
+      return importiereCharakter(daten)
+    }
     const charakter = await api.post<CharakterDetail>(
       `/archetypen/${encodeURIComponent(id)}/duplizieren`,
       { ordner_id: ordnerId },
@@ -306,6 +406,8 @@ export const useCharakterStore = defineStore('charakter', () => {
     aktuellerCharakter,
     abgeleiteteWerte,
     loading,
+    istGast,
+    aktuellIstGast,
     kannUndo,
     kannRedo,
     undo,
@@ -319,6 +421,7 @@ export const useCharakterStore = defineStore('charakter', () => {
     loescheCharakter,
     exportiereCharakter,
     importiereCharakter,
+    uebernehmeGastCharaktere,
     ladeOrdner,
     erstelleOrdner,
     benenneOrdner,

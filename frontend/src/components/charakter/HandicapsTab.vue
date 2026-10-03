@@ -5,6 +5,12 @@
         Handicap-Punkte: {{ daten.gesamt_handicap_punkte ?? 0 }} / 4
         (Leicht = 1 Punkt, Schwer = 2 Punkte) —
         verfügbar zum Einlösen: <strong>{{ verbleibendePunkte }}</strong>
+        <template v-if="maximumErreicht && !istAbgeschlossen">
+          <br />
+          <v-icon size="small" color="warning">mdi-alert</v-icon>
+          Maximum erreicht — weitere Handicaps können gewählt werden, bringen aber
+          keine Punkte mehr.
+        </template>
         <template v-if="istAbgeschlossen">
           <br />
           Nach der Erschaffung: schweres Handicap auf leicht reduzieren oder ein
@@ -188,6 +194,7 @@ const daten = computed(() => store.aktuellerCharakter!.charakter_daten)
 const selectedHandicaps = computed(() => daten.value.selected_handicaps || [])
 const verbleibendePunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)
 const istAbgeschlossen = computed(() => !!daten.value.char_gen_completed)
+const maximumErreicht = computed(() => (daten.value.gesamt_handicap_punkte ?? 0) >= 4)
 
 type EinloeseOption = 'attribut' | 'fertigkeit' | 'startgeld'
 
@@ -289,7 +296,11 @@ function istGewaehlt(name: string): boolean {
 }
 
 async function waehleHandicap(name: string) {
-  await store.spiellogikAktion('handicap/waehlen', name)
+  const result = await store.spiellogikAktion('handicap/waehlen', name)
+  if (result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
 }
 
 async function entferneHandicap(name: string) {

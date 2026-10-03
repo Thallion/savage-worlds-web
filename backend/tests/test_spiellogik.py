@@ -141,11 +141,45 @@ def test_handicap_punkte_addieren_sich(daten):
     assert d["verbleibende_handicap_punkte"] == 3
 
 
-def test_handicap_limit_vier_punkte(daten):
+def test_handicap_ueber_limit_waehlbar_ohne_punkte(daten):
     d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
     d = aktion("handicap/waehlen", d, "Arrogant")["charakter_daten"]
     r = aktion("handicap/waehlen", d, "Arm")
-    assert not r["success"]
+    assert r["success"]
+    assert "Maximale Handicap-Punkte" in r["message"]
+    d = r["charakter_daten"]
+    assert "Arm" in d["selected_handicaps"]
+    assert d["gesamt_handicap_punkte"] == 4
+    assert d["verbleibende_handicap_punkte"] == 4
+
+
+def test_handicap_teilweise_ueber_limit(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Arm")["charakter_daten"]  # 3 Punkte
+    r = aktion("handicap/waehlen", d, "Arrogant")  # schwer, nur 1 Punkt frei
+    assert r["success"]
+    assert "nur 1 Punkt" in r["message"]
+    assert r["charakter_daten"]["gesamt_handicap_punkte"] == 4
+
+
+def test_handicap_entfernen_ueber_limit_aendert_punkte_nicht(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Arrogant")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Arm")["charakter_daten"]  # 0 Punkte
+    d = aktion("handicap/entfernen", d, "Arm")["charakter_daten"]
+    assert d["gesamt_handicap_punkte"] == 4
+    assert d["verbleibende_handicap_punkte"] == 4
+
+
+def test_handicap_entfernen_laesst_ueberzaehlige_nachruecken(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Arrogant")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Arm")["charakter_daten"]  # 0 Punkte
+    d = aktion("handicap/entfernen", d, "Arrogant")["charakter_daten"]
+    # Alt (2) + Arm rückt mit 1 Punkt nach
+    assert d["gesamt_handicap_punkte"] == 3
+    assert d["verbleibende_handicap_punkte"] == 3
+    assert d["handicap_punkte_gewaehrt"]["Arm"] == 1
 
 
 def test_handicap_entfernen_gibt_punkte_zurueck(daten):
@@ -2619,3 +2653,25 @@ def test_cyberware_mehrfach_fertigkeitsbonus_und_reihenfolge(scifi):
     assert d["fertigkeiten"]["Schießen"]["wuerfel"]["modifier"] == 0
     d = aktion("cyberware/deinstallieren", d, "Cyberware: Fertigkeitsbonus")["charakter_daten"]
     assert d["fertigkeiten"]["Schießen"]["wuerfel"]["modifier"] == -2
+
+
+# --- Gastmodus ---
+
+def test_gast_charakter_neu():
+    resp = client.post("/api/spiellogik/charakter/neu", json={"char_name": "Gast", "active_setting_name": "SWAE"})
+    assert resp.status_code == 200
+    d = resp.json()["charakter_daten"]
+    assert d["active_setting_name"] == "SWAE"
+    assert d["verbleibende_attributsteigerungen"] == 5
+
+
+def test_gast_charakter_neu_unbekanntes_setting():
+    resp = client.post("/api/spiellogik/charakter/neu", json={"char_name": "Gast", "active_setting_name": "Gibtsnicht"})
+    assert resp.status_code == 404
+
+
+def test_gast_charakter_normalisieren_fuellt_felder(daten):
+    del daten["handicap_einloesungen"]
+    resp = client.post("/api/spiellogik/charakter/normalisieren", json={"charakter_daten": daten})
+    assert resp.status_code == 200
+    assert resp.json()["charakter_daten"]["handicap_einloesungen"] == {}

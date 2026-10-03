@@ -15,12 +15,24 @@
           subtitle="Konto verwalten"
           @click="drawer = false"
         />
-        <v-divider v-if="authStore.isLoggedIn" class="mb-2" />
-        <template v-if="authStore.isLoggedIn">
-          <v-list-item to="/" prepend-icon="mdi-account-group" title="Charaktere" @click="drawer = false" />
-          <v-list-item to="/settings" prepend-icon="mdi-book-cog" title="Settings" @click="drawer = false" />
-          <v-list-item to="/kampf" prepend-icon="mdi-sword-cross" title="Kampf" @click="drawer = false" />
-        </template>
+        <v-list-item
+          v-else
+          to="/login"
+          prepend-icon="mdi-login"
+          title="Anmelden"
+          subtitle="Charaktere im Konto sichern"
+          @click="drawer = false"
+        />
+        <v-divider class="mb-2" />
+        <v-list-item to="/" prepend-icon="mdi-account-group" title="Charaktere" @click="drawer = false" />
+        <v-list-item
+          v-if="authStore.isLoggedIn"
+          to="/settings"
+          prepend-icon="mdi-book-cog"
+          title="Settings"
+          @click="drawer = false"
+        />
+        <v-list-item to="/kampf" prepend-icon="mdi-sword-cross" title="Kampf" @click="drawer = false" />
         <v-list-item to="/info" prepend-icon="mdi-information-outline" title="Info" @click="drawer = false" />
         <template v-if="authStore.isLoggedIn">
           <v-divider class="my-2" />
@@ -44,10 +56,15 @@
       <v-app-bar-title>Savage Worlds Charakter-Generator</v-app-bar-title>
       <v-spacer />
       <template v-if="!mobile">
+        <v-btn to="/" variant="text" prepend-icon="mdi-account-group">Charaktere</v-btn>
+        <v-btn v-if="authStore.isLoggedIn" to="/settings" variant="text" prepend-icon="mdi-book-cog">
+          Settings
+        </v-btn>
+        <v-btn to="/kampf" variant="text" prepend-icon="mdi-sword-cross">Kampf</v-btn>
+        <v-btn v-if="!authStore.isLoggedIn" to="/login" variant="outlined" prepend-icon="mdi-login" class="ml-2">
+          Anmelden
+        </v-btn>
         <template v-if="authStore.isLoggedIn">
-          <v-btn to="/" variant="text" prepend-icon="mdi-account-group">Charaktere</v-btn>
-          <v-btn to="/settings" variant="text" prepend-icon="mdi-book-cog">Settings</v-btn>
-          <v-btn to="/kampf" variant="text" prepend-icon="mdi-sword-cross">Kampf</v-btn>
           <v-chip
             class="mr-2 ml-2"
             variant="outlined"

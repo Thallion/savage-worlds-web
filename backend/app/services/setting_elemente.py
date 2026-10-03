@@ -210,11 +210,17 @@ def _entferne_aus_auswahl(daten: dict, typ: str, alter_name: str, neuer_name: st
             liste[liste.index(alter_name)] = neuer_name
     elif typ == "handicaps":
         liste = daten.get("selected_handicaps", [])
+        gewaehrt = daten.get("handicap_punkte_gewaehrt", {})
         for i, eintrag in enumerate(liste):
+            neu = None
             if eintrag == alter_name:
-                liste[i] = neuer_name
+                neu = neuer_name
             elif eintrag in (f"{alter_name}_leicht", f"{alter_name}_schwer"):
-                liste[i] = f"{neuer_name}{eintrag[len(alter_name):]}"
+                neu = f"{neuer_name}{eintrag[len(alter_name):]}"
+            if neu is not None:
+                liste[i] = neu
+                if eintrag in gewaehrt:
+                    gewaehrt[neu] = gewaehrt.pop(eintrag)
     elif typ == "ausruestung":
         auswahl = daten.get("ausruestung_selected", {})
         if alter_name in auswahl:

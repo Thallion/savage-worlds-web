@@ -20,6 +20,10 @@
                 prepend-inner-icon="mdi-lock"
                 required
               />
+              <v-alert v-if="anzahlGast" type="info" variant="tonal" class="mb-4" density="compact">
+                {{ anzahlGast === 1 ? 'Dein Gast-Charakter wird' : `Deine ${anzahlGast} Gast-Charaktere werden` }}
+                nach der Anmeldung in dein Konto übernommen.
+              </v-alert>
               <v-alert v-if="error" type="error" class="mb-4" density="compact">
                 {{ error }}
               </v-alert>
@@ -32,6 +36,15 @@
             <span class="text-body-2">Noch kein Konto?</span>
             <v-btn variant="text" color="primary" to="/register">Registrieren</v-btn>
           </v-card-actions>
+          <v-divider class="my-2" />
+          <v-card-actions class="flex-column">
+            <v-btn variant="tonal" prepend-icon="mdi-account-arrow-right" to="/">
+              Ohne Anmeldung loslegen
+            </v-btn>
+            <span class="text-caption text-medium-emphasis mt-2 text-center">
+              Charaktere werden dann nur in diesem Browser gespeichert.
+            </span>
+          </v-card-actions>
         </v-card>
       </v-col>
     </v-row>
@@ -42,6 +55,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCharakterStore } from '@/stores/charakter'
+import { ladeGastCharaktere } from '@/utils/gastCharaktere'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -50,13 +65,15 @@ const email = ref('')
 const passwort = ref('')
 const error = ref('')
 const loading = ref(false)
+const anzahlGast = ladeGastCharaktere().length
 
 async function handleLogin() {
   error.value = ''
   loading.value = true
   try {
     await authStore.login(email.value, passwort.value)
-    router.push('/')
+    const uebernommen = await useCharakterStore().uebernehmeGastCharaktere()
+    router.push({ path: '/', query: uebernommen ? { uebernommen: String(uebernommen) } : {} })
   } catch (e: any) {
     error.value = e.message || 'Anmeldung fehlgeschlagen'
   } finally {

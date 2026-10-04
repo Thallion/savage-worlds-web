@@ -52,8 +52,8 @@
         <h3 class="text-subtitle-1 mb-2">Ausgewählt</h3>
         <div class="d-flex flex-column ga-1">
           <div
-            v-for="h in ausgewaehlteHandicaps"
-            :key="h.key"
+            v-for="(h, i) in ausgewaehlteHandicaps"
+            :key="`${h.key}-${i}`"
             class="d-flex align-center ga-2 flex-wrap"
           >
             <v-chip :color="h.stufe === 'schwer' ? 'error' : 'accent'" size="small" label class="handicap-chip">
@@ -138,11 +138,42 @@
             <v-chip size="x-small" class="ml-1" :color="handicap.stufe === 'schwer' ? 'error' : 'warning'">
               {{ handicap.stufe }}
             </v-chip>
+            <v-chip
+              v-if="istMehrfach(String(name))"
+              size="x-small"
+              class="ml-1"
+              color="primary"
+              variant="outlined"
+              prepend-icon="mdi-plus-box-multiple-outline"
+              title="Dieses Handicap kann mehrfach gewählt werden (jeweils mit eigenem Ziel)"
+            >
+              mehrfach
+            </v-chip>
           </v-list-item-title>
           <v-list-item-subtitle v-if="handicap.beschreibung" class="text-wrap">
             {{ handicap.beschreibung?.substring(0, 120) }}{{ handicap.beschreibung?.length > 120 ? '...' : '' }}
           </v-list-item-subtitle>
           <template #append>
+            <template v-if="istMehrfach(String(name)) && handicapAnzahl[String(name)]">
+              <v-btn
+                icon="mdi-minus"
+                size="x-small"
+                variant="tonal"
+                color="secondary"
+                :title="istAbgeschlossen ? 'Eine Kopie abkaufen (1 Aufstieg)' : 'Eine Kopie entfernen'"
+                @click.stop="entferneHandicap(String(name))"
+              />
+              <span class="mx-1 text-body-2">×{{ handicapAnzahl[String(name)] }}</span>
+              <v-btn
+                icon="mdi-plus"
+                size="x-small"
+                variant="tonal"
+                color="primary"
+                class="mr-2"
+                title="Weitere Kopie wählen"
+                @click.stop="waehleHandicap(String(name))"
+              />
+            </template>
             <v-btn
               icon="mdi-information-outline"
               size="x-small"
@@ -175,6 +206,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { api } from '@/api/client'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import ElementEditor from '@/components/charakter/ElementEditor.vue'
@@ -196,6 +228,23 @@ const selectedHandicaps = computed(() => daten.value.selected_handicaps || [])
 const verbleibendePunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)
 const istAbgeschlossen = computed(() => !!daten.value.char_gen_completed)
 const maximumErreicht = computed(() => (daten.value.gesamt_handicap_punkte ?? 0) >= 4)
+// Kopien pro Handicap (Ziel-Handicaps wie Phobie können mehrfach gewählt werden)
+const handicapAnzahl = computed(() => {
+  const anzahl: Record<string, number> = {}
+  for (const name of selectedHandicaps.value) anzahl[name] = (anzahl[name] ?? 0) + 1
+  return anzahl
+})
+
+// Basisnamen der mehrfach wählbaren Handicaps ("+"/"−" in der Liste)
+const mehrfachWaehlbar = ref<Set<string>>(new Set())
+api
+  .get<{ mehrfach_waehlbar: string[] }>('/spiellogik/handicaps/mehrfach')
+  .then((r) => (mehrfachWaehlbar.value = new Set(r.mehrfach_waehlbar)))
+  .catch(() => {})
+function istMehrfach(key: string) {
+  const name = (handicaps.value as Record<string, any>)[key]?.name ?? key
+  return mehrfachWaehlbar.value.has(name) || mehrfachWaehlbar.value.has(key)
+}
 
 type EinloeseOption = 'attribut' | 'fertigkeit' | 'startgeld'
 

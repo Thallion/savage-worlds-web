@@ -2756,3 +2756,89 @@ def test_gast_charakter_normalisieren_fuellt_felder(daten):
     resp = client.post("/api/spiellogik/charakter/normalisieren", json={"charakter_daten": daten})
     assert resp.status_code == 200
     assert resp.json()["charakter_daten"]["handicap_einloesungen"] == {}
+
+
+def test_talente_mehrfach_liefert_mehrfach_waehlbare_talente():
+    r = client.get("/api/spiellogik/talente/mehrfach")
+    assert r.status_code == 200
+    mehrfach = r.json()["mehrfach_waehlbar"]
+    assert "Neue Mächte" in mehrfach
+    assert "Machtpunkte" in mehrfach
+
+
+# --- Ziel-Handicaps mehrfach wählbar (Phobie, Schwur, Feind, ...) ---
+
+def test_handicaps_mehrfach_liefert_ziel_handicaps():
+    mehrfach = client.get("/api/spiellogik/handicaps/mehrfach").json()["mehrfach_waehlbar"]
+    assert "Phobie" in mehrfach
+    assert "Arm" not in mehrfach
+
+
+def test_ziel_handicap_mehrfach_waehlbar(daten):
+    d = aktion("handicap/waehlen", daten, "Phobie_leicht")["charakter_daten"]
+    r = aktion("handicap/waehlen", d, "Phobie_leicht")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["selected_handicaps"].count("Phobie_leicht") == 2
+    assert d["gesamt_handicap_punkte"] == 2
+    assert d["handicap_punkte_gewaehrt"]["Phobie_leicht"] == 2
+
+
+def test_normales_handicap_nicht_mehrfach_waehlbar(daten):
+    d = aktion("handicap/waehlen", daten, "Arm")["charakter_daten"]
+    r = aktion("handicap/waehlen", d, "Arm")
+    assert not r["success"]
+    assert "bereits ausgewählt" in r["message"]
+
+
+def test_ziel_handicap_kopie_entfernen_gibt_ihre_punkte_zurueck(daten):
+    d = aktion("handicap/waehlen", daten, "Phobie_schwer")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Arm")["charakter_daten"]  # 3 Punkte
+    d = aktion("handicap/waehlen", d, "Phobie_schwer")["charakter_daten"]  # nur 1 Punkt
+    assert d["gesamt_handicap_punkte"] == 4
+    assert d["handicap_punkte_gewaehrt"]["Phobie_schwer"] == 3
+    d = aktion("handicap/entfernen", d, "Phobie_schwer")["charakter_daten"]
+    assert d["selected_handicaps"].count("Phobie_schwer") == 1
+    assert d["gesamt_handicap_punkte"] == 3
+    assert d["handicap_punkte_gewaehrt"]["Phobie_schwer"] == 2
+    d = aktion("handicap/entfernen", d, "Phobie_schwer")["charakter_daten"]
+    assert "Phobie_schwer" not in d["selected_handicaps"]
+    assert "Phobie_schwer" not in d["handicap_punkte_gewaehrt"]
+    assert d["gesamt_handicap_punkte"] == 1
+
+
+def test_ziel_handicap_kopie_rueckt_nach(daten):
+    d = aktion("handicap/waehlen", daten, "Alt")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Phobie_schwer")["charakter_daten"]  # 4 Punkte
+    d = aktion("handicap/waehlen", d, "Phobie_schwer")["charakter_daten"]  # 0 Punkte
+    assert d["handicap_punkte_gewaehrt"]["Phobie_schwer"] == 2
+    d = aktion("handicap/entfernen", d, "Alt")["charakter_daten"]
+    # Die zweite Phobie rückt mit vollen 2 Punkten nach
+    assert d["gesamt_handicap_punkte"] == 4
+    assert d["handicap_punkte_gewaehrt"]["Phobie_schwer"] == 4
+
+
+def test_ziel_handicap_neben_volks_kopie(aventurien):
+    d = aktion("volk/waehlen", aventurien, "Zwerg")["charakter_daten"]
+    assert "Phobie_schwer" in d["selected_handicaps"]  # Meeresphobie vom Volk
+    d = aktion("handicap/waehlen", d, "Phobie_schwer")["charakter_daten"]
+    assert d["selected_handicaps"].count("Phobie_schwer") == 2
+    assert d["gesamt_handicap_punkte"] == 2
+    # Entfernt wird die eigene Kopie, die Volks-Kopie bleibt geschützt
+    d = aktion("handicap/entfernen", d, "Phobie_schwer")["charakter_daten"]
+    assert d["selected_handicaps"].count("Phobie_schwer") == 1
+    assert d["gesamt_handicap_punkte"] == 0
+    r = aktion("handicap/entfernen", d, "Phobie_schwer")
+    assert not r["success"]
+    assert "Volk" in r["message"]
+
+
+def test_ziel_handicap_reduzieren_neben_leichter_kopie(daten):
+    d = aktion("handicap/waehlen", daten, "Phobie_leicht")["charakter_daten"]
+    d = aktion("handicap/waehlen", d, "Phobie_schwer")["charakter_daten"]  # 3 Punkte
+    r = aktion("handicap/reduzieren", d, "Phobie_schwer")
+    assert r["success"]
+    d = r["charakter_daten"]
+    assert d["selected_handicaps"].count("Phobie_leicht") == 2
+    assert d["gesamt_handicap_punkte"] == 2
+    assert d["handicap_punkte_gewaehrt"] == {"Phobie_leicht": 2}

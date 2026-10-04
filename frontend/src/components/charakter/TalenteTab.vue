@@ -115,18 +115,54 @@
           </template>
           <v-list-item-title>
             {{ talent.name || name }}
-            <v-chip v-if="(talentAnzahl[String(name)] ?? 0) > 1" size="x-small" color="success" class="ml-1">
+            <v-chip
+              v-if="(talentAnzahl[String(name)] ?? 0) > 1 && !istMehrfach(String(name))"
+              size="x-small"
+              color="success"
+              class="ml-1"
+            >
               ×{{ talentAnzahl[String(name)] }}
             </v-chip>
             <v-chip size="x-small" class="ml-1">{{ RANG_NAMEN[talent.rang] ?? talent.rang }}</v-chip>
             <v-chip v-if="talent.kategorie" size="x-small" class="ml-1" variant="outlined">
               {{ talent.kategorie }}
             </v-chip>
+            <v-chip
+              v-if="istMehrfach(String(name))"
+              size="x-small"
+              class="ml-1"
+              color="primary"
+              variant="outlined"
+              prepend-icon="mdi-plus-box-multiple-outline"
+              title="Dieses Talent kann mehrfach gewählt werden"
+            >
+              mehrfach
+            </v-chip>
           </v-list-item-title>
           <v-list-item-subtitle v-if="talent.voraussetzungen?.length" class="text-wrap">
             Voraussetzungen: {{ talent.voraussetzungen.join(', ') }}
           </v-list-item-subtitle>
           <template #append>
+            <template v-if="istMehrfach(String(name)) && talentAnzahl[String(name)]">
+              <v-btn
+                icon="mdi-minus"
+                size="x-small"
+                variant="tonal"
+                color="secondary"
+                title="Eine Kopie entfernen"
+                @click.stop="entferneTalent(String(name))"
+              />
+              <span class="mx-1 text-body-2">×{{ talentAnzahl[String(name)] }}</span>
+              <v-btn
+                icon="mdi-plus"
+                size="x-small"
+                variant="tonal"
+                color="primary"
+                class="mr-2"
+                title="Weitere Kopie wählen"
+                @click.stop="waehleTalent(String(name))"
+              />
+            </template>
             <v-btn
               icon="mdi-information-outline"
               size="x-small"
@@ -195,6 +231,15 @@ const pathfinderKostenlosHinweis = computed(() => {
     ? 'kostenloses Talent eingelöst'
     : 'ein Klassen-Talent (oder Hintergrund-/Expertentalent) ist kostenlos'
 })
+// Talente, die laut Regeln mehrfach wählbar sind ("+"/"−" in der Liste)
+const mehrfachWaehlbar = ref<Set<string>>(new Set())
+api
+  .get<{ mehrfach_waehlbar: string[] }>('/spiellogik/talente/mehrfach')
+  .then((r) => (mehrfachWaehlbar.value = new Set(r.mehrfach_waehlbar)))
+  .catch(() => {})
+function istMehrfach(name: string) {
+  return mehrfachWaehlbar.value.has(name) || mehrfachWaehlbar.value.has(talente.value[name]?.name)
+}
 const verbleibendeTalente = computed(() => daten.value.verbleibende_talente ?? 0)
 const verbleibendeHandicapPunkte = computed(() => daten.value.verbleibende_handicap_punkte ?? 0)
 

@@ -462,10 +462,44 @@ def _handicap_punkte_voll(stufe: str) -> int:
     return 1 if stufe == "leicht" else 2
 
 
+def _ist_handicap_mehrfach(handicap_name: str, handicap_data: dict) -> bool:
+    """Ziel-Handicaps wie Phobie, Schwur oder Feind dürfen mehrfach gewählt
+    werden (jede Kopie mit eigenem Ziel) — Liste in handicap_config.json."""
+    erlaubt = load_config("handicap_config.json").get("mehrfach_waehlbare_handicaps", [])
+    return handicap_data.get("name", handicap_name) in erlaubt or handicap_name in erlaubt
+
+
+def _eigene_handicap_kopien(daten: dict, handicap_name: str) -> int:
+    """Selbst gewählte Kopien; Volks- und Talent-Kopien geben keine Punkte."""
+    anzahl = daten.get("selected_handicaps", []).count(handicap_name)
+    if handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
+        anzahl -= 1
+    if ist_auto_element(daten, "handicaps", handicap_name):
+        anzahl -= 1
+    return max(0, anzahl)
+
+
 def _handicap_punkte_gewaehrt(daten: dict, handicap_name: str, stufe: str) -> int:
-    """Tatsächlich gutgeschriebene Punkte; Bestandscharaktere ohne Eintrag
-    haben immer die vollen Punkte erhalten."""
-    return daten.get("handicap_punkte_gewaehrt", {}).get(handicap_name, _handicap_punkte_voll(stufe))
+    """Punkte, die eine (die zuletzt gewählte) Kopie gutgeschrieben bekommen hat.
+
+    handicap_punkte_gewaehrt hält die Summe über alle eigenen Kopien; die
+    zuletzt gewählte hat davon am wenigsten erhalten. Bestandscharaktere ohne
+    Eintrag haben immer die vollen Punkte erhalten."""
+    voll = _handicap_punkte_voll(stufe)
+    kopien = max(1, _eigene_handicap_kopien(daten, handicap_name))
+    summe = daten.get("handicap_punkte_gewaehrt", {}).get(handicap_name, kopien * voll)
+    return summe - min(summe, (kopien - 1) * voll)
+
+
+def _handicap_punkte_abbuchen(daten: dict, handicap_name: str, punkte: int) -> None:
+    """Zieht die Punkte einer entfernten Kopie ab (nach selected.remove)."""
+    gewaehrt_map = daten.get("handicap_punkte_gewaehrt", {})
+    if handicap_name not in gewaehrt_map:
+        return
+    if _eigene_handicap_kopien(daten, handicap_name) == 0:
+        gewaehrt_map.pop(handicap_name)
+    else:
+        gewaehrt_map[handicap_name] = max(0, gewaehrt_map[handicap_name] - punkte)
 
 
 def _handicap_punkte_nachruecken(daten: dict, setting: dict) -> None:
@@ -473,14 +507,15 @@ def _handicap_punkte_nachruecken(daten: dict, setting: dict) -> None:
     gewählt wurden (in Auswahlreihenfolge)."""
     gewaehrt_map = daten.get("handicap_punkte_gewaehrt", {})
     handicaps = setting.get("handicaps", {})
-    for name in daten.get("selected_handicaps", []):
+    for name in dict.fromkeys(daten.get("selected_handicaps", [])):
         frei = MAX_HANDICAP_PUNKTE - daten.get("gesamt_handicap_punkte", 0)
         if frei <= 0:
             return
         if name not in gewaehrt_map:
             continue
         stufe = handicaps.get(name, {}).get("stufe", "leicht").lower()
-        nachschlag = min(_handicap_punkte_voll(stufe) - gewaehrt_map[name], frei)
+        voll = _handicap_punkte_voll(stufe) * _eigene_handicap_kopien(daten, name)
+        nachschlag = min(voll - gewaehrt_map[name], frei)
         if nachschlag <= 0:
             continue
         gewaehrt_map[name] += nachschlag
@@ -504,7 +539,7 @@ def handicap_waehlen(req: SpiellogikRequest):
         return SpiellogikResponse(success=False, message=f"Handicap '{handicap_name}' nicht gefunden")
 
     selected = daten.get("selected_handicaps", [])
-    if handicap_name in selected:
+    if handicap_name in selected and not _ist_handicap_mehrfach(handicap_name, handicap_data):
         return SpiellogikResponse(success=False, message=f"'{handicap_name}' bereits ausgewählt")
 
     konflikt = handicap_konflikt(handicap_name, daten)
@@ -518,9 +553,12 @@ def handicap_waehlen(req: SpiellogikRequest):
     # nur die restlichen) Punkte
     gewaehrt = min(punkte, max(0, MAX_HANDICAP_PUNKTE - gesamt))
 
+    # Weitere Kopie eines Ziel-Handicaps: Punkte auf die bisherigen aufsummieren
+    bisher = _eigene_handicap_kopien(daten, handicap_name)
+    gewaehrt_map = daten.setdefault("handicap_punkte_gewaehrt", {})
+    gewaehrt_map[handicap_name] = gewaehrt_map.get(handicap_name, bisher * punkte) + gewaehrt
     selected.append(handicap_name)
     daten["selected_handicaps"] = selected
-    daten.setdefault("handicap_punkte_gewaehrt", {})[handicap_name] = gewaehrt
     daten["gesamt_handicap_punkte"] = gesamt + gewaehrt
     daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) + gewaehrt
     # Spezialeffekte wie "Alt" (+5 Fertigkeitspunkte) oder "Jung" (weniger Steigerungen)
@@ -547,13 +585,17 @@ def handicap_entfernen(req: SpiellogikRequest):
     if handicap_name not in selected:
         return SpiellogikResponse(success=False, message=f"'{handicap_name}' ist nicht ausgewählt")
 
-    if handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
+    # Bei Mehrfachauswahl wird zuerst die selbst gewählte Kopie entfernt;
+    # Volks- und Talent-Kopien bleiben geschützt
+    eigene_kopie = _eigene_handicap_kopien(daten, handicap_name) > 0
+
+    if not eigene_kopie and handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
         return SpiellogikResponse(
             success=False,
             message=f"'{handicap_name}' stammt vom gewählten Volk und kann nicht entfernt werden",
         )
 
-    if ist_auto_element(daten, "handicaps", handicap_name):
+    if not eigene_kopie and ist_auto_element(daten, "handicaps", handicap_name):
         return SpiellogikResponse(
             success=False,
             message=f"'{handicap_name}' wurde automatisch durch ein Talent gewährt "
@@ -589,7 +631,7 @@ def handicap_entfernen(req: SpiellogikRequest):
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_HANDICAP
         selected.remove(handicap_name)
         daten["selected_handicaps"] = selected
-        daten.get("handicap_punkte_gewaehrt", {}).pop(handicap_name, None)
+        _handicap_punkte_abbuchen(daten, handicap_name, punkte)
         journal_eintrag(
             daten,
             "handicap_entfernt",
@@ -606,7 +648,7 @@ def handicap_entfernen(req: SpiellogikRequest):
 
     selected.remove(handicap_name)
     daten["selected_handicaps"] = selected
-    daten.get("handicap_punkte_gewaehrt", {}).pop(handicap_name, None)
+    _handicap_punkte_abbuchen(daten, handicap_name, punkte)
     daten["gesamt_handicap_punkte"] = max(0, daten.get("gesamt_handicap_punkte", 0) - punkte)
     daten["verbleibende_handicap_punkte"] = daten.get("verbleibende_handicap_punkte", 0) - punkte
     wende_handicap_punkte_effekte_an(daten, handicap_name, stufe, vorzeichen=-1)
@@ -629,13 +671,15 @@ def handicap_reduzieren(req: SpiellogikRequest):
     if handicap_name not in selected:
         return SpiellogikResponse(success=False, message=f"'{handicap_name}' ist nicht ausgewählt")
 
-    if handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
+    eigene_kopie = _eigene_handicap_kopien(daten, handicap_name) > 0
+
+    if not eigene_kopie and handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
         return SpiellogikResponse(
             success=False,
             message=f"'{handicap_name}' stammt vom gewählten Volk und kann nicht reduziert werden",
         )
 
-    if ist_auto_element(daten, "handicaps", handicap_name):
+    if not eigene_kopie and ist_auto_element(daten, "handicaps", handicap_name):
         return SpiellogikResponse(
             success=False,
             message=f"'{handicap_name}' wurde automatisch durch ein Talent gewährt "
@@ -672,7 +716,7 @@ def handicap_reduzieren(req: SpiellogikRequest):
             message=f"Kein leichtes Gegenstück für '{basis_name}' vorhanden — "
             "das Handicap kann nur ganz abgekauft (entfernt) werden",
         )
-    if leicht_key in selected:
+    if leicht_key in selected and not _ist_handicap_mehrfach(leicht_key, handicaps[leicht_key]):
         return SpiellogikResponse(
             success=False,
             message=f"'{basis_name}' ist bereits als leichtes Handicap ausgewählt",
@@ -706,12 +750,14 @@ def handicap_reduzieren(req: SpiellogikRequest):
         wende_handicap_punkte_effekte_an(daten, handicap_name, "schwer", vorzeichen=-1)
         wende_handicap_punkte_effekte_an(daten, leicht_key, "leicht")
         gewaehrt_map = daten.setdefault("handicap_punkte_gewaehrt", {})
-        gewaehrt_map.pop(handicap_name, None)
-        gewaehrt_map[leicht_key] = gewaehrt_neu
+        leicht_bisher = gewaehrt_map.get(leicht_key, _eigene_handicap_kopien(daten, leicht_key))
+        gewaehrt_map[leicht_key] = leicht_bisher + gewaehrt_neu
 
     selected.remove(handicap_name)
     selected.append(leicht_key)
     daten["selected_handicaps"] = selected
+    if not abgeschlossen:
+        _handicap_punkte_abbuchen(daten, handicap_name, gewaehrt_alt)
     if not abgeschlossen:
         _handicap_punkte_nachruecken(daten, setting)
     journal_eintrag(
@@ -1706,6 +1752,22 @@ def talente_verfuegbar(req: SpiellogikRequest):
         and not pruefe_voraussetzungen(talent, daten, setting_talente, setting.get("handicaps"))
     ]
     return {"verfuegbar": verfuegbar}
+
+
+@router.get("/talente/mehrfach")
+def talente_mehrfach():
+    """Talente, die laut Regeln ausdrücklich mehrfach gewählt werden dürfen
+    (z. B. "Neue Mächte", "Machtpunkte") — die UI bietet dafür "+"/"−" an."""
+    return {"mehrfach_waehlbar": load_config("talent_config.json").get("mehrfach_waehlbare_talente", [])}
+
+
+@router.get("/handicaps/mehrfach")
+def handicaps_mehrfach():
+    """Ziel-Handicaps (Phobie, Schwur, Feind, ...), die mehrfach gewählt werden
+    dürfen — Basisnamen, gelten für leichte und schwere Variante."""
+    return {
+        "mehrfach_waehlbar": load_config("handicap_config.json").get("mehrfach_waehlbare_handicaps", [])
+    }
 
 
 @router.post("/element/speichern", response_model=SpiellogikResponse)

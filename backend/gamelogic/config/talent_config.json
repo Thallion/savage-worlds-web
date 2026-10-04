@@ -36,6 +36,22 @@
         "Sehr attraktiv"
     ],
     
+    "mehrfach_waehlbare_talente": [
+        "Neue Mächte",
+        "Machtpunkte",
+        "Anhänger",
+        "Offenbarung",
+        "Waffenspezialisierung",
+        "Ausdauernde Tiergestalt",
+        "Erzfeind",
+        "Zauberfinesse",
+        "Drachenwuchs",
+        "Blattsegen",
+        "Waffenbann",
+        "Monsterjäger",
+        "Monsterschlächter"
+    ],
+
     "pathfinder_kostenlose_kategorien": [
         "Klasse",
         "Hintergrund",

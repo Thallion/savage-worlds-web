@@ -62,6 +62,23 @@
     "Fettleibig",
     "Langsam"
   ],
+  "mehrfach_waehlbare_handicaps": [
+    "Phobie",
+    "Schwur",
+    "Feind",
+    "Gesucht",
+    "Angewohnheit",
+    "Abhängigkeit",
+    "Loyal",
+    "Schutzbefohlener",
+    "Verpflichtung",
+    "Geheimnis",
+    "Talisman",
+    "Magisches Verbot",
+    "Wissenslücke",
+    "Übernatürliche Schwäche",
+    "Umweltschwäche"
+  ],
   "kosten_entfernung": {
     "leicht": 1,
     "schwer": 2,

@@ -669,7 +669,7 @@
       "kategorie": "Druide",
       "rang": "F",
       "voraussetzungen": [
-        "AH (Druide)"
+        "AH (Druide, Geode)"
       ],
       "beschreibung": "Der Druide erhält Gestaltwandeln. Wirkungsdauer ist eine Stunde, und er wirkt den Zauber mit einem Rang höher als normal.",
       "neue_maechte": 0,
@@ -683,7 +683,7 @@
       "kategorie": "Druide",
       "rang": "V",
       "voraussetzungen": [
-        "AH (Druide)"
+        "AH (Druide, Geode)"
       ],
       "beschreibung": "Als begrenzte freie Aktion kann der Druide bis zu zwei Punkte Abzüge ignorieren, wenn er Schutz, Verstricken oder Waffe verbessern wirkt.",
       "neue_maechte": 0,
@@ -697,7 +697,7 @@
       "kategorie": "Druide",
       "rang": "H",
       "voraussetzungen": [
-        "AH (Druide)"
+        "AH (Druide, Geode)"
       ],
       "beschreibung": "Der Druide kann Epische Machtmodifikatoren verwenden.",
       "neue_maechte": 0,
@@ -2260,7 +2260,7 @@
       "kategorie": "Druide",
       "rang": "A",
       "voraussetzungen": [
-        "AH (Druide)"
+        "AH (Druide, Geode)"
       ],
       "beschreibung": "Ein Kampfstab, der zusätzlichen Schaden verursacht und bei Verlust durch ein Ritual ersetzt werden kann.",
       "neue_maechte": 0,
@@ -2274,7 +2274,7 @@
       "kategorie": "Druide",
       "rang": "F",
       "voraussetzungen": [
-        "AH (Druide)"
+        "AH (Druide, Geode)"
       ],
       "beschreibung": "Ermöglicht Druiden, in Tierform zu sprechen und Mächte zu wirken, mit Risiken bei längerem Verweilen in Tiergestalt.",
       "neue_maechte": 0,
@@ -2288,7 +2288,7 @@
       "kategorie": "Elementarmagier",
       "rang": "A",
       "voraussetzungen": [
-        "AH (Elementarist)"
+        "AH (Elementarist, Geode)"
       ],
       "beschreibung": "Erhöht Robustheit um +2 während der Nutzung von Elementarsynergie.",
       "neue_maechte": 0,
@@ -2302,7 +2302,7 @@
       "kategorie": "Elementarmagier",
       "rang": "F",
       "voraussetzungen": [
-        "AH (Elementarist)"
+        "AH (Elementarist, Geode)"
       ],
       "beschreibung": "Erlaubt die Beherrschung eines zusätzlichen Elements, Mächte können zwischen Elementen gewechselt werden.",
       "neue_maechte": 0,
@@ -2802,7 +2802,7 @@
       "kategorie": "Macht",
       "rang": "A",
       "voraussetzungen": [
-        "AH (Hexe, Druide, Schamane, Nekromant, Dämonologe, Elementarist, Magier)"
+        "AH (Hexe, Druide, Geode, Schamane, Nekromant, Dämonologe, Elementarist, Magier)"
       ],
       "beschreibung": "Gewährt einen loyalen magischen Begleiter, der 5 eigene Machtpunkte hat und als Wildcard fungiert. Der Vertraute kann keine Zauber wirken, aber der Meister kann auf seine Machtpunkte zugreifen.",
       "neue_maechte": 0,
@@ -4948,7 +4948,7 @@
       "kategorie": "Druide",
       "rang": "A",
       "voraussetzungen": [
-        "AH (Druide)"
+        "AH (Druide, Geode)"
       ],
       "beschreibung": "Der Druide kann ein Tier beschwören, das als sein Begleiter dient.",
       "neue_maechte": 0,
@@ -4962,7 +4962,7 @@
       "kategorie": "Druide",
       "rang": "A",
       "voraussetzungen": [
-        "AH (Druide)"
+        "AH (Druide, Geode)"
       ],
       "beschreibung": "Druiden halten Zwiesprache mit der Natur und ihren Geistern. Überleben ist für sie mit Willenskraft verknüpft, nicht mit Verstand.",
       "neue_maechte": 0,
@@ -6326,8 +6326,8 @@
       "kategorie": "Druide",
       "rang": "A",
       "voraussetzungen": [
-        "AH (Druide)",
-        "Zaubern (VER) W8"
+        "AH (Druide, Geode)",
+        "Zaubern (WIL) W8"
       ],
       "beschreibung": "Der Vulkanglasdolch wird kalt bei dämonischer Präsenz, weist den Weg zu seinem Weiheort und zu günstigen Orten der Wildnis (+1 auf Überleben) und zeigt Kraftlinien an. Einmal pro Tag kann der Druide eine Erschöpfungsstufe heilen, wenn er den Dolch in die Erde steckt und ein kurzes Ritual ausführt.",
       "neue_maechte": 0,

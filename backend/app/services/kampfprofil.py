@@ -11,7 +11,7 @@ Liefert die kampfrelevanten Werte eines Charakters in kompakter Form:
         "panzerung": 1,
         "bennys": 3,
         "waffen": [{"name": ..., "fertigkeit": ..., "schaden": ..., "pb": ...,
-                    "mindeststaerke": ..., "reichweite": ...}],
+                    "mindeststaerke": ..., "reichweite": ..., "parade": ...}],
         "talente": [...],                             # inkl. Abstammungs-Talente
         "handicaps": [...],                           # "Name" bzw. "Name (schwer)"
         "groesse": 0,
@@ -25,6 +25,7 @@ weil der Simulator Panzerbrechend (PB) gegen die Panzerung verrechnet.
 
 import re
 
+from app.services.ausruestung import angelegte_waffen_parade, waffen_parade
 from app.services.statblock import _basisname
 from app.services.volk_effekte import gewaehltes_volk
 from app.services.volk_wahlen import arkane_fertigkeit_aus_ah
@@ -85,14 +86,37 @@ def _mit_stufe(eintrag: str) -> str:
     return f"{name} ({treffer.group(1)})" if name and treffer else name
 
 
+def _handicap(eintrag: str, setting_handicaps: dict) -> str:
+    """Setting-Handicaps mit Anzeigenamen und Stufe aus dem Katalog:
+    "Behindernde_Rüstung_schwer" wird zu "Behindernde Rüstung (schwer)"."""
+    handicap = setting_handicaps.get(eintrag)
+    if not handicap:
+        return _mit_stufe(eintrag)
+    name = _basisname(handicap.get("name") or eintrag)
+    treffer = _STUFE.search(eintrag)
+    stufe = treffer.group(1) if treffer else str(handicap.get("stufe") or "").lower()
+    return f"{name} ({stufe})" if stufe in ("leicht", "schwer") else name
+
+
 def _merkmale(daten: dict, setting: dict, feld: str) -> list[str]:
     """Gewählte Talente bzw. Handicaps plus die der Abstammung, normalisiert."""
-    auswahl_feld = "selected_talente" if feld == "talente" else "selected_handicaps"
-    normalisiere = _basisname if feld == "talente" else _mit_stufe
-    namen = [normalisiere(e) for e in daten.get(auswahl_feld, [])]
+    katalog = setting.get(feld, {})
+    if feld == "talente":
+        # Setting-Talente behalten ihren vollen Namen ("AH (Geode)");
+        # nur Freitext-Einträge werden auf den Basisnamen gekürzt
+        namen = [e if e in katalog else _basisname(e) for e in daten.get("selected_talente", [])]
+        normalisiere = _basisname
+    else:
+        namen = [_handicap(e, katalog) for e in daten.get("selected_handicaps", [])]
+        normalisiere = _mit_stufe
+    # Die Freitext-Liste des Volks nur ergänzen, wenn seine Effekte nicht
+    # schon als Auto-Talente/-Handicaps in der Auswahl stehen
     _, volk_data = gewaehltes_volk(daten, setting)
-    if volk_data:
-        namen += [normalisiere(e) for e in volk_data.get(feld) or []]
+    if volk_data and not (daten.get("volk_effekte") or {}).get(feld):
+        bekannt = {_basisname(n) for n in namen}
+        namen += [
+            normalisiere(e) for e in volk_data.get(feld) or [] if _basisname(e) not in bekannt
+        ]
     return list(dict.fromkeys(n for n in namen if n))
 
 
@@ -118,6 +142,10 @@ def _waffen(daten: dict, setting: dict) -> list[dict]:
                 "pb": _zahl(eigenschaften.get("PB")),
                 "mindeststaerke": _seiten(item.get("mindeststaerke")),
                 "reichweite": str(eigenschaften.get("Reichweite") or "") if fernkampf else "",
+                # Gilt nur, solange die Waffe geführt wird — der Simulator
+                # rechnet ihn auf die Parade an
+                "parade": waffen_parade(item),
+                "angelegt": bool(eintrag.get("angelegt")),
             }
         )
     return waffen
@@ -146,11 +174,14 @@ def _arkane_fertigkeit(daten: dict, setting: dict) -> str:
 def generiere_kampfprofil(daten: dict, setting: dict, werte: dict) -> dict:
     """werte: das Ergebnis von /spiellogik/berechne für dieselben daten."""
     panzerung = werte.get("panzerung", 0)
+    # Der Simulator rechnet den Bonus der jeweils geführten Waffe selbst an —
+    # hier daher die Parade ohne angelegte Waffen
+    waffen_bonus = angelegte_waffen_parade(daten, setting)
     return {
         "name": daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter",
         "attribute": _attribute(daten),
         "fertigkeiten": _fertigkeiten(daten),
-        "parade": werte.get("parade", 2),
+        "parade": werte.get("parade", 2) - waffen_bonus,
         "robustheit": werte.get("robustheit", 4) - panzerung,
         "panzerung": panzerung,
         "bennys": werte.get("bennys", 3),

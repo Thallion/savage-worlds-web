@@ -16,14 +16,17 @@ Geld wird nicht als Kontostand gespeichert, sondern hergeleitet:
   nach Abschluss wie im Original 50 %.
 
 Gekaufte Gegenstände liegen in daten["ausruestung_selected"]:
-{name: {"anzahl": int, "angelegt": bool}}. "angelegt" gibt es nur für
-Rüstungen und Schilde; angelegte Rüstung zählt mit ihrem Torso-Wert auf die
-Robustheit, angelegte Schilde mit "parade" auf die Parade (siehe /berechne).
+{name: {"anzahl": int, "angelegt": bool}}. "angelegt" gibt es für Rüstungen,
+Schilde und Waffen; angelegte Rüstung zählt mit ihrem Torso-Wert auf die
+Robustheit, angelegte Schilde mit "parade" und angelegte (geführte) Waffen mit
+ihrem Paradebonus aus der Beschreibung auf die Parade (siehe /berechne).
 """
+
+import re
 
 STANDARD_STARTKAPITAL = 500
 VERKAUF_FAKTOR_NACH_ERSCHAFFUNG = 0.5
-ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
+ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild", "Waffe")
 
 _VERMOEGEN_TALENTE = {"Stinkreich": 5, "Reich": 3}
 
@@ -125,7 +128,7 @@ def setze_angelegt(daten: dict, setting: dict, item_name: str, angelegt: bool) -
 
     kategorie = setting.get("ausruestung", {}).get(item_name, {}).get("kategorie")
     if kategorie not in ANLEGBARE_KATEGORIEN:
-        return False, f"'{item_name}' kann nicht angelegt werden (nur Rüstungen und Schilde)"
+        return False, f"'{item_name}' kann nicht angelegt werden (nur Rüstungen, Schilde und Waffen)"
 
     eintrag["angelegt"] = angelegt
     return True, ""
@@ -151,8 +154,27 @@ def panzerung_torso(daten: dict, setting: dict) -> int:
     return sum(item.get("torso", 0) or 0 for item in _angelegte_items(daten, setting, "Rüstung"))
 
 
+# "Parade +1" / "Parade -1" im Beschreibungstext einer Waffe. Bedingte
+# Angaben ("Parade +1 wenn zweihändig", "... beim Verteidigen") zählen nicht.
+_WAFFEN_PARADE = re.compile(r"Parade\s*([+\-–−])\s*(\d+)([^,.;]*)")
+
+
+def waffen_parade(item: dict) -> int:
+    """Paradebonus/-malus einer Waffe, solange sie geführt wird (SWADE)."""
+    for vorzeichen, wert, rest in _WAFFEN_PARADE.findall(item.get("beschreibung") or ""):
+        if rest.strip():
+            continue
+        return -int(wert) if vorzeichen != "+" else int(wert)
+    return 0
+
+
 def schild_parade(daten: dict, setting: dict) -> int:
     return sum(item.get("parade", 0) or 0 for item in _angelegte_items(daten, setting, "Schild"))
+
+
+def angelegte_waffen_parade(daten: dict, setting: dict) -> int:
+    """Paradebonus der angelegten (geführten) Waffen, z. B. Kampfstab +1."""
+    return sum(waffen_parade(item) for item in _angelegte_items(daten, setting, "Waffe"))
 
 
 def gesamtgewicht(daten: dict, setting: dict) -> float:

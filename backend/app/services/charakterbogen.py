@@ -13,8 +13,8 @@ Schwarz-Weiß ohne Flächenfarben.
 Abweichungen vom Original:
 - Wunden, Erschöpfung und Entschlossenheit fehlen (Spielzustand, den die
   Web-App nicht verwaltet).
-- Waffen werden alle gekauften gelistet ("angelegt" gibt es hier nur für
-  Rüstungen und Schilde).
+- Waffen werden alle gekauften gelistet; "angelegt" wirkt bei ihnen nur auf
+  die Parade (Paradebonus der geführten Waffe).
 """
 
 import base64

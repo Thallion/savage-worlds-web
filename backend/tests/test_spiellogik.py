@@ -1751,7 +1751,7 @@ def test_allgemein_item_nicht_anlegbar(daten):
     d = aktion("ausruestung/kaufen", daten, "Fackel")["charakter_daten"]
     r = aktion("ausruestung/anlegen", d, "Fackel")
     assert not r["success"]
-    assert "nur Rüstungen und Schilde" in r["message"]
+    assert "nur Rüstungen, Schilde und Waffen" in r["message"]
 
 
 def test_einloesen_startgeld(daten):

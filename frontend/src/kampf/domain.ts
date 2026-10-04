@@ -801,6 +801,10 @@ export interface WaffenDaten {
   pb?: number
   mindeststaerke?: number
   reichweite?: string
+  /** Paradebonus/-malus, solange die Waffe geführt wird (z. B. Kampfstab +1). */
+  parade?: number
+  /** Im Charakter als angelegt markiert: wird zu Kampfbeginn geführt. */
+  angelegt?: boolean
 }
 
 export class Waffe {
@@ -811,6 +815,8 @@ export class Waffe {
   readonly pb: number
   readonly mindeststaerke: number
   readonly reichweite: string
+  readonly parade: number
+  readonly angelegt: boolean
 
   constructor(d: WaffenDaten) {
     this.name = d.name
@@ -820,6 +826,8 @@ export class Waffe {
     this.pb = d.pb || 0
     this.mindeststaerke = d.mindeststaerke || 0
     this.reichweite = d.reichweite || ''
+    this.parade = d.parade || 0
+    this.angelegt = Boolean(d.angelegt)
   }
 
   get istNahkampf(): boolean {
@@ -842,6 +850,8 @@ export class Waffe {
       pb: this.pb,
       mindeststaerke: this.mindeststaerke,
       reichweite: this.reichweite,
+      parade: this.parade,
+      angelegt: this.angelegt,
     }
   }
 }
@@ -913,6 +923,8 @@ export class Kaempfer {
   robustheit: number
   panzerung: number
   waffen: Waffe[]
+  /** Zuletzt benutzte Waffe; ihr Paradebonus zählt zur Parade. */
+  gefuehrteWaffe: Waffe
   talente: Set<string>
   handicaps: Set<string>
   bennys: number
@@ -985,6 +997,7 @@ export class Kaempfer {
     this.robustheit = d.robustheit ?? 4
     this.panzerung = d.panzerung ?? 0
     this.waffen = d.waffen && d.waffen.length ? d.waffen : [Waffe.waffenlos()]
+    this.gefuehrteWaffe = Kaempfer.startwaffe(this.waffen)
     this.talente = new Set(d.talente ?? [])
     this.handicaps = new Set(d.handicaps ?? [])
     this.bennys = d.bennys ?? (this.wildcard ? 3 : 0)
@@ -1144,7 +1157,21 @@ export class Kaempfer {
   }
 
   get aktuelleParade(): number {
-    return this.parade + (this.verteidigt ? VERTEIDIGEN_BONUS : 0)
+    return this.parade + this.gefuehrteWaffe.parade + (this.verteidigt ? VERTEIDIGEN_BONUS : 0)
+  }
+
+  /** Wer mit einer Waffe angreift, führt sie danach (und pariert mit ihr). */
+  fuehre(waffe: Waffe): void {
+    if (this.waffen.includes(waffe)) this.gefuehrteWaffe = waffe
+  }
+
+  /** Zu Kampfbeginn: die angelegte Waffe, sonst die Nahkampfwaffe mit der besten Parade. */
+  private static startwaffe(waffen: Waffe[]): Waffe {
+    const angelegt = waffen.find((w) => w.angelegt)
+    if (angelegt) return angelegt
+    const nahkampf = waffen.filter((w) => w.istNahkampf && !w.istWaffenlos)
+    if (!nahkampf.length) return waffen[0]
+    return nahkampf.reduce((beste, w) => (w.parade > beste.parade ? w : beste))
   }
 
   robustheitGegen(pb: number): number {

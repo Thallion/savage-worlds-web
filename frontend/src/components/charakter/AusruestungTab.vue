@@ -307,7 +307,8 @@ import { useEinstellungenStore } from '@/stores/einstellungen'
 import ElementEditor from '@/components/charakter/ElementEditor.vue'
 import { mergeKatalog } from '@/utils/settingElemente'
 
-const ANLEGBARE_KATEGORIEN = ['Rüstung', 'Schild']
+// Waffen: angelegt = geführt, ihr Paradebonus (z. B. Kampfstab +1) zählt zur Parade
+const ANLEGBARE_KATEGORIEN = ['Rüstung', 'Schild', 'Waffe']
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()

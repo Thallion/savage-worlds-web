@@ -712,6 +712,11 @@ export class KampfController {
       return
     }
     const waffe = angreifer.waffen[waffenIndex] ?? angreifer.waffen[0]
+    const paradeVorher = angreifer.aktuelleParade
+    angreifer.fuehre(waffe)
+    if (angreifer.aktuelleParade !== paradeVorher) {
+      this.protokolliere(`${angreifer.name} führt jetzt ${waffe.name} (Parade ${angreifer.aktuelleParade}).`)
+    }
     const nahkampf = waffe.istNahkampf
     // Im Berserkerrausch müssen alle Angriffe Rücksichtslos sein.
     const ruecksichtslos = nahkampf && Boolean(optionen.ruecksichtslos || angreifer.berserker)

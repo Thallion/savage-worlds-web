@@ -46,6 +46,7 @@ from app.services.ausruestung import (
     kaufe_ausruestung,
     panzerung_torso,
     schild_parade,
+    angelegte_waffen_parade,
     setze_angelegt,
     startkapital_basis,
     traegt_ruestung,
@@ -1612,7 +1613,13 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
 
     groesse = boni["groesse"] + cyber_boni["groesse"]
     panzerung = panzerung_torso(daten, setting) + cyber_boni["panzerung"] + boni["panzerung"]
-    parade = 2 + (kaempfen_wert // 2) + boni["parade"] + schild_parade(daten, setting)
+    parade = (
+        2
+        + (kaempfen_wert // 2)
+        + boni["parade"]
+        + schild_parade(daten, setting)
+        + angelegte_waffen_parade(daten, setting)
+    )
     # Größe und Torso-Panzerung fließen nach SWAE in die Robustheit ein
     robustheit = 2 + (kon_wert // 2) + boni["robustheit"] + cyber_boni["robustheit"] + groesse + panzerung
     bewegungsweite = 6 + boni["bewegungsweite"] + cyber_boni["bewegungsweite"]

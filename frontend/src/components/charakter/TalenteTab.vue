@@ -15,13 +15,19 @@
       <!-- "Trotzdem auswählen" bei nicht erfüllten Voraussetzungen / zu hohem Rang -->
       <v-dialog v-model="bestaetigungSichtbar" max-width="480">
         <v-card>
-          <v-card-title>Prüfung nicht bestanden</v-card-title>
+          <v-card-title>
+            {{ bestaetigungEntfernen ? 'Abhängige Aufstiege' : 'Prüfung nicht bestanden' }}
+          </v-card-title>
           <v-card-text>{{ bestaetigungMeldung }}</v-card-text>
           <v-card-actions>
             <v-spacer />
             <v-btn variant="text" @click="bestaetigungSichtbar = false">Abbrechen</v-btn>
-            <v-btn color="warning" variant="tonal" @click="trotzdemWaehlen">
-              Trotzdem auswählen
+            <v-btn
+              color="warning"
+              variant="tonal"
+              @click="bestaetigungEntfernen ? trotzdemEntfernen() : trotzdemWaehlen()"
+            >
+              {{ bestaetigungEntfernen ? 'Trotzdem entfernen' : 'Trotzdem auswählen' }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -249,6 +255,8 @@ const meldungSichtbar = ref(false)
 const bestaetigungSichtbar = ref(false)
 const bestaetigungMeldung = ref('')
 const bestaetigungTalent = ref('')
+// Nach der Erschaffung: Abwählen bricht ggf. Voraussetzungen späterer Aufstiege
+const bestaetigungEntfernen = ref(false)
 
 const talente = computed(() =>
   mergeKatalog(einstellungenStore.aktuellesSetting?.talente, daten.value, 'talente'),
@@ -327,6 +335,7 @@ async function waehleTalent(name: string) {
   const result = await store.spiellogikAktion('talent/waehlen', name)
   if (!result.success && result.bestaetigung_moeglich) {
     bestaetigungTalent.value = name
+    bestaetigungEntfernen.value = false
     bestaetigungMeldung.value = `${result.message}. Trotzdem auswählen?`
     bestaetigungSichtbar.value = true
   } else if (!result.success && result.message) {
@@ -346,6 +355,20 @@ async function trotzdemWaehlen() {
 
 async function entferneTalent(name: string) {
   const result = await store.spiellogikAktion('talent/entfernen', name)
+  if (!result.success && result.bestaetigung_moeglich) {
+    bestaetigungTalent.value = name
+    bestaetigungEntfernen.value = true
+    bestaetigungMeldung.value = `${result.message}. Trotzdem entfernen?`
+    bestaetigungSichtbar.value = true
+  } else if (!result.success && result.message) {
+    meldung.value = result.message
+    meldungSichtbar.value = true
+  }
+}
+
+async function trotzdemEntfernen() {
+  bestaetigungSichtbar.value = false
+  const result = await store.spiellogikAktion('talent/entfernen', bestaetigungTalent.value, true)
   if (!result.success && result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true

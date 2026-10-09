@@ -1,3 +1,4 @@
+import copy
 from typing import Any
 from urllib.parse import quote
 
@@ -65,8 +66,15 @@ from app.services.setting_elemente import (
 from app.services.kampfprofil import generiere_kampfprofil
 from app.services.statblock import generiere_statblock
 from app.services.steigerungs_journal import (
+    abhaengigkeits_konflikte,
+    aktualisiere_raenge,
+    eintrag_aufstiegskosten,
+    entferne_journal_eintrag,
+    finde_eintrag,
+    journal_eintraege,
     journal_eintrag,
     journal_eintrag_entfernen,
+    letzter_eintrag_index,
     wuerfel_anzeige,
 )
 from app.services.natuerliche_waffen import synchronisiere as synchronisiere_natuerliche_waffen
@@ -188,10 +196,13 @@ def attribut_senken(req: SpiellogikRequest):
     if not attr_name or attr_name not in daten.get("attribute", {}):
         return SpiellogikResponse(success=False, message=f"Attribut '{attr_name}' nicht gefunden")
 
+    # Nach der Erschaffung: Rücknahme der letzten bezahlten Steigerung
+    if daten.get("char_gen_completed"):
+        return _senken_per_journal(daten, "attribut_steigerung", attr_name, req.ignoriere_pruefungen)
+
     attr = daten["attribute"][attr_name]
     wert = attr.get("wert", 4)
     modifier = attr.get("modifier", 0)
-    abgeschlossen = daten.get("char_gen_completed", False)
     max_steig = daten.get("maximale_attributsteigerungen", 5)
     verbleibend = daten.get("verbleibende_attributsteigerungen", 0)
 
@@ -202,7 +213,7 @@ def attribut_senken(req: SpiellogikRequest):
             charakter_daten=daten,
         )
 
-    if not abgeschlossen and verbleibend >= max_steig:
+    if verbleibend >= max_steig:
         return SpiellogikResponse(
             success=False,
             message="Keine Steigerungen zum Rückgängigmachen",
@@ -216,11 +227,7 @@ def attribut_senken(req: SpiellogikRequest):
     else:
         return SpiellogikResponse(success=False, message="Minimum erreicht", charakter_daten=daten)
 
-    if abgeschlossen:
-        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + AUFSTIEG_KOSTEN_ATTRIBUT
-        journal_eintrag_entfernen(daten, "attribut_steigerung", attr_name)
-    else:
-        daten["verbleibende_attributsteigerungen"] = verbleibend + 1
+    daten["verbleibende_attributsteigerungen"] = verbleibend + 1
     daten["attribute"][attr_name] = attr
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
@@ -313,6 +320,9 @@ def fertigkeit_senken(req: SpiellogikRequest):
     if not fert_name or fert_name not in daten.get("fertigkeiten", {}):
         return SpiellogikResponse(success=False, message=f"Fertigkeit '{fert_name}' nicht gefunden")
 
+    if daten.get("char_gen_completed"):
+        return _senken_per_journal(daten, "fertigkeit_steigerung", fert_name, req.ignoriere_pruefungen)
+
     fert = daten["fertigkeiten"][fert_name]
     wuerfel = fert.get("wuerfel", {"value": 4, "modifier": 0})
     wert = wuerfel.get("value", 4)
@@ -329,8 +339,7 @@ def fertigkeit_senken(req: SpiellogikRequest):
 
     attr_name = fert.get("attribut", "")
     attr_wert = daten.get("attribute", {}).get(attr_name, {}).get("wert", 4)
-    abgeschlossen = daten.get("char_gen_completed", False)
-    basis = AUFSTIEG_KOSTEN_FERTIGKEIT if abgeschlossen else 1
+    basis = 1
     refund = basis * 2 if wert > attr_wert else basis
 
     if wert == 12 and modifier > 0:
@@ -347,11 +356,7 @@ def fertigkeit_senken(req: SpiellogikRequest):
     if wuerfel["value"] == 4 and wuerfel["modifier"] == -2:
         fert["ausgewaehlt"] = False
     daten["fertigkeiten"][fert_name] = fert
-    if abgeschlossen:
-        daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + refund
-        journal_eintrag_entfernen(daten, "fertigkeit_steigerung", fert_name)
-    else:
-        daten["verbleibende_fertigkeitssteigerungen"] = daten.get("verbleibende_fertigkeitssteigerungen", 0) + refund
+    daten["verbleibende_fertigkeitssteigerungen"] = daten.get("verbleibende_fertigkeitssteigerungen", 0) + refund
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -439,7 +444,16 @@ def fertigkeit_entfernen(req: SpiellogikRequest):
     attr_wert = daten.get("attribute", {}).get(attr_name, {}).get("wert", 4)
     abgeschlossen = daten.get("char_gen_completed", False)
     basis = AUFSTIEG_KOSTEN_FERTIGKEIT if abgeschlossen else 1
-    refund = _fertigkeit_investierte_punkte(fert.get("wuerfel", {}), attr_wert, basis)
+    if abgeschlossen:
+        # Erschaffungs-Punkte werden nicht in Aufstiege umgewandelt — nur
+        # die laut Journal mit Aufstiegen bezahlten Stufen gehen zurück
+        refund = sum(
+            eintrag_aufstiegskosten(e)
+            for e in journal_eintraege(daten)
+            if e.get("type") == "fertigkeit_steigerung" and (e.get("details") or {}).get("name") == name
+        )
+    else:
+        refund = _fertigkeit_investierte_punkte(fert.get("wuerfel", {}), attr_wert, basis)
 
     del daten["fertigkeiten"][name]
     if abgeschlossen:
@@ -636,7 +650,12 @@ def handicap_entfernen(req: SpiellogikRequest):
         journal_eintrag(
             daten,
             "handicap_entfernt",
-            {"name": handicap_name, "kosten": AUFSTIEG_KOSTEN_HANDICAP, "kosten_typ": "Aufstieg"},
+            {
+                "name": handicap_name,
+                "punkte": punkte,
+                "kosten": AUFSTIEG_KOSTEN_HANDICAP,
+                "kosten_typ": "Aufstieg",
+            },
         )
         return SpiellogikResponse(success=True, charakter_daten=daten)
 
@@ -764,7 +783,12 @@ def handicap_reduzieren(req: SpiellogikRequest):
     journal_eintrag(
         daten,
         "handicap_reduziert",
-        {"name": handicap_name, "kosten": AUFSTIEG_KOSTEN_HANDICAP, "kosten_typ": "Aufstieg"},
+        {
+            "name": handicap_name,
+            "leicht": leicht_key,
+            "kosten": AUFSTIEG_KOSTEN_HANDICAP,
+            "kosten_typ": "Aufstieg",
+        },
     )
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
@@ -1021,6 +1045,10 @@ def _kivy_import_zahlungsquelle(daten: dict, talent_name: str) -> str:
 
 @router.post("/talent/entfernen", response_model=SpiellogikResponse)
 def talent_entfernen(req: SpiellogikRequest):
+    return _entfernen_geprueft(req, "talent_hinzugefuegt", _talent_entfernen)
+
+
+def _talent_entfernen(req: SpiellogikRequest) -> SpiellogikResponse:
     daten = req.charakter_daten
     talent_name = req.element_name
     selected = daten.get("selected_talente", [])
@@ -1125,6 +1153,10 @@ def macht_waehlen(req: SpiellogikRequest):
 
 @router.post("/macht/entfernen", response_model=SpiellogikResponse)
 def macht_entfernen(req: SpiellogikRequest):
+    return _entfernen_geprueft(req, "macht_hinzugefuegt", _macht_entfernen)
+
+
+def _macht_entfernen(req: SpiellogikRequest) -> SpiellogikResponse:
     daten = req.charakter_daten
     macht_name = req.element_name
     selected = daten.get("selected_maechte", [])
@@ -1296,6 +1328,182 @@ def aufstieg_entfernen(req: SpiellogikRequest):
     daten["aufstiege_gesamt"] = daten["aufstiege_gesamt"] - 1
     daten["verbleibende_aufstiege"] = daten["verbleibende_aufstiege"] - 1
     return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+@router.post("/aufstieg/rueckgaengig", response_model=SpiellogikResponse)
+def aufstieg_rueckgaengig(req: SpiellogikRequest):
+    """Nimmt einen beliebigen Eintrag des Steigerungs-Journals zurück
+    (element_name = Eintrags-ID, Alt-Einträge ohne ID: "#<index>").
+
+    Bricht die Rücknahme Voraussetzungen oder Rang späterer Talente/Mächte,
+    wird abgelehnt — per Bestätigung (ignoriere_pruefungen) überspringbar."""
+    daten = req.charakter_daten
+    if not daten.get("char_gen_completed"):
+        return SpiellogikResponse(
+            success=False,
+            message="Aufstiege lassen sich erst nach Abschluss der Erschaffung zurücknehmen",
+            charakter_daten=daten,
+        )
+    index = finde_eintrag(daten, req.element_name)
+    if index is None:
+        return SpiellogikResponse(
+            success=False, message="Journal-Eintrag nicht gefunden", charakter_daten=daten
+        )
+    return _journal_eintrag_zuruecknehmen(daten, index, req.ignoriere_pruefungen)
+
+
+def _senken_per_journal(daten: dict, entry_type: str, name: str, ignoriere: bool) -> SpiellogikResponse:
+    """Minus-Button nach der Erschaffung: nimmt die letzte mit Aufstiegen
+    bezahlte Steigerung zurück. Werte aus der Erschaffung bleiben."""
+    index = letzter_eintrag_index(daten, entry_type, name)
+    if index is None:
+        return SpiellogikResponse(
+            success=False,
+            message=f"{name}: keine mit Aufstiegen bezahlte Steigerung — "
+            "Werte aus der Erschaffung lassen sich nur bei geöffneter Erschaffung senken",
+            charakter_daten=daten,
+        )
+    return _journal_eintrag_zuruecknehmen(daten, index, ignoriere)
+
+
+def _entfernen_geprueft(req: SpiellogikRequest, entry_type: str, entfernen) -> SpiellogikResponse:
+    """Talent/Macht abwählen. Nach der Erschaffung läuft ein im Journal
+    geführter Kauf über die Journal-Rücknahme; sonst wird zumindest geprüft,
+    ob spätere Talente/Mächte davon abhängen."""
+    daten = req.charakter_daten
+    if not daten.get("char_gen_completed"):
+        return entfernen(req)
+    index = letzter_eintrag_index(daten, entry_type, req.element_name or "")
+    if index is not None:
+        return _journal_eintrag_zuruecknehmen(daten, index, req.ignoriere_pruefungen)
+    vorher = copy.deepcopy(daten)
+    ergebnis = entfernen(req)
+    if not ergebnis.success:
+        return ergebnis
+    return _pruefe_abhaengigkeiten(vorher, ergebnis.charakter_daten, req.ignoriere_pruefungen) or ergebnis
+
+
+def _pruefe_abhaengigkeiten(vorher: dict, nachher: dict, ignoriere: bool) -> SpiellogikResponse | None:
+    """Ablehnung (mit unverändertem Charakter), wenn die Änderung spätere
+    Talente oder Mächte ungültig macht; sonst None."""
+    if ignoriere:
+        return None
+    setting = _setting_oder_none(nachher)
+    if setting is None:
+        return None
+    konflikte = abhaengigkeits_konflikte(vorher, nachher, setting)
+    if not konflikte:
+        return None
+    return SpiellogikResponse(
+        success=False,
+        message="Das verletzt Voraussetzungen späterer Aufstiege: "
+        f"{'; '.join(konflikte)} — diese zuerst rückgängig machen",
+        bestaetigung_moeglich=True,
+        charakter_daten=vorher,
+    )
+
+
+def _wuerfel_senken(wert: int, modifier: int, minimum_modifier: int) -> tuple[int, int] | None:
+    if wert == 12 and modifier > 0:
+        return wert, modifier - 1
+    if wert > 4:
+        return wert - 2, modifier
+    if wert == 4 and modifier > minimum_modifier:
+        return 4, minimum_modifier
+    return None
+
+
+def _journal_eintrag_zuruecknehmen(daten: dict, index: int, ignoriere: bool) -> SpiellogikResponse:
+    vorher = copy.deepcopy(daten)
+    entries = list(journal_eintraege(daten))
+    eintrag = entries[index]
+    typ = eintrag.get("type")
+    details = eintrag.get("details") or {}
+    name = details.get("name") or ""
+    erstattung = eintrag_aufstiegskosten(eintrag)
+
+    def fehler(message: str) -> SpiellogikResponse:
+        return SpiellogikResponse(success=False, message=message, charakter_daten=vorher)
+
+    if typ == "attribut_steigerung":
+        attr = daten.get("attribute", {}).get(name)
+        neu = attr and _wuerfel_senken(attr.get("wert", 4), attr.get("modifier", 0), 0)
+        if not neu:
+            return fehler(f"{name} kann nicht weiter gesenkt werden")
+        attr["wert"], attr["modifier"] = neu
+    elif typ == "fertigkeit_steigerung":
+        fert = daten.get("fertigkeiten", {}).get(name)
+        if not fert:
+            return fehler(f"Fertigkeit '{name}' nicht gefunden")
+        wuerfel = fert.setdefault("wuerfel", {"value": 4, "modifier": -2})
+        minimum = 0 if fert.get("grundfertigkeit") else -2
+        neu = _wuerfel_senken(wuerfel.get("value", 4), wuerfel.get("modifier", 0), minimum)
+        if not neu:
+            return fehler(f"{name} kann nicht weiter gesenkt werden")
+        wuerfel["value"], wuerfel["modifier"] = neu
+        if neu == (4, -2):
+            fert["ausgewaehlt"] = False
+    elif typ in ("talent_hinzugefuegt", "macht_hinzugefuegt"):
+        entfernen = _talent_entfernen if typ == "talent_hinzugefuegt" else _macht_entfernen
+        ergebnis = entfernen(SpiellogikRequest(charakter_daten=daten, element_name=name))
+        if not ergebnis.success:
+            return fehler(ergebnis.message)
+        # Der Request arbeitet auf einer Kopie des Dicts
+        daten = ergebnis.charakter_daten
+        # Die Erstattung (Aufstieg, Slot, ...) erledigt das Abwählen selbst
+        erstattung = 0
+    elif typ == "handicap_hinzugefuegt":
+        # Rücknahme wie ein Abwählen während der Erschaffung (Punkte zurück,
+        # kein Aufstieg fällig)
+        daten["char_gen_completed"] = False
+        ergebnis = handicap_entfernen(SpiellogikRequest(charakter_daten=daten, element_name=name))
+        if not ergebnis.success:
+            return fehler(ergebnis.message)
+        daten = ergebnis.charakter_daten
+        daten["char_gen_completed"] = True
+    elif typ == "handicap_entfernt":
+        konflikt = handicap_konflikt(name, daten)
+        if konflikt:
+            return fehler(konflikt)
+        daten.setdefault("selected_handicaps", []).append(name)
+        gewaehrt_map = daten.get("handicap_punkte_gewaehrt", {})
+        if name in gewaehrt_map and details.get("punkte") is not None:
+            gewaehrt_map[name] += details["punkte"]
+    elif typ == "handicap_reduziert":
+        leicht = details.get("leicht") or _leichtes_gegenstueck(daten, name)
+        selected = daten.get("selected_handicaps", [])
+        if not leicht or leicht not in selected:
+            return fehler(f"Leichte Stufe von '{name}' ist nicht mehr ausgewählt")
+        selected.reverse()
+        selected.remove(leicht)
+        selected.reverse()
+        selected.append(name)
+    else:
+        return fehler("Dieser Eintrag kann nicht rückgängig gemacht werden")
+
+    daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) + erstattung
+    daten.setdefault("steigerungs_journal", {})["entries"] = entferne_journal_eintrag(entries, index)
+    aktualisiere_raenge(daten, index)
+
+    abgelehnt = _pruefe_abhaengigkeiten(vorher, daten, ignoriere)
+    if abgelehnt:
+        return abgelehnt
+    return SpiellogikResponse(success=True, charakter_daten=daten)
+
+
+def _leichtes_gegenstueck(daten: dict, handicap_name: str) -> str | None:
+    """Alt-Einträge ohne gespeichertes Gegenstück: wie /handicap/reduzieren suchen."""
+    setting = _setting_oder_none(daten) or {}
+    handicaps = setting.get("handicaps", {})
+    basis_name = handicaps.get(handicap_name, {}).get("name", handicap_name)
+    return next(
+        (
+            key
+            for key, hd in handicaps.items()
+            if hd.get("name") == basis_name and str(hd.get("stufe", "")).lower() == "leicht"
+        ),
+        None,
+    )
 
 
 @router.post("/setting/wechseln", response_model=SpiellogikResponse)

@@ -290,6 +290,7 @@
                 <th>Typ</th>
                 <th>Name</th>
                 <th>Kosten</th>
+                <th v-if="rueckgaengigMoeglich" />
               </tr>
             </thead>
             <tbody>
@@ -298,9 +299,35 @@
                 <td>{{ zeile.typ }}</td>
                 <td>{{ zeile.name }}</td>
                 <td>{{ zeile.kosten }}</td>
+                <td v-if="rueckgaengigMoeglich" class="text-right">
+                  <v-btn
+                    v-if="zeile.ref"
+                    icon="mdi-undo"
+                    size="x-small"
+                    variant="text"
+                    title="Rückgängig machen (Aufstieg wird erstattet)"
+                    @click="nimmZurueck(zeile.ref)"
+                  />
+                </td>
               </tr>
             </tbody>
           </v-table>
+          <v-snackbar v-model="rueckgaengigMeldungSichtbar" :timeout="5000">
+            {{ rueckgaengigMeldung }}
+          </v-snackbar>
+          <v-dialog v-model="rueckgaengigBestaetigung" max-width="520">
+            <v-card>
+              <v-card-title>Abhängige Aufstiege</v-card-title>
+              <v-card-text>{{ rueckgaengigMeldung }}. Trotzdem rückgängig machen?</v-card-text>
+              <v-card-actions>
+                <v-spacer />
+                <v-btn variant="text" @click="rueckgaengigBestaetigung = false">Abbrechen</v-btn>
+                <v-btn color="warning" variant="tonal" @click="nimmZurueck(rueckgaengigRef, true)">
+                  Trotzdem rückgängig
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
         </v-col>
       </v-row>
     </v-card-text>
@@ -576,6 +603,31 @@ interface SteigerungsZeile {
   typ: string
   name: string
   kosten: string
+  // Verweis für /aufstieg/rueckgaengig: Eintrags-ID, Alt-Einträge "#<index>"
+  ref?: string
+}
+
+// Journal-Einträge lassen sich nach der Erschaffung einzeln zurücknehmen;
+// das Backend prüft, ob spätere Aufstiege davon abhängen
+const rueckgaengigMoeglich = computed(
+  () => !!daten.value.char_gen_completed && !!daten.value.steigerungs_journal?.entries?.length,
+)
+const rueckgaengigMeldung = ref('')
+const rueckgaengigMeldungSichtbar = ref(false)
+const rueckgaengigBestaetigung = ref(false)
+const rueckgaengigRef = ref('')
+
+async function nimmZurueck(ref_: string, ignoriere = false) {
+  rueckgaengigBestaetigung.value = false
+  const result = await store.spiellogikAktion('aufstieg/rueckgaengig', ref_, ignoriere)
+  if (result.success) return
+  rueckgaengigMeldung.value = result.message
+  if (result.bestaetigung_moeglich) {
+    rueckgaengigRef.value = ref_
+    rueckgaengigBestaetigung.value = true
+  } else if (result.message) {
+    rueckgaengigMeldungSichtbar.value = true
+  }
 }
 
 const steigerungen = computed<SteigerungsZeile[]>(() => {
@@ -584,8 +636,9 @@ const steigerungen = computed<SteigerungsZeile[]>(() => {
 
   if (journal.entries?.length) {
     return journal.entries
-      .filter((e) => e.type in STEIGERUNGS_TYPEN)
-      .map((e) => {
+      .map((e, index) => ({ e, ref: e.id ?? `#${index}` }))
+      .filter(({ e }) => e.type in STEIGERUNGS_TYPEN)
+      .map(({ e, ref }) => {
         const details = e.details ?? {}
         let name = details.name ?? ''
         if (e.type === 'attribut_steigerung' || e.type === 'fertigkeit_steigerung') {
@@ -600,6 +653,7 @@ const steigerungen = computed<SteigerungsZeile[]>(() => {
           typ: STEIGERUNGS_TYPEN[e.type],
           name,
           kosten: formatKosten(details.kosten ?? details.punkte, details.kosten_typ),
+          ref,
         }
       })
   }

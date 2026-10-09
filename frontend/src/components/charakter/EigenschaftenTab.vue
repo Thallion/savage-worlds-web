@@ -31,7 +31,7 @@
                   icon="mdi-minus"
                   size="small"
                   variant="outlined"
-                  @click="store.spiellogikAktion('attribut/senken', String(name))"
+                  @click="senke('attribut/senken', String(name))"
                 />
                 <v-chip class="font-weight-bold" :color="wuerfelFarbe(attr.wert)">
                   {{ formatWuerfel(attr.wert, attr.modifier) }}
@@ -113,7 +113,7 @@
                   icon="mdi-minus"
                   size="x-small"
                   variant="outlined"
-                  @click="store.spiellogikAktion('fertigkeit/senken', String(name))"
+                  @click="senke('fertigkeit/senken', String(name))"
                 />
                 <v-chip
                   size="small"
@@ -216,16 +216,17 @@
         </v-card>
       </v-dialog>
 
-      <!-- Warnung bei doppelten Kosten (Fertigkeit über Attribut) -->
+      <!-- Warnung bei doppelten Kosten (Fertigkeit über Attribut) bzw. beim
+           Senken nach der Erschaffung, wenn spätere Aufstiege davon abhängen -->
       <v-dialog v-model="bestaetigungSichtbar" max-width="480">
         <v-card>
-          <v-card-title>Doppelte Kosten</v-card-title>
+          <v-card-title>{{ bestaetigungTitel }}</v-card-title>
           <v-card-text>{{ bestaetigungMeldung }}</v-card-text>
           <v-card-actions>
             <v-spacer />
             <v-btn variant="text" @click="bestaetigungSichtbar = false">Abbrechen</v-btn>
-            <v-btn color="warning" variant="tonal" @click="trotzdemSteigern">
-              Trotzdem steigern
+            <v-btn color="warning" variant="tonal" @click="trotzdemAusfuehren">
+              {{ bestaetigungKnopf }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -249,7 +250,19 @@ const meldung = ref('')
 const meldungSichtbar = ref(false)
 const bestaetigungSichtbar = ref(false)
 const bestaetigungMeldung = ref('')
-const bestaetigungFertigkeit = ref('')
+const bestaetigungAktion = ref('')
+const bestaetigungElement = ref('')
+const bestaetigungTitel = ref('')
+const bestaetigungKnopf = ref('')
+
+function frageBestaetigung(aktion: string, name: string, titel: string, text: string, knopf: string) {
+  bestaetigungAktion.value = aktion
+  bestaetigungElement.value = name
+  bestaetigungTitel.value = titel
+  bestaetigungMeldung.value = text
+  bestaetigungKnopf.value = knopf
+  bestaetigungSichtbar.value = true
+}
 
 const hinzufuegenSichtbar = ref(false)
 const neuerName = ref('')
@@ -322,20 +335,39 @@ async function entferneFertigkeit(name: string) {
 async function steigereFertigkeit(name: string) {
   const result = await store.spiellogikAktion('fertigkeit/steigern', name)
   if (!result.success && result.bestaetigung_moeglich) {
-    bestaetigungFertigkeit.value = name
-    bestaetigungMeldung.value = `${result.message}. Trotzdem steigern?`
-    bestaetigungSichtbar.value = true
+    frageBestaetigung(
+      'fertigkeit/steigern',
+      name,
+      'Doppelte Kosten',
+      `${result.message}. Trotzdem steigern?`,
+      'Trotzdem steigern',
+    )
   } else if (!result.success && result.message) {
     meldung.value = result.message
     meldungSichtbar.value = true
   }
 }
 
-async function trotzdemSteigern() {
+async function senke(aktion: string, name: string) {
+  const result = await store.spiellogikAktion(aktion, name)
+  if (!result.success && result.bestaetigung_moeglich) {
+    frageBestaetigung(
+      aktion,
+      name,
+      'Abhängige Aufstiege',
+      `${result.message}. Trotzdem senken?`,
+      'Trotzdem senken',
+    )
+  } else if (!result.success && result.message) {
+    zeigeMeldung(result.message)
+  }
+}
+
+async function trotzdemAusfuehren() {
   bestaetigungSichtbar.value = false
   const result = await store.spiellogikAktion(
-    'fertigkeit/steigern',
-    bestaetigungFertigkeit.value,
+    bestaetigungAktion.value,
+    bestaetigungElement.value,
     true,
   )
   if (!result.success && result.message) {

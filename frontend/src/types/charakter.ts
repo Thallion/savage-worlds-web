@@ -34,6 +34,7 @@ export interface TalentEffektSnapshot {
 // Web-App für Steigerungen nach Abschluss der Erschaffung; cost_entries ist
 // das Erschaffungs-Kauf-Journal aus Kivy-Exporten/Archetypen (nur Anzeige).
 export interface SteigerungsJournalEintrag {
+  id?: string
   timestamp?: string
   type: string
   rang?: string
@@ -45,6 +46,7 @@ export interface SteigerungsJournalEintrag {
     kosten_typ?: string
     stufe?: string
     punkte?: number
+    leicht?: string
   }
 }
 

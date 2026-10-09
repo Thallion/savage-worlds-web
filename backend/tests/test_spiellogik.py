@@ -1452,6 +1452,166 @@ def test_rang_steigt_mit_ausgegebenen_aufstiegen(daten):
     assert r["success"], r["message"]
 
 
+# --- Aufstiege rückgängig machen (Steigerungs-Journal) ---
+
+def mit_aufstiegen(daten: dict, anzahl: int) -> dict:
+    d = mit_abschluss(daten)
+    for _ in range(anzahl):
+        d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
+    return d
+
+
+def journal(d: dict) -> list[dict]:
+    return d["steigerungs_journal"]["entries"]
+
+
+def test_senken_erstattet_keine_erschaffungs_steigerung(daten):
+    # Früher wurde eine Erschaffungs-Steigerung nach Abschluss als Aufstieg erstattet
+    d = aktion("attribut/steigern", daten, "Stärke")["charakter_daten"]
+    d = aktion("fertigkeit/steigern", d, "Kämpfen")["charakter_daten"]
+    d = mit_abschluss(d)
+    for pfad, name in (("attribut/senken", "Stärke"), ("fertigkeit/senken", "Kämpfen")):
+        r = aktion(pfad, d, name)
+        assert not r["success"]
+        assert "Erschaffung" in r["message"]
+    assert d["verbleibende_aufstiege"] == 0
+
+
+def test_senken_nimmt_nur_bezahlte_stufen_zurueck(daten):
+    d = aktion("attribut/steigern", daten, "Stärke")["charakter_daten"]  # Erschaffung: W6
+    d = mit_aufstiegen(d, 1)
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]  # W8
+    d = aktion("attribut/senken", d, "Stärke")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert d["verbleibende_aufstiege"] == 1
+    assert journal(d) == []
+    assert not aktion("attribut/senken", d, "Stärke")["success"]
+
+
+def test_rueckgaengig_beliebiger_eintrag(daten):
+    d = mit_aufstiegen(daten, 3)
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]  # W4 → W6
+    d = aktion("talent/waehlen", d, "Aristokrat")["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]  # W6 → W8
+    erster = journal(d)[0]
+    assert erster["id"]
+
+    d = aktion("aufstieg/rueckgaengig", d, erster["id"])["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 6
+    assert d["verbleibende_aufstiege"] == 1
+    eintraege = journal(d)
+    assert [e["type"] for e in eintraege] == ["talent_hinzugefuegt", "attribut_steigerung"]
+    # Die spätere Stärke-Steigerung beginnt jetzt eine Stufe tiefer
+    assert (eintraege[1]["details"]["von"], eintraege[1]["details"]["nach"]) == ("4", "6")
+
+
+def test_rueckgaengig_fertigkeit_erstattet_gezahlte_kosten(daten):
+    d = mit_aufstiegen(daten, 3)
+    d = aktion("fertigkeit/steigern", d, "Kämpfen")["charakter_daten"]  # W4-2 → W4: 0.5
+    # W4 → W6 über GES W4: doppelt (1)
+    d = aktion("fertigkeit/steigern", d, "Kämpfen", ignoriere_pruefungen=True)["charakter_daten"]
+    d = aktion("attribut/steigern", d, "Geschicklichkeit")["charakter_daten"]  # GES W6: 1
+    assert d["verbleibende_aufstiege"] == 0.5
+    # Erstattet wird der gezahlte Preis, nicht der zum heutigen GES-Wert
+    d = aktion("fertigkeit/senken", d, "Kämpfen")["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 1.5
+    assert d["fertigkeiten"]["Kämpfen"]["wuerfel"]["value"] == 4
+
+
+def test_rueckgaengig_blockiert_bei_fehlender_voraussetzung(daten):
+    d = mit_aufstiegen(daten, 3)
+    d = aktion("attribut/steigern", d, "Geschicklichkeit")["charakter_daten"]  # GES W6
+    d = aktion("talent/waehlen", d, "Flink")["charakter_daten"]  # braucht GES W6
+    r = aktion("attribut/senken", d, "Geschicklichkeit")
+    assert not r["success"]
+    assert r["bestaetigung_moeglich"]
+    assert "Flink" in r["message"]
+    assert r["charakter_daten"]["attribute"]["Geschicklichkeit"]["wert"] == 6
+
+    # Bestätigt geht es direkt
+    r = aktion("attribut/senken", d, "Geschicklichkeit", ignoriere_pruefungen=True)
+    assert r["success"]
+    assert "Flink" in r["charakter_daten"]["selected_talente"]
+
+    # Oder das Talent zuerst zurücknehmen
+    d = aktion("talent/entfernen", d, "Flink")["charakter_daten"]
+    r = aktion("attribut/senken", d, "Geschicklichkeit")
+    assert r["success"], r["message"]
+    assert r["charakter_daten"]["verbleibende_aufstiege"] == 3
+
+
+def test_rueckgaengig_blockiert_bei_rangverlust(daten):
+    d = mit_aufstiegen(daten, 4)
+    for _ in range(4):
+        d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]
+    # Talent aus einem freien Slot: 4 ausgegebene Aufstiege = Fortgeschritten,
+    # nach der Rücknahme einer Steigerung nur noch Anfänger
+    d["verbleibende_talente"] = 1
+    d = aktion("talent/waehlen", d, "Kampfreflexe")["charakter_daten"]  # Rang F
+    assert journal(d)[-1]["rang"] == "Fortgeschritten"
+    r = aktion("aufstieg/rueckgaengig", d, journal(d)[0]["id"])
+    assert not r["success"]
+    assert "Kampfreflexe" in r["message"] and "Fortgeschritten" in r["message"]
+
+    r = aktion("aufstieg/rueckgaengig", d, journal(d)[0]["id"], ignoriere_pruefungen=True)
+    assert r["success"]
+    # Ränge der Folgeeinträge werden nachgeführt
+    assert [e["rang"] for e in journal(r["charakter_daten"])] == [
+        "Anfänger", "Anfänger", "Anfänger", "Anfänger",
+    ]
+
+
+def test_rueckgaengig_talent_als_voraussetzung(daten):
+    d = mit_aufstiegen(daten, 2)
+    d = aktion("talent/waehlen", d, "Glück")["charakter_daten"]
+    d = aktion("talent/waehlen", d, "Großes Glück")["charakter_daten"]
+    r = aktion("talent/entfernen", d, "Glück")
+    assert not r["success"]
+    assert "Großes Glück" in r["message"]
+
+
+def test_rueckgaengig_handicap_abkaufen(daten):
+    d = aktion("handicap/waehlen", daten, "Arm")["charakter_daten"]
+    d = mit_aufstiegen(d, 1)
+    d = aktion("handicap/entfernen", d, "Arm")["charakter_daten"]
+    assert "Arm" not in d["selected_handicaps"]
+    d = aktion("aufstieg/rueckgaengig", d, journal(d)[0]["id"])["charakter_daten"]
+    assert "Arm" in d["selected_handicaps"]
+    assert d["verbleibende_aufstiege"] == 1
+    assert journal(d) == []
+
+
+def test_rueckgaengig_handicap_reduzieren(daten):
+    d = aktion("handicap/waehlen", daten, "Langsam_schwer")["charakter_daten"]
+    d = mit_aufstiegen(d, 1)
+    d = aktion("handicap/reduzieren", d, "Langsam_schwer")["charakter_daten"]
+    assert "Langsam_schwer" not in d["selected_handicaps"]
+    d = aktion("aufstieg/rueckgaengig", d, journal(d)[0]["id"])["charakter_daten"]
+    assert "Langsam_schwer" in d["selected_handicaps"]
+    assert not any(h.startswith("Langsam") and h != "Langsam_schwer" for h in d["selected_handicaps"])
+    assert d["verbleibende_aufstiege"] == 1
+
+
+def test_rueckgaengig_alteintrag_ohne_id(daten):
+    d = mit_aufstiegen(daten, 1)
+    d = aktion("attribut/steigern", d, "Stärke")["charakter_daten"]
+    del journal(d)[0]["id"]
+    assert not aktion("aufstieg/rueckgaengig", d, "#5")["success"]
+    d = aktion("aufstieg/rueckgaengig", d, "#0")["charakter_daten"]
+    assert d["attribute"]["Stärke"]["wert"] == 4
+    assert d["verbleibende_aufstiege"] == 1
+
+
+def test_eigene_fertigkeit_entfernen_erstattet_nur_aufstiege(daten):
+    d = aktion("fertigkeit/hinzufuegen", daten, "Schmieden", attribut="Stärke")["charakter_daten"]
+    d = aktion("fertigkeit/steigern", d, "Schmieden")["charakter_daten"]  # Erschaffungspunkt
+    d = mit_aufstiegen(d, 1)
+    d = aktion("fertigkeit/steigern", d, "Schmieden", ignoriere_pruefungen=True)["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 0
+    d = aktion("fertigkeit/entfernen", d, "Schmieden")["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 1
+
+
 def test_aufstieg_entfernen_nur_wenn_nicht_ausgegeben(daten):
     d = mit_abschluss(daten)
     d = aktion("aufstieg/hinzufuegen", d)["charakter_daten"]
@@ -2080,6 +2240,15 @@ def test_statblock_handicap_stufe_und_ruestung(daten):
     assert "Robustheit: 5 (1)" in text
     assert "Jacke (dünn) [angelegt]" in text
     assert "Geld: 480" in text
+
+
+def test_statblock_ausruestung_vollstaendig(daten):
+    # Früher wurde nach 8 Einträgen mit "..." gekürzt
+    daten["ausruestung_selected"] = {f"Gegenstand {i:02d}": {"anzahl": 1} for i in range(12)}
+    text = statblock(daten)
+    zeile = next(z for z in text.splitlines() if z.startswith("Ausrüstung:"))
+    assert all(f"Gegenstand {i:02d}" in zeile for i in range(12))
+    assert "..." not in zeile
 
 
 def test_statblock_abstammungs_handicaps_und_besonderheiten(daten):

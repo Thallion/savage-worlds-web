@@ -12,12 +12,14 @@ Erzeugt einen kompakten Text-Statblock im SWADE-Stil:
     Besonderheiten: Klauen (Stä+W4 Schaden, PB 2, +2 Athletik Klettern), ...
     Superkräfte: Fliegen [4 SKP, Senkrechtstarter] (Machtstufe I, 4/15 SKP)
     Cyberware: Scanner (Stress 1/2)
-    Ausrüstung: Fackel (2x), ... — Geld: 475
+    Ausrüstung: Fackel (2x), Seil, ... — Geld: 475
 
 Abweichung vom Original: Fertigkeiten listen alle gelernten Werte (auch W4),
 nicht nur die über W4 — Grundfertigkeiten wären sonst unsichtbar. Ebenfalls
 ergänzt sind die Abstammungs-Zeilen: Volks-Handicaps und -Besonderheiten stehen
 nicht in selected_handicaps/selected_talente und fehlten sonst im Export.
+Die Ausrüstung wird vollständig gelistet (das Original kürzte nach 8 Einträgen
+mit "...").
 """
 
 from app.services.macht_auspraegungen import macht_anzeigename
@@ -25,9 +27,6 @@ from app.services.volk_effekte import gewaehltes_volk
 
 # Anzeige-Reihenfolge nach SWADE-Statblock (Agility, Smarts, Spirit, Strength, Vigor)
 ATTRIBUT_REIHENFOLGE = ["Geschicklichkeit", "Verstand", "Willenskraft", "Stärke", "Konstitution"]
-
-MAX_AUSRUESTUNG_EINTRAEGE = 8
-
 
 def _wuerfel(wert: int, modifier: int = 0) -> str:
     if modifier:
@@ -148,8 +147,6 @@ def _ausruestung(daten: dict, werte: dict) -> str:
         if eintrag.get("angelegt"):
             text += " [angelegt]"
         teile.append(text)
-    if len(teile) > MAX_AUSRUESTUNG_EINTRAEGE:
-        teile = teile[:MAX_AUSRUESTUNG_EINTRAEGE] + ["..."]
     text = ", ".join(teile)
     if text:
         geld = werte.get("vermoegen")

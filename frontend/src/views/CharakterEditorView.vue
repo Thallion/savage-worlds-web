@@ -4,6 +4,17 @@
       <v-col cols="auto">
         <v-btn icon="mdi-arrow-left" variant="text" @click="router.push('/')" />
       </v-col>
+      <v-col cols="auto" class="pe-0">
+        <CharakterPortraet
+          class="cursor-pointer"
+          :bild-id="store.aktuellerCharakter.bild_id"
+          :name="daten.profil_daten?.Name || store.aktuellerCharakter.char_name"
+          :setting="store.aktuellerCharakter.active_setting_name"
+          :breite="48"
+          title="Zum Profil"
+          @click="zumProfil"
+        />
+      </v-col>
       <v-col>
         <h2 class="text-h5">{{ daten.profil_daten?.Name || 'Neuer Charakter' }}</h2>
         <span class="text-caption">{{ store.aktuellerCharakter.active_setting_name }}</span>
@@ -189,6 +200,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import ProfilTab from '@/components/charakter/ProfilTab.vue'
+import CharakterPortraet from '@/components/charakter/CharakterPortraet.vue'
 import VoelkerTab from '@/components/charakter/VoelkerTab.vue'
 import EigenschaftenTab from '@/components/charakter/EigenschaftenTab.vue'
 import HandicapsTab from '@/components/charakter/HandicapsTab.vue'
@@ -205,6 +217,9 @@ const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
 
 const activeTab = ref('profil')
+function zumProfil() {
+  activeTab.value = 'profil'
+}
 const saving = ref(false)
 const abschlussDialog = ref(false)
 const meldung = ref('')

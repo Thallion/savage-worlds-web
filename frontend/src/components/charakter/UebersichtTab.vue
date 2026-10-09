@@ -40,6 +40,14 @@
         <!-- Profil-Zusammenfassung -->
         <v-col cols="12" md="4">
           <h3 class="text-h6 mb-3">Profil</h3>
+          <CharakterPortraet
+            v-if="store.aktuellerCharakter?.bild_id"
+            class="mx-auto mb-3"
+            :bild-id="store.aktuellerCharakter.bild_id"
+            :name="daten.profil_daten?.Name"
+            variante="gross"
+            :breite="160"
+          />
           <v-table density="compact">
             <tbody>
               <tr v-for="(val, key) in daten.profil_daten" :key="key">
@@ -348,6 +356,7 @@ import { useCharakterStore } from '@/stores/charakter'
 import { useEinstellungenStore } from '@/stores/einstellungen'
 import { mergeKatalog } from '@/utils/settingElemente'
 import { api } from '@/api/client'
+import CharakterPortraet from './CharakterPortraet.vue'
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
@@ -380,6 +389,7 @@ async function ladeBogenHtml(): Promise<string> {
   const result = await api.post<{ html: string }>('/spiellogik/charakterbogen', {
     charakter_daten: daten.value,
     printer_friendly: druckerfreundlich.value,
+    bild_id: store.aktuellerCharakter?.bild_id ?? null,
   })
   return result.html
 }
@@ -423,6 +433,7 @@ async function downloadCharakterbogenPdf() {
     const blob = await api.postBlob('/spiellogik/charakterbogen/pdf', {
       charakter_daten: daten.value,
       printer_friendly: druckerfreundlich.value,
+      bild_id: store.aktuellerCharakter?.bild_id ?? null,
     })
     speichereBlob(blob, `${daten.value.profil_daten?.Name || 'charakter'}.pdf`)
   } catch (e) {

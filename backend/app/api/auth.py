@@ -10,6 +10,7 @@ from app.config import settings
 from app.api.deps import get_current_user
 from app.db.database import get_db
 from app.db import models as db_models
+from app.services import charakterbild
 from app.schemas.auth import (
     UserCreate,
     UserLogin,
@@ -100,5 +101,8 @@ def account_loeschen(
 ):
     if not _verify_password(data.passwort, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Passwort falsch")
+    bild_ids = [c.bild_id for c in current_user.charaktere if c.bild_id]
     db.delete(current_user)
     db.commit()
+    for bild_id in bild_ids:
+        charakterbild.loesche(bild_id)

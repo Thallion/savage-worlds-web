@@ -90,6 +90,21 @@
           <v-icon class="mr-3">{{ gruppe.id === null ? 'mdi-folder-outline' : 'mdi-folder' }}</v-icon>
           <span class="text-subtitle-1 font-weight-medium">{{ gruppe.name }}</span>
           <v-chip size="small" class="ml-3" variant="tonal">{{ gruppe.chars.length }}</v-chip>
+          <!-- Überlappende Avatare, damit man den Ordner auch zugeklappt erkennt -->
+          <div v-if="gruppe.chars.length" class="avatar-stapel d-none d-sm-flex ml-4">
+            <CharakterPortraet
+              v-for="char in stapelAvatare(gruppe.chars)"
+              :key="char.id"
+              :bild-id="char.bild_id"
+              :name="char.char_name"
+              :setting="char.active_setting_name"
+              :breite="32"
+              :title="char.char_name"
+            />
+            <span v-if="gruppe.chars.length > STAPEL_MAX" class="text-caption ml-2 align-self-center">
+              +{{ gruppe.chars.length - STAPEL_MAX }}
+            </span>
+          </div>
           <v-spacer />
           <template v-if="gruppe.id !== null">
             <v-btn
@@ -231,6 +246,7 @@ import { useEinstellungenStore } from '@/stores/einstellungen'
 import { ApiError } from '@/api/client'
 import type { Archetyp, CharakterListItem } from '@/types/charakter'
 import CharakterKarte from '@/components/charakter/CharakterKarte.vue'
+import CharakterPortraet from '@/components/charakter/CharakterPortraet.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -250,6 +266,12 @@ const ordnerName = ref('')
 const ordnerBearbeitenId = ref<number | null>(null)
 
 const hatOrdner = computed(() => store.ordnerListe.length > 0)
+
+const STAPEL_MAX = 4
+/** Bis zu vier Avatare je Ordner — Charaktere mit Porträt zuerst. */
+function stapelAvatare(chars: CharakterListItem[]) {
+  return [...chars].sort((a, b) => Number(!!b.bild_id) - Number(!!a.bild_id)).slice(0, STAPEL_MAX)
+}
 
 // Offene Expansion-Panels (Panel-Wert = Ordner-id bzw. 'ohne'). Leer = alles zu
 // → liefert die kompakte Ordner-Übersicht.
@@ -408,3 +430,12 @@ async function verschiebe(char: CharakterListItem, ordnerId: number | null) {
   await meldeFehler(() => store.verschiebeCharakter(char.id, ordnerId))
 }
 </script>
+
+<style scoped>
+.avatar-stapel :deep(.portraet + .portraet) {
+  margin-left: -8px;
+}
+.avatar-stapel :deep(.portraet) {
+  box-shadow: 0 0 0 2px rgb(var(--v-theme-surface));
+}
+</style>

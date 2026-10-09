@@ -64,6 +64,16 @@
               dem Server gespeichert und ausschließlich Ihrem Konto zugeordnet.
               Andere Nutzer haben keinen Zugriff auf Ihre Charaktere.
             </p>
+            <p class="mb-2">
+              <strong>Charakterporträts:</strong> Mit Konto können Sie pro Charakter ein
+              Bild hochladen. Es wird auf dem Server in verkleinerten Fassungen
+              gespeichert; eingebettete Metadaten (z.&nbsp;B. Kameradaten oder
+              GPS-Standort) werden dabei entfernt. Die Bilder sind nur über einen
+              zufällig erzeugten, nicht erratbaren Link abrufbar und werden nirgends
+              öffentlich gelistet. Beim Löschen des Bildes, des Charakters oder Ihres
+              Kontos werden die Bilddateien ebenfalls gelöscht. Laden Sie bitte nur
+              Bilder hoch, an denen Sie die erforderlichen Rechte haben.
+            </p>
             <p class="mb-0">
               <strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO
               (Erfüllung des Nutzungsvertrags).

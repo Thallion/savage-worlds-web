@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, JSON, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, ForeignKey, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -51,6 +51,11 @@ class Charakter(Base):
     active_setting_name = Column(String, nullable=False, default="SWAE")
     char_gen_completed = Column(Boolean, default=False)
     charakter_daten = Column(JSON, nullable=False)
+    # Porträt: Dateien unter data/bilder/<user_id>/<bild_id>_*.webp (siehe
+    # services/charakterbild.py). Bewusst nicht im Blob — der wandert bei jeder
+    # Spiellogik-Aktion hin und her und liegt bis zu 50× in der Undo-Historie.
+    bild_id = Column(String(32), nullable=True)
+    bild_fokus_y = Column(Float, nullable=True)
     erstellt_am = Column(DateTime, default=datetime.utcnow)
     aktualisiert_am = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

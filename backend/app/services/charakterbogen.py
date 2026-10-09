@@ -168,6 +168,28 @@ h1 {{
     letter-spacing: 0.3em;
     margin: 0;
 }}
+.kopf.mit-bild {{
+    display: grid;
+    grid-template-columns: 132px 1fr 132px;
+    align-items: center;
+    gap: 12px;
+}}
+.kopf .portraet {{
+    grid-column: 3;
+    width: 132px;
+    height: 176px;
+    object-fit: cover;
+    border: 1px solid {band_rand};
+    padding: 3px;
+    background-color: {hervor};
+    {"filter: grayscale(1);" if printer_friendly else ""}
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}}
+.kopf .kopf-text {{
+    grid-column: 2;
+    grid-row: 1;
+}}
 .kopf .untertitel {{
     font-size: 8pt;
     text-transform: uppercase;
@@ -311,6 +333,17 @@ td.beschreibung .eintrag strong {{
     .two-column {{
         flex-direction: column;
     }}
+    .kopf.mit-bild {{
+        grid-template-columns: 1fr;
+    }}
+    .kopf .portraet {{
+        grid-column: 1;
+        justify-self: center;
+    }}
+    .kopf .kopf-text {{
+        grid-column: 1;
+        grid-row: auto;
+    }}
     td, th {{
         padding-left: 6px;
         padding-right: 6px;
@@ -333,7 +366,7 @@ td.beschreibung .eintrag strong {{
 </html>"""
 
 
-def _kopf_sektion(daten: dict, printer_friendly: bool) -> str:
+def _kopf_sektion(daten: dict, printer_friendly: bool, bild: bytes | None = None) -> str:
     name = daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter"
     untertitel = "Charakterbogen"
     setting_name = daten.get("active_setting_name")
@@ -341,10 +374,18 @@ def _kopf_sektion(daten: dict, printer_friendly: bool) -> str:
         untertitel += f" · {setting_name}"
     icons = _genre_icons(printer_friendly)
     icon_row = "".join(f'<span class="icon-badge">{svg}</span>' for svg in icons)
-    return f"""<header class="kopf">
-<div class="icon-row">{icon_row}</div>
+    text = f"""<div class="icon-row">{icon_row}</div>
 <h1>{_esc(name)}</h1>
-<div class="untertitel">{_esc(untertitel)}</div>
+<div class="untertitel">{_esc(untertitel)}</div>"""
+    if not bild:
+        return f'<header class="kopf">\n{text}\n</header>'
+    # Als Data-URL eingebettet: das HTML wird als eigenständige Datei gespeichert
+    daten_url = "data:image/webp;base64," + base64.b64encode(bild).decode("ascii")
+    return f"""<header class="kopf mit-bild">
+<img class="portraet" src="{daten_url}" alt="Porträt">
+<div class="kopf-text">
+{text}
+</div>
 </header>"""
 
 
@@ -746,9 +787,11 @@ def _steigerungen_sektion(daten: dict) -> str | None:
 
 
 def generiere_charakterbogen(
-    daten: dict, setting: dict, werte: dict, printer_friendly: bool = False
+    daten: dict, setting: dict, werte: dict, printer_friendly: bool = False,
+    bild: bytes | None = None,
 ) -> str:
-    """werte: das Ergebnis von /spiellogik/berechne für dieselben daten."""
+    """werte: das Ergebnis von /spiellogik/berechne für dieselben daten.
+    bild: optionales Porträt (WebP-Bytes) für den Kopf."""
     sections = [
         _profil_sektion(daten),
         _attribute_fertigkeiten_sektion(daten, setting, werte),
@@ -769,5 +812,5 @@ def generiere_charakterbogen(
 
     name = daten.get("profil_daten", {}).get("Name") or "Charakterbogen"
     return _erzeuge_html_dokument(
-        _esc(name), _kopf_sektion(daten, printer_friendly), "\n".join(sections), printer_friendly
+        _esc(name), _kopf_sektion(daten, printer_friendly, bild), "\n".join(sections), printer_friendly
     )

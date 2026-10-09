@@ -33,6 +33,9 @@ class SpiellogikRequest(BaseModel):
 class CharakterbogenRequest(SpiellogikRequest):
     # Druckerfreundliche Version ohne Hintergrundfarben (wie im Original)
     printer_friendly: bool = False
+    # Porträt des gespeicherten Charakters (Capability-ID wie in /api/bilder);
+    # der Endpoint bleibt ohne DB-Zugriff und liest nur die Datei.
+    bild_id: str | None = None
 
 
 class SettingElementRequest(SpiellogikRequest):

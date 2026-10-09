@@ -197,11 +197,14 @@ export interface CharakterListItem {
   char_name: string
   active_setting_name: string
   char_gen_completed: boolean
+  // Porträt (nur Konto-Charaktere); URLs baut utils/charakterBild.ts
+  bild_id?: string | null
   aktualisiert_am: string
 }
 
 export interface CharakterDetail extends CharakterListItem {
   charakter_daten: CharakterDaten
+  bild_fokus_y?: number | null
   erstellt_am: string
 }
 

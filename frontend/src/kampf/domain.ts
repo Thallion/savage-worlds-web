@@ -890,6 +890,8 @@ export interface KaempferDaten {
   machtpunkte?: number
   /** Namen der beherrschten Mächte (siehe kampf/maechte.ts). */
   maechte?: string[]
+  /** Porträt eigener Charaktere (nur Anzeige, siehe utils/charakterBild.ts). */
+  bild_id?: string | null
 }
 
 /** Festgehalten/Gebunden (S. 103) durch Ringen oder Verstricken. */
@@ -934,6 +936,8 @@ export class Kaempfer {
   arkaneFertigkeit: string
   maxMachtpunkte: number
   maechte: string[]
+  /** Nur Anzeige: Porträt-ID eigener Charaktere. */
+  bildId: string | null
 
   // Kampfzustand
   wunden = 0
@@ -986,6 +990,7 @@ export class Kaempfer {
     arkaneFertigkeit?: string
     machtpunkte?: number
     maechte?: string[]
+    bildId?: string | null
   }) {
     this.id = `k${naechsteId++}`
     this.name = d.name
@@ -1008,6 +1013,7 @@ export class Kaempfer {
     this.maxMachtpunkte = Math.max(0, d.machtpunkte ?? 0)
     this.machtpunkte = this.maxMachtpunkte
     this.maechte = [...(d.maechte ?? [])]
+    this.bildId = d.bildId ?? null
   }
 
   /** Kann überhaupt Mächte wirken (arkane Fertigkeit und Mächte bekannt). */
@@ -1349,6 +1355,7 @@ export class Kaempfer {
       arkane_fertigkeit: this.arkaneFertigkeit,
       machtpunkte: this.maxMachtpunkte,
       maechte: [...this.maechte],
+      bild_id: this.bildId,
     }
   }
 
@@ -1374,6 +1381,7 @@ export class Kaempfer {
       fertigkeiten: wuerfelMap(d.fertigkeiten),
       waffen,
       arkaneFertigkeit: d.arkane_fertigkeit,
+      bildId: d.bild_id,
     })
   }
 }

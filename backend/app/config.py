@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     # Eigene Settings der Nutzer — liegt unter data/ (Docker-Volume), damit sie
     # App-Updates überleben (Original: user_settings_dir mit custom_*.json)
     custom_settings_path: Path = Path("data") / "settings"
+    # Charakterporträts (data/bilder/<user_id>/<bild_id>_<variante>.webp)
+    bilder_path: Path = Path("data") / "bilder"
+    bild_max_upload_mb: int = 8
+    bild_kontingent_mb: int = 50
 
     model_config = {"env_prefix": "CHARGEN_"}
 

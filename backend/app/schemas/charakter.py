@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class CharakterCreate(BaseModel):
@@ -22,6 +22,8 @@ class CharakterResponse(BaseModel):
     char_name: str
     active_setting_name: str
     char_gen_completed: bool
+    bild_id: str | None = None
+    bild_fokus_y: float | None = None
     erstellt_am: datetime
     aktualisiert_am: datetime
 
@@ -38,6 +40,7 @@ class CharakterListItem(BaseModel):
     char_name: str
     active_setting_name: str
     char_gen_completed: bool
+    bild_id: str | None = None
     aktualisiert_am: datetime
 
     model_config = {"from_attributes": True}
@@ -47,3 +50,9 @@ class CharakterVerschieben(BaseModel):
     """Verschiebt einen Charakter in einen Ordner (ordner_id) oder heraus (None)."""
 
     ordner_id: int | None = None
+
+
+class BildFokus(BaseModel):
+    """Vertikaler Fokus (0 = oben, 1 = unten) für den quadratischen Avatar."""
+
+    fokus_y: float = Field(ge=0.0, le=1.0)

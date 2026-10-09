@@ -1,17 +1,31 @@
 <template>
   <v-card class="cursor-pointer" hover @click="emit('oeffnen')">
-    <v-card-title>{{ char.char_name || 'Unbenannt' }}</v-card-title>
-    <v-card-subtitle>{{ char.active_setting_name }}</v-card-subtitle>
-    <v-card-text>
-      <!-- Der Chip meint den Stand der Erschaffung (wie „Erschaffung abschließen"
-           im Editor), nicht ob der Bogen gerade offen ist. -->
-      <v-chip :color="char.char_gen_completed ? 'success' : 'warning'" size="small">
-        {{ char.char_gen_completed ? 'Erschaffung abgeschlossen' : 'Erschaffung offen' }}
-      </v-chip>
-      <div class="text-caption mt-2">
-        Zuletzt bearbeitet: {{ new Date(char.aktualisiert_am).toLocaleDateString('de-DE') }}
+    <div class="d-flex">
+      <!-- Porträt links, damit die Karte so niedrig bleibt wie ohne Bild -->
+      <div class="pt-4 ps-4">
+        <CharakterPortraet
+          :bild-id="char.bild_id"
+          :name="char.char_name"
+          :setting="char.active_setting_name"
+          variante="karte"
+          :breite="mobile ? 54 : 72"
+        />
       </div>
-    </v-card-text>
+      <div class="flex-grow-1" style="min-width: 0">
+        <v-card-title class="text-truncate">{{ char.char_name || 'Unbenannt' }}</v-card-title>
+        <v-card-subtitle>{{ char.active_setting_name }}</v-card-subtitle>
+        <v-card-text>
+          <!-- Der Chip meint den Stand der Erschaffung (wie „Erschaffung abschließen"
+               im Editor), nicht ob der Bogen gerade offen ist. -->
+          <v-chip :color="char.char_gen_completed ? 'success' : 'warning'" size="small">
+            {{ char.char_gen_completed ? 'Erschaffung abgeschlossen' : 'Erschaffung offen' }}
+          </v-chip>
+          <div class="text-caption mt-2">
+            Zuletzt bearbeitet: {{ new Date(char.aktualisiert_am).toLocaleDateString('de-DE') }}
+          </div>
+        </v-card-text>
+      </div>
+    </div>
     <v-card-actions>
       <!-- Verschieben -->
       <v-menu v-if="verschiebbar">
@@ -44,7 +58,11 @@
 </template>
 
 <script setup lang="ts">
+import { useDisplay } from 'vuetify'
 import type { CharakterListItem, Ordner } from '@/types/charakter'
+import CharakterPortraet from './CharakterPortraet.vue'
+
+const { xs: mobile } = useDisplay()
 
 withDefaults(
   defineProps<{

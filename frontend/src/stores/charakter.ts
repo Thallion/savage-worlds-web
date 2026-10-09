@@ -217,6 +217,34 @@ export const useCharakterStore = defineStore('charakter', () => {
     return charakter
   }
 
+  // ---- Porträt ----
+  // Wirkt sofort auf dem Server, unabhängig von „Speichern“ und der Undo-Historie:
+  // nur bild_id/bild_fokus_y übernehmen, ungespeicherte charakter_daten bleiben.
+
+  function uebernehmeBild(antwort: CharakterDetail) {
+    if (aktuellerCharakter.value?.id === antwort.id) {
+      aktuellerCharakter.value.bild_id = antwort.bild_id
+      aktuellerCharakter.value.bild_fokus_y = antwort.bild_fokus_y
+    }
+    const eintrag = liste.value.find((c) => c.id === antwort.id)
+    if (eintrag) eintrag.bild_id = antwort.bild_id
+  }
+
+  async function ladeBildHoch(id: number, bild: Blob, fokusY: number) {
+    const form = new FormData()
+    form.append('datei', bild, 'portraet.webp')
+    form.append('fokus_y', String(fokusY))
+    uebernehmeBild(await api.putForm<CharakterDetail>(`/charaktere/${id}/bild`, form))
+  }
+
+  async function setzeBildFokus(id: number, fokusY: number) {
+    uebernehmeBild(await api.patch<CharakterDetail>(`/charaktere/${id}/bild`, { fokus_y: fokusY }))
+  }
+
+  async function entferneBild(id: number) {
+    uebernehmeBild(await api.delete<CharakterDetail>(`/charaktere/${id}/bild`))
+  }
+
   // ---- Ordner ----
 
   /**
@@ -422,6 +450,9 @@ export const useCharakterStore = defineStore('charakter', () => {
     exportiereCharakter,
     importiereCharakter,
     uebernehmeGastCharaktere,
+    ladeBildHoch,
+    setzeBildFokus,
+    entferneBild,
     ladeOrdner,
     erstelleOrdner,
     benenneOrdner,

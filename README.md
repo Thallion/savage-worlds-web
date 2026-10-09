@@ -51,6 +51,9 @@ Das Backend liest Umgebungsvariablen mit dem Präfix `CHARGEN_` (siehe `backend/
 | `CHARGEN_SECRET_KEY` | Unsicherer Platzhalter | JWT-Signaturschlüssel — in Produktion setzen (`openssl rand -hex 32`) |
 | `CHARGEN_DATABASE_URL` | `sqlite:///./data/chargen.db` | SQLAlchemy-Datenbank-URL |
 | `CHARGEN_ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` | Token-Gültigkeit (24 h) |
+| `CHARGEN_BILDER_PATH` | `data/bilder` | Ablage der Charakterporträts (beim Backup neben `chargen.db` mitsichern) |
+| `CHARGEN_BILD_MAX_UPLOAD_MB` | `8` | Maximale Größe eines Porträt-Uploads |
+| `CHARGEN_BILD_KONTINGENT_MB` | `50` | Porträt-Speicher pro Konto |
 
 ## Produktion / Docker
 

@@ -268,7 +268,15 @@
                 :class="{ 'status-aus': !k.istKampffaehig }"
               >
                 <div class="d-flex justify-space-between ga-2">
-                  <strong>{{ k.name }}</strong>
+                  <span class="d-flex align-center ga-2">
+                    <CharakterPortraet
+                      v-if="k.bildId"
+                      :bild-id="k.bildId"
+                      :name="k.name"
+                      :breite="28"
+                    />
+                    <strong>{{ k.name }}</strong>
+                  </span>
                   <span class="text-medium-emphasis text-no-wrap">
                     Parade {{ k.aktuelleParade }}, Robustheit {{ kampf.robustheitVon(k) }}{{ k.gesamtPanzerung ? ` (${k.gesamtPanzerung})` : '' }}
                   </span>
@@ -435,6 +443,7 @@
                 <span class="karte-mitte">{{ k.karte.joker ? 'Joker' : k.karte.symbol }}</span>
                 <span class="karte-ecke karte-ecke-unten">{{ k.karte.kuerzel }}<br />{{ k.karte.symbol }}</span>
               </div>
+              <CharakterPortraet v-if="k.bildId" :bild-id="k.bildId" :name="k.name" :breite="28" />
               <span class="platz-name">{{ k.name }}</span>
               <span class="platz-zustand">{{ zustandText(k) }}</span>
             </li>
@@ -819,6 +828,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useCharakterStore } from '@/stores/charakter'
+import CharakterPortraet from '@/components/charakter/CharakterPortraet.vue'
 import { ANGESAGTE_ZIELE, HERAUSFORDERN_ATTRIBUT, KampfController, type AngesagtesZiel } from '@/kampf/controller'
 import {
   ATTRIBUTE,
@@ -1087,8 +1097,12 @@ function erstelleSchnellKaempfer(): Kaempfer {
 async function ladeKaempfer(): Promise<Kaempfer> {
   if (quelle.value === 'schnell') return erstelleSchnellKaempfer()
   let profil: Kampfprofil
-  if (quelle.value === 'charakter') profil = await store.ladeKampfprofilCharakter(auswahlCharakter.value!)
-  else if (quelle.value === 'kreatur') profil = await store.ladeKampfprofilKreatur(auswahlKreatur.value!)
+  if (quelle.value === 'charakter') {
+    profil = await store.ladeKampfprofilCharakter(auswahlCharakter.value!)
+    const bildId = store.liste.find((c) => c.id === auswahlCharakter.value)?.bild_id
+    return Kaempfer.ausDaten({ ...profil, bild_id: bildId ?? null })
+  }
+  if (quelle.value === 'kreatur') profil = await store.ladeKampfprofilKreatur(auswahlKreatur.value!)
   else profil = await store.ladeKampfprofilArchetyp(auswahlArchetyp.value!)
   return Kaempfer.ausDaten(profil)
 }

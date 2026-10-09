@@ -57,6 +57,7 @@ from app.services.ausruestung import (
 )
 from app.services import cyberware, superkraefte
 from app.services.charakterbogen import generiere_charakterbogen
+from app.services import charakterbild
 from app.services.charakterbogen_pdf import generiere_charakterbogen_pdf
 from app.services.setting_elemente import (
     loesche_element,
@@ -1923,7 +1924,8 @@ def charakterbogen(req: CharakterbogenRequest):
         setting = {}
     setting = wende_setting_overrides_an(setting, daten)
     werte = berechne_abgeleitete_werte(req)
-    return {"html": generiere_charakterbogen(daten, setting, werte, req.printer_friendly)}
+    bild = charakterbild.lade(req.bild_id, "gross")
+    return {"html": generiere_charakterbogen(daten, setting, werte, req.printer_friendly, bild)}
 
 
 @router.post("/charakterbogen/pdf")
@@ -1936,7 +1938,8 @@ def charakterbogen_pdf(req: CharakterbogenRequest):
         setting = {}
     setting = wende_setting_overrides_an(setting, daten)
     werte = berechne_abgeleitete_werte(req)
-    pdf = generiere_charakterbogen_pdf(daten, setting, werte, req.printer_friendly)
+    bild = charakterbild.lade(req.bild_id, "gross")
+    pdf = generiere_charakterbogen_pdf(daten, setting, werte, req.printer_friendly, bild)
 
     name = daten.get("profil_daten", {}).get("Name") or "charakter"
     dateiname = f"{name}.pdf"

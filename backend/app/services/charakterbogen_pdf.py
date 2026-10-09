@@ -14,6 +14,7 @@ Helfer mit dem HTML-Bogen, damit beide Darstellungen synchron bleiben.
 from io import BytesIO
 from xml.sax.saxutils import escape as _xml_escape
 
+from PIL import Image as PILImage, ImageOps
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -206,7 +207,36 @@ def _icon_row(bogen: _Bogen):
     return t
 
 
-def _kopf(bogen: _Bogen, daten: dict) -> list:
+PORTRAET_BREITE = 35 * mm
+PORTRAET_HOEHE = PORTRAET_BREITE * 4 / 3
+
+
+def _portraet(bogen: _Bogen, bild: bytes) -> Table | None:
+    """Porträt (3:4) mit Rahmen in Bandfarbe; druckfreundlich in Graustufen."""
+    try:
+        img = PILImage.open(BytesIO(bild))
+        img = ImageOps.grayscale(img) if bogen.printer_friendly else img.convert("RGB")
+    except OSError:
+        return None
+    # Als JPEG übergeben — reportlab bettet das direkt ein
+    puffer = BytesIO()
+    img.save(puffer, "JPEG", quality=90)
+    puffer.seek(0)
+    t = Table([[Image(puffer, width=PORTRAET_BREITE - 2 * mm, height=PORTRAET_HOEHE - 2 * mm)]],
+              colWidths=[PORTRAET_BREITE], rowHeights=[PORTRAET_HOEHE])
+    t.setStyle(TableStyle([
+        ("BOX", (0, 0), (-1, -1), 0.8, bogen.f["band_rand"]),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+        ("TOPPADDING", (0, 0), (-1, -1), 0),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 0),
+    ]))
+    return t
+
+
+def _kopf(bogen: _Bogen, daten: dict, bild: bytes | None = None) -> list:
     name = daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter"
     untertitel = "Charakterbogen"
     setting_name = daten.get("active_setting_name")
@@ -218,11 +248,26 @@ def _kopf(bogen: _Bogen, daten: dict) -> list:
         ("LINEABOVE", (0, 0), (-1, 0), 1.2, bogen.f["band_rand"]),
         ("LINEBELOW", (0, 0), (-1, 0), 0.6, bogen.f["band_rand"]),
     ]))
-    return [
+    text = [
         _icon_row(bogen),
         Spacer(1, 4),
         bogen.p(name.upper(), bogen.h1),
         bogen.p(untertitel.upper(), bogen.untertitel),
+    ]
+    portraet = _portraet(bogen, bild) if bild else None
+    if portraet is not None:
+        # Leere linke Spalte so breit wie das Bild, damit der Name mittig bleibt
+        mitte = INHALT_BREITE - 2 * PORTRAET_BREITE
+        kopf = Table([["", text, portraet]], colWidths=[PORTRAET_BREITE, mitte, PORTRAET_BREITE])
+        kopf.setStyle(TableStyle([
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 0),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+            ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ]))
+        text = [kopf]
+    return text + [
         Spacer(1, 3),
         trennlinie,
         Spacer(1, 6),
@@ -672,7 +717,8 @@ def _mach_hintergrund(bogen: _Bogen):
 
 
 def generiere_charakterbogen_pdf(
-    daten: dict, setting: dict, werte: dict, printer_friendly: bool = False
+    daten: dict, setting: dict, werte: dict, printer_friendly: bool = False,
+    bild: bytes | None = None,
 ) -> bytes:
     """Erzeugt den Charakterbogen als PDF (DIN A4).
 
@@ -687,7 +733,7 @@ def generiere_charakterbogen_pdf(
         title=name, author="Savage Worlds Charakter-Generator",
     )
 
-    flowables = _kopf(bogen, daten)
+    flowables = _kopf(bogen, daten, bild)
     flowables += _profil(bogen, daten)
     flowables += _attribute_fertigkeiten(bogen, daten, setting, werte)
     flowables += _handicaps(bogen, daten, setting)

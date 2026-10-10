@@ -495,6 +495,11 @@ def _eigene_handicap_kopien(daten: dict, handicap_name: str) -> int:
     return max(0, anzahl)
 
 
+def _ist_volks_kopie(daten: dict, handicap_name: str, eigene_kopie: bool) -> bool:
+    """Trifft die Aktion die Abstammungs-Kopie (eigene Kopien gehen vor)?"""
+    return not eigene_kopie and handicap_name in daten.get("volk_effekte", {}).get("handicaps", [])
+
+
 def _handicap_punkte_gewaehrt(daten: dict, handicap_name: str, stufe: str) -> int:
     """Punkte, die eine (die zuletzt gewählte) Kopie gutgeschrieben bekommen hat.
 
@@ -604,11 +609,14 @@ def handicap_entfernen(req: SpiellogikRequest):
     # Bei Mehrfachauswahl wird zuerst die selbst gewählte Kopie entfernt;
     # Volks- und Talent-Kopien bleiben geschützt
     eigene_kopie = _eigene_handicap_kopien(daten, handicap_name) > 0
+    volks_kopie = _ist_volks_kopie(daten, handicap_name, eigene_kopie)
 
-    if not eigene_kopie and handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
+    # Abstammungs-Handicaps lassen sich nur nach der Erschaffung per Aufstieg abkaufen
+    if volks_kopie and not daten.get("char_gen_completed"):
         return SpiellogikResponse(
             success=False,
-            message=f"'{handicap_name}' stammt vom gewählten Volk und kann nicht entfernt werden",
+            message=f"'{handicap_name}' stammt von der Abstammung und kann erst nach der "
+            "Erschaffung per Aufstieg abgekauft werden",
         )
 
     if not eigene_kopie and ist_auto_element(daten, "handicaps", handicap_name):
@@ -647,17 +655,19 @@ def handicap_entfernen(req: SpiellogikRequest):
         daten["verbleibende_aufstiege"] = daten.get("verbleibende_aufstiege", 0) - AUFSTIEG_KOSTEN_HANDICAP
         selected.remove(handicap_name)
         daten["selected_handicaps"] = selected
-        _handicap_punkte_abbuchen(daten, handicap_name, punkte)
-        journal_eintrag(
-            daten,
-            "handicap_entfernt",
-            {
-                "name": handicap_name,
-                "punkte": punkte,
-                "kosten": AUFSTIEG_KOSTEN_HANDICAP,
-                "kosten_typ": "Aufstieg",
-            },
-        )
+        details = {
+            "name": handicap_name,
+            "punkte": punkte,
+            "kosten": AUFSTIEG_KOSTEN_HANDICAP,
+            "kosten_typ": "Aufstieg",
+        }
+        if volks_kopie:
+            # Volks-Kopien haben keine Punkte gebracht
+            daten["volk_effekte"]["handicaps"].remove(handicap_name)
+            details.update(punkte=0, volk=True)
+        else:
+            _handicap_punkte_abbuchen(daten, handicap_name, punkte)
+        journal_eintrag(daten, "handicap_entfernt", details)
         return SpiellogikResponse(success=True, charakter_daten=daten)
 
     if daten.get("verbleibende_handicap_punkte", 0) < punkte:
@@ -693,11 +703,13 @@ def handicap_reduzieren(req: SpiellogikRequest):
         return SpiellogikResponse(success=False, message=f"'{handicap_name}' ist nicht ausgewählt")
 
     eigene_kopie = _eigene_handicap_kopien(daten, handicap_name) > 0
+    volks_kopie = _ist_volks_kopie(daten, handicap_name, eigene_kopie)
 
-    if not eigene_kopie and handicap_name in daten.get("volk_effekte", {}).get("handicaps", []):
+    if volks_kopie and not daten.get("char_gen_completed"):
         return SpiellogikResponse(
             success=False,
-            message=f"'{handicap_name}' stammt vom gewählten Volk und kann nicht reduziert werden",
+            message=f"'{handicap_name}' stammt von der Abstammung und kann erst nach der "
+            "Erschaffung per Aufstieg reduziert werden",
         )
 
     if not eigene_kopie and ist_auto_element(daten, "handicaps", handicap_name):
@@ -781,16 +793,18 @@ def handicap_reduzieren(req: SpiellogikRequest):
         _handicap_punkte_abbuchen(daten, handicap_name, gewaehrt_alt)
     if not abgeschlossen:
         _handicap_punkte_nachruecken(daten, setting)
-    journal_eintrag(
-        daten,
-        "handicap_reduziert",
-        {
-            "name": handicap_name,
-            "leicht": leicht_key,
-            "kosten": AUFSTIEG_KOSTEN_HANDICAP,
-            "kosten_typ": "Aufstieg",
-        },
-    )
+    details = {
+        "name": handicap_name,
+        "leicht": leicht_key,
+        "kosten": AUFSTIEG_KOSTEN_HANDICAP,
+        "kosten_typ": "Aufstieg",
+    }
+    if volks_kopie:
+        # Die leichte Stufe bleibt Abstammungs-Handicap (fällt beim Volk-Wechsel weg)
+        volk_handicaps = daten["volk_effekte"]["handicaps"]
+        volk_handicaps[volk_handicaps.index(handicap_name)] = leicht_key
+        details["volk"] = True
+    journal_eintrag(daten, "handicap_reduziert", details)
     return SpiellogikResponse(success=True, charakter_daten=daten)
 
 
@@ -1467,8 +1481,10 @@ def _journal_eintrag_zuruecknehmen(daten: dict, index: int, ignoriere: bool) -> 
         if konflikt:
             return fehler(konflikt)
         daten.setdefault("selected_handicaps", []).append(name)
+        if details.get("volk"):
+            daten.setdefault("volk_effekte", {}).setdefault("handicaps", []).append(name)
         gewaehrt_map = daten.get("handicap_punkte_gewaehrt", {})
-        if name in gewaehrt_map and details.get("punkte") is not None:
+        if name in gewaehrt_map and details.get("punkte") is not None and not details.get("volk"):
             gewaehrt_map[name] += details["punkte"]
     elif typ == "handicap_reduziert":
         leicht = details.get("leicht") or _leichtes_gegenstueck(daten, name)
@@ -1479,6 +1495,9 @@ def _journal_eintrag_zuruecknehmen(daten: dict, index: int, ignoriere: bool) -> 
         selected.remove(leicht)
         selected.reverse()
         selected.append(name)
+        volk_handicaps = daten.get("volk_effekte", {}).get("handicaps", [])
+        if details.get("volk") and leicht in volk_handicaps:
+            volk_handicaps[volk_handicaps.index(leicht)] = name
     else:
         return fehler("Dieser Eintrag kann nicht rückgängig gemacht werden")
 

@@ -14,7 +14,8 @@
         <template v-if="istAbgeschlossen">
           <br />
           Nach der Erschaffung: schweres Handicap auf leicht reduzieren oder ein
-          leichtes ganz abkaufen kostet je <strong>1 Aufstieg</strong>.
+          leichtes ganz abkaufen kostet je <strong>1 Aufstieg</strong> — auch bei
+          Handicaps der Abstammung.
         </template>
       </v-alert>
 
@@ -60,8 +61,16 @@
               {{ h.anzeige }}
               <span class="ml-1 text-caption">({{ h.stufe }})</span>
             </v-chip>
+            <v-chip
+              v-if="h.vonAbstammung"
+              size="x-small"
+              variant="outlined"
+              title="Handicap der Abstammung — nach der Erschaffung per Aufstieg reduzier- bzw. abkaufbar"
+            >
+              Abstammung
+            </v-chip>
             <v-btn
-              v-if="h.kannReduzieren"
+              v-if="h.kannReduzieren && (!h.vonAbstammung || istAbgeschlossen)"
               size="x-small"
               variant="tonal"
               color="primary"
@@ -71,6 +80,7 @@
               {{ istAbgeschlossen ? 'Auf leicht reduzieren (1 Aufstieg)' : 'Auf leicht reduzieren' }}
             </v-btn>
             <v-btn
+              v-if="!h.vonAbstammung || istAbgeschlossen"
               size="x-small"
               variant="text"
               color="error"
@@ -322,18 +332,23 @@ function hatLeichtVariante(schwerKey: string): boolean {
   )
 }
 
-const ausgewaehlteHandicaps = computed(() =>
-  selectedHandicaps.value.map((key: string) => {
+const ausgewaehlteHandicaps = computed(() => {
+  // Je Volks-Handicap gilt die erste Kopie als die der Abstammung
+  const volkOffen = [...(daten.value.volk_effekte?.handicaps ?? [])]
+  return selectedHandicaps.value.map((key: string) => {
     const h = (handicaps.value as Record<string, any>)[key] ?? {}
     const stufe = String(h.stufe ?? '').toLowerCase() || 'leicht'
+    const volkIndex = volkOffen.indexOf(key)
+    if (volkIndex >= 0) volkOffen.splice(volkIndex, 1)
     return {
       key,
       anzeige: h.name ?? key,
       stufe,
+      vonAbstammung: volkIndex >= 0,
       kannReduzieren: stufe === 'schwer' && hatLeichtVariante(key),
     }
-  }),
-)
+  })
+})
 
 // Auswahl kann mit Stufen-Suffix gespeichert sein (z. B. "Arm_leicht")
 function istGewaehlt(name: string): boolean {

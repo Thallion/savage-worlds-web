@@ -2999,7 +2999,54 @@ def test_ziel_handicap_neben_volks_kopie(aventurien):
     assert d["gesamt_handicap_punkte"] == 0
     r = aktion("handicap/entfernen", d, "Phobie_schwer")
     assert not r["success"]
-    assert "Volk" in r["message"]
+    assert "Abstammung" in r["message"]
+    r = aktion("handicap/reduzieren", d, "Phobie_schwer")
+    assert not r["success"]
+    assert "Abstammung" in r["message"]
+
+
+def _zwerg_mit_aufstiegen(aventurien, anzahl: int) -> dict:
+    return mit_aufstiegen(aktion("volk/waehlen", aventurien, "Zwerg")["charakter_daten"], anzahl)
+
+
+def test_volks_handicap_nach_erschaffung_reduzieren_und_abkaufen(aventurien):
+    d = _zwerg_mit_aufstiegen(aventurien, 2)
+    punkte_vorher = d["gesamt_handicap_punkte"]
+    # Schwer erst reduzieren, nicht direkt abkaufen
+    r = aktion("handicap/entfernen", d, "Phobie_schwer")
+    assert not r["success"]
+
+    r = aktion("handicap/reduzieren", d, "Phobie_schwer")
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 1
+    assert "Phobie_leicht" in d["selected_handicaps"]
+    assert "Phobie_leicht" in d["volk_effekte"]["handicaps"]
+    assert "Phobie_schwer" not in d["volk_effekte"]["handicaps"]
+
+    r = aktion("handicap/entfernen", d, "Phobie_leicht")
+    assert r["success"], r["message"]
+    d = r["charakter_daten"]
+    assert d["verbleibende_aufstiege"] == 0
+    assert "Phobie_leicht" not in d["selected_handicaps"]
+    assert "Phobie_leicht" not in d["volk_effekte"]["handicaps"]
+    assert d["gesamt_handicap_punkte"] == punkte_vorher
+
+
+def test_volks_handicap_abkaufen_rueckgaengig(aventurien):
+    d = _zwerg_mit_aufstiegen(aventurien, 2)
+    d = aktion("handicap/reduzieren", d, "Phobie_schwer")["charakter_daten"]
+    d = aktion("handicap/entfernen", d, "Phobie_leicht")["charakter_daten"]
+    eintraege = journal(d)
+    assert eintraege[-1]["details"]["volk"] is True
+
+    d = aktion("aufstieg/rueckgaengig", d, eintraege[-1]["id"])["charakter_daten"]
+    assert "Phobie_leicht" in d["volk_effekte"]["handicaps"]
+    d = aktion("aufstieg/rueckgaengig", d, journal(d)[-1]["id"])["charakter_daten"]
+    assert "Phobie_schwer" in d["selected_handicaps"]
+    assert "Phobie_leicht" not in d["selected_handicaps"]
+    assert d["volk_effekte"]["handicaps"].count("Phobie_schwer") == 1
+    assert d["verbleibende_aufstiege"] == 2
 
 
 def test_ziel_handicap_reduzieren_neben_leichter_kopie(daten):

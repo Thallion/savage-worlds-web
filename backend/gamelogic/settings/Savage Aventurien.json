@@ -6531,6 +6531,385 @@
         "Behindernde_Rüstung_schwer",
         "Materialkomponenten"
       ],
+      "auswirkung": "",
+      "auto_talente": [
+        "Bindung des Rings"
+      ]
+    },
+    "Bindung des Rings": {
+      "name": "Bindung des Rings",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "AH (Geode)"
+      ],
+      "beschreibung": "Der Geode bindet seinen Lebensring (goldener Halsreif: Schlange, die sich in den Schwanz beißt) bei seiner Weihe; durch AH (Geode) automatisch und kostenlos. Der Ring ist unzerbrechlich (nur durch Feuer heißer als Drachenodem oder Bannen mit Steigerung zerstörbar) und nach der Bindung nicht mehr ablegbar; geweihtes Gold stört die Magie nicht.\n\nRingzauber sind Talente der Kategorie Lebensring zu je 1 Aufstieg; ihr Rang richtet sich nach den DSA-AP (10 = Anfänger, 12 = Fortgeschritten, 15 = Veteran, 20 = Heroisch, 25 = Legendär). Der Ring fasst Ringzauber mit insgesamt 12 Volumen (Volumenerweiterung: +1 je Stufe).\n\nAktivierung: 1 Aktion, MP zahlen, keine Zaubernprobe – gilt als Erfolg. Keine Steigerung, keine Modifikatoren, keine Zusätzliche Anstrengung, kein Rückschlag. Nur ein Ringzauber gleichzeitig aktiv; Beenden als freie Aktion. Bannen wirkt normal (der Geode verteidigt mit Zaubern).\n\nGehemmte Magie: Wo Erz- oder Humusmagie Abzüge erleidet, wirken Erz-/Humus-Ringzauber nicht automatisch, sondern erfordern eine Zaubernprobe mit dem Abzug. Was der Stein nicht durchlässt, lässt auch der Ring nicht durch.\n\nBann des Eisens: gilt regeltechnisch nicht (nicht Teil von AH (Geode)); inhaltlich trägt ein Geode kein verhüttetes Metall.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "kostenlos": true,
+      "auswirkung": ""
+    },
+    "Heilkräfte der Natur": {
+      "name": "Heilkräfte der Natur",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 4) · SW-Macht: Heilung · 3 MP. 30 Minuten unter Laub oder auf Humus: heilt 1 Wunde, auch wenn sie älter als eine Stunde ist. Nicht bei Außer Gefecht. Einmal pro Patient und Tag.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 4,
+      "auswirkung": ""
+    },
+    "Machtvolle Heilkräfte": {
+      "name": "Machtvolle Heilkräfte",
+      "kategorie": "Lebensring",
+      "rang": "V",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Heilkräfte der Natur"
+      ],
+      "beschreibung": "Ringzauber (Volumen 5) · SW-Macht: Heilung (Neutralisieren) · 4 MP. 30 Minuten: heilt eine nichtmagische Krankheit oder ein Gift.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 5,
+      "auswirkung": ""
+    },
+    "Beherrscher der Flammen": {
+      "name": "Beherrscher der Flammen",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 3) · SW-Macht: Elementarmanipulation (Feuer) · 1 MP. 5 Runden: alle natürlichen Flammen bis Lagerfeuergröße im Umkreis von 4\" anfachen, dämpfen oder löschen; beendet Brennend im Bereich.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 3,
+      "auswirkung": ""
+    },
+    "Seelenfeuer": {
+      "name": "Seelenfeuer",
+      "kategorie": "Lebensring",
+      "rang": "H",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Beherrscher der Flammen"
+      ],
+      "beschreibung": "Ringzauber (Volumen 6) · SW-Macht: Schadensfeld · 4 MP. Stationäre Zone, 4\" Umkreis, 5 Runden; betrifft nur Lebewesen. Betreten: Willenskraftprobe. Wer die Zone betritt oder seine Runde darin beendet, würfelt Geschicklichkeit, sonst 2W4 Schaden ohne Panzerung. Der Geode ist immun.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 6,
+      "auswirkung": ""
+    },
+    "Wasserbann": {
+      "name": "Wasserbann",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 3) · SW-Macht: Schutz vor Naturgewalten (Wasser) · 2 MP. 1 Stunde Luftblase: kein Wasser dringt ein, Atemluft für 1 Stunde. Der Geschützte sinkt, Schwimmen ist nicht möglich.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 3,
+      "auswirkung": ""
+    },
+    "Machtvoller Wasserbann": {
+      "name": "Machtvoller Wasserbann",
+      "kategorie": "Lebensring",
+      "rang": "V",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Wasserbann"
+      ],
+      "beschreibung": "Ringzauber (Volumen 4) · SW-Macht: Schutz vor Naturgewalten (+ Zusätzliche Empfänger) · 2 je 30 Minuten MP. Kugel (mittlere Schablone), die sich mit dem Geoden bewegt und mehrere Personen schützt.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 4,
+      "auswirkung": ""
+    },
+    "Macht über Regen": {
+      "name": "Macht über Regen",
+      "kategorie": "Lebensring",
+      "rang": "F",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Wasserbann"
+      ],
+      "beschreibung": "Ringzauber (Volumen 4) · SW-Macht: Elementarmanipulation (Wetter) · 3 MP. Vorhandene Wolken im Umkreis von 1 Meile regnen ab. Erzeugt keine neuen Wolken.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 4,
+      "auswirkung": ""
+    },
+    "Wirbelnder Luftschild": {
+      "name": "Wirbelnder Luftschild",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 3) · SW-Macht: Abwehren (nur Fernkampf) · 2 MP. 5 Runden: Fernkampfangriffe gegen den Geoden −4, sein eigener Fernkampf ebenfalls −4.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 3,
+      "auswirkung": ""
+    },
+    "Machtvoller Luftschild": {
+      "name": "Machtvoller Luftschild",
+      "kategorie": "Lebensring",
+      "rang": "V",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Wirbelnder Luftschild"
+      ],
+      "beschreibung": "Ringzauber (Volumen 6) · SW-Macht: Abwehren (Zone) · 4 MP. Stationäre Zone, 4\" Umkreis, 5 Runden: jeder Fernkampfangriff hinein, heraus oder hindurch −4.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 6,
+      "auswirkung": ""
+    },
+    "Launen des Windes": {
+      "name": "Launen des Windes",
+      "kategorie": "Lebensring",
+      "rang": "F",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Wirbelnder Luftschild"
+      ],
+      "beschreibung": "Ringzauber (Volumen 5) · SW-Macht: Fliegen (Feder) · 1 pro Minute MP. Schwerelos mit bis zu 12 Stein Gepäck; Richtungswechsel nur durch Abstoßen, Bewegungsweite normal. Endet der Zauber in der Luft: Sturz.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 5,
+      "auswirkung": ""
+    },
+    "Magnetismus": {
+      "name": "Magnetismus",
+      "kategorie": "Lebensring",
+      "rang": "V",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 7) · SW-Macht: Telekinese (Metall) · 4 MP. Stationäre Zone, 4\" Umkreis, 5 Runden. Wer eine Metallwaffe halten will, muss eine Stärkeprobe schaffen, sonst fällt sie; gehalten −2 auf Kämpfen und Parade. Geschosse mit Metall fallen zu Boden. Metallrüstung: −1 Geschicklichkeit, −2 Bewegungsweite.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 7,
+      "auswirkung": ""
+    },
+    "Eiskristalle": {
+      "name": "Eiskristalle",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 4) · SW-Macht: Geschoss (Eis) · 2 MP. Trifft automatisch, 2W6 Schaden. Nicht in Wüste oder Dschungel. Eis ist für Diener Sumus verpönt.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 4,
+      "auswirkung": ""
+    },
+    "Frostwelle": {
+      "name": "Frostwelle",
+      "kategorie": "Lebensring",
+      "rang": "V",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Eiskristalle"
+      ],
+      "beschreibung": "Ringzauber (Volumen 4) · SW-Macht: Flächenschlag (Eis) · 4 MP. Alle Lebewesen (auch Verbündete) im Umkreis von 8\": 2W4 Schaden, Konstitutionsprobe oder Betäubt. Verpönt.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 4,
+      "auswirkung": ""
+    },
+    "Schutzzone vor Bösem": {
+      "name": "Schutzzone vor Bösem",
+      "kategorie": "Lebensring",
+      "rang": "F",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 6) · SW-Macht: Heiligtum (Bannzone) · 1 pro Runde MP. Stationär, bis 2\" Umkreis. Geister, hirnlose Untote und niedere Dämonen können nicht eindringen. Wer vom Rand aus angreift, kann zurück angegriffen werden.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 6,
+      "auswirkung": ""
+    },
+    "Weg durch Sumus Leib": {
+      "name": "Weg durch Sumus Leib",
+      "kategorie": "Lebensring",
+      "rang": "H",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 5) · SW-Macht: Teleportation (durch Erz/Humus) · 5 MP. Durch Erde oder Fels bis zu 10 Meilen an eine verbundene Stelle. Kein Metall außer dem Ring, höchstens 5 Stein Gepäck.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 5,
+      "auswirkung": ""
+    },
+    "Pforte durch Sumus Leib": {
+      "name": "Pforte durch Sumus Leib",
+      "kategorie": "Lebensring",
+      "rang": "L",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Weg durch Sumus Leib"
+      ],
+      "beschreibung": "Ringzauber (Volumen 7) · SW-Macht: Teleportation (+ Zusätzliche Empfänger) · 5 + 2 pro Person MP. Wie Weg durch Sumus Leib, für bis zu 6 Personen in Körperkontakt.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 7,
+      "auswirkung": ""
+    },
+    "Machtvolle Ringzauber": {
+      "name": "Machtvolle Ringzauber",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "Ringzauber (Volumen 1). Alle Ringzauber gelten als mit Steigerung gewirkt (wo die Macht eine Steigerungswirkung hat).",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "volumen": 1,
+      "auswirkung": ""
+    },
+    "Volumenerweiterung I": {
+      "name": "Volumenerweiterung I",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings"
+      ],
+      "beschreibung": "+1 Volumen des Lebensrings. Kostet keinen Aufstieg, sondern dauerhaft 1 Machtpunkt (höchstens 5 Stufen).",
+      "neue_maechte": 0,
+      "machtpunkte": -1,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "kostenlos": true,
+      "volumen_bonus": 1,
+      "auswirkung": ""
+    },
+    "Volumenerweiterung II": {
+      "name": "Volumenerweiterung II",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Volumenerweiterung I"
+      ],
+      "beschreibung": "+1 Volumen des Lebensrings. Kostet keinen Aufstieg, sondern dauerhaft 1 Machtpunkt (höchstens 5 Stufen).",
+      "neue_maechte": 0,
+      "machtpunkte": -1,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "kostenlos": true,
+      "volumen_bonus": 1,
+      "auswirkung": ""
+    },
+    "Volumenerweiterung III": {
+      "name": "Volumenerweiterung III",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Volumenerweiterung II"
+      ],
+      "beschreibung": "+1 Volumen des Lebensrings. Kostet keinen Aufstieg, sondern dauerhaft 1 Machtpunkt (höchstens 5 Stufen).",
+      "neue_maechte": 0,
+      "machtpunkte": -1,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "kostenlos": true,
+      "volumen_bonus": 1,
+      "auswirkung": ""
+    },
+    "Volumenerweiterung IV": {
+      "name": "Volumenerweiterung IV",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Volumenerweiterung III"
+      ],
+      "beschreibung": "+1 Volumen des Lebensrings. Kostet keinen Aufstieg, sondern dauerhaft 1 Machtpunkt (höchstens 5 Stufen).",
+      "neue_maechte": 0,
+      "machtpunkte": -1,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "kostenlos": true,
+      "volumen_bonus": 1,
+      "auswirkung": ""
+    },
+    "Volumenerweiterung V": {
+      "name": "Volumenerweiterung V",
+      "kategorie": "Lebensring",
+      "rang": "A",
+      "voraussetzungen": [
+        "Bindung des Rings",
+        "Volumenerweiterung IV"
+      ],
+      "beschreibung": "+1 Volumen des Lebensrings. Kostet keinen Aufstieg, sondern dauerhaft 1 Machtpunkt (höchstens 5 Stufen).",
+      "neue_maechte": 0,
+      "machtpunkte": -1,
+      "ausgewaehlt": false,
+      "aktiv": true,
+      "kostenlos": true,
+      "volumen_bonus": 1,
+      "auswirkung": ""
+    },
+    "Geodenrituale": {
+      "name": "Geodenrituale",
+      "kategorie": "Geode",
+      "rang": "A",
+      "voraussetzungen": [
+        "AH (Geode)"
+      ],
+      "beschreibung": "Geodenrituale werden mit Zaubern geprobt.\n\nTrank des ungehinderten Weges (nur Diener Sumus): 2 Stunden Ritual, 3 MP. Ignoriert schwieriges Gelände aus Fels, Eis, Schnee, Sumpf und Treibsand; kein Schaden durch den Untergrund; nicht über Wasser. Wirkungsdauer 1 Tag, mit Steigerung 2 Tage.\n\nGestalt aus Rauch: nur Herren der Erde.",
+      "neue_maechte": 0,
+      "machtpunkte": 0,
+      "ausgewaehlt": false,
+      "aktiv": true,
       "auswirkung": ""
     },
     "AH (Kristallomant)": {
@@ -19821,7 +20200,7 @@
       "gewicht": 0.1,
       "kosten": 0,
       "setting": "fantasy",
-      "beschreibung": "Traditionsartefakt der Geoden. Bindung des Rings: weiht den Ring und bindet ihn dauerhaft an den Geoden -> Gegenstand verbessern/schaden Macht über Regen: ruft oder vertreibt Regen -> Elementarmanipulation Frostwelle: lässt eine Kältewelle in einem Umkreis Wesen verletzen -> Flächenschlag Wirbelnder Luftschild: umgibt den Geoden mit einem schützenden Luftwirbel -> Schutz Machtvolle Heilkräfte der Natur: heilt einen Verletzten mit der Kraft der Natur -> Heilung Weg durch Sumus Leib: lässt den Geoden durch das Erdreich an einen anderen Ort reisen -> Teleportation Schutzzone vor Bösem: erschafft eine Zone, die böse Wesen abwehrt -> Heiligtum Magnetismus: zieht metallene Gegenstände an oder stößt sie ab -> Telekinese",
+      "beschreibung": "Traditionsartefakt der Geoden: goldener Halsreif in Gestalt einer Schlange, die sich in den Schwanz beißt. Nach der Bindung unzerbrechlich und nicht mehr ablegbar. Fasst Ringzauber (Talente der Kategorie Lebensring) mit 12 Volumen; Regeln siehe Talent Bindung des Rings. Ringzauber -> SW-Macht: Heilkräfte der Natur -> Heilung, Machtvolle Heilkräfte -> Heilung (Neutralisieren), Beherrscher der Flammen -> Elementarmanipulation, Seelenfeuer -> Schadensfeld, Wasserbann -> Schutz vor Naturgewalten, Machtvoller Wasserbann -> Schutz vor Naturgewalten, Macht über Regen -> Elementarmanipulation, Wirbelnder Luftschild -> Abwehren, Machtvoller Luftschild -> Abwehren, Launen des Windes -> Fliegen, Magnetismus -> Telekinese, Eiskristalle -> Geschoss, Frostwelle -> Flächenschlag, Schutzzone vor Bösem -> Heiligtum, Weg durch Sumus Leib -> Teleportation, Pforte durch Sumus Leib -> Teleportation",
       "aktiv": true
     },
     "Magierstab": {

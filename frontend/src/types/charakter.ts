@@ -20,7 +20,7 @@ export interface AttributState {
   modifier: number
 }
 
-export type TalentZahlung = 'slot' | 'handicap_punkte' | 'aufstieg' | 'pathfinder_kostenlos'
+export type TalentZahlung = 'slot' | 'handicap_punkte' | 'aufstieg' | 'pathfinder_kostenlos' | 'kostenlos'
 
 export interface TalentEffektSnapshot {
   handicaps?: string[]

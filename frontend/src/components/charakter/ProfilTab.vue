@@ -16,7 +16,6 @@
             <CharakterPortraet
               :bild-id="charakter.bild_id"
               :name="profil.Name || charakter.char_name"
-              :setting="charakter.active_setting_name"
               variante="gross"
               :breite="200"
             />

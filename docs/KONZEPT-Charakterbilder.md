@@ -189,9 +189,8 @@ IndexedDB-Speicherung, Browser-seitige Variantenerzeugung und die Bildübernahme
 
 - **`components/charakter/CharakterPortraet.vue`**: Anzeige mit den Props `charakter`,
   `variante` (`gross|karte|avatar`) und `groesse`. Hat kein Charakter ein Bild, zeigt sie einen
-  Platzhalter: die **Initialen** des Namens auf einer Farbe, die aus dem Setting-Namen
-  gehasht wird. Charaktere eines Settings sehen so gleichfarbig aus, und die Liste wirkt
-  auch ohne Bilder ordentlich.
+  Platzhalter: die **Initialen** des Namens in der Primärfarbe des aktiven Themes auf einem
+  leicht getönten Grund. So passt er zu Pergament, Pergament dunkel, Hell und Dunkel.
 - **`components/charakter/BildHochladenDialog.vue`**: Upload- und Zuschneide-Dialog (siehe 5.3).
 
 ### 5.2 Einbindungsorte
@@ -199,7 +198,7 @@ IndexedDB-Speicherung, Browser-seitige Variantenerzeugung und die Bildübernahme
 | # | Ort | Datei | Variante | Darstellung |
 |---|---|---|---|---|
 | 1 | **Charakterliste & Ordner-Übersicht**, Karte | `CharakterKarte.vue` | `karte` | Bild links als 72 × 96 px (3:4), Titel/Setting/Chip rechts daneben. Auf schmalen Bildschirmen (< 400 px) 54 × 72 px. Die Karte bleibt so niedrig wie heute, statt ein großes Cover-Bild zu bekommen. |
-| 2 | **Ordner-Kopf** (Expansion-Panel-Titel) | `CharakterListeView.vue` | `avatar` | Bis zu 4 überlappende runde Avatare (32 px) der enthaltenen Charaktere, danach „+N“. So erkennt man den Ordner auch zugeklappt. |
+| 2 | **Ordner-Kopf** (Expansion-Panel-Titel) | `CharakterListeView.vue` | `avatar` | Bis zu 4 überlappende runde Avatare (32 px) der enthaltenen Charaktere **mit hochgeladenem Porträt**, danach „+N“. Ohne Porträts im Ordner bleibt der Kopf leer. So erkennt man den Ordner auch zugeklappt. |
 | 3 | **Editor-Kopfzeile** | `CharakterEditorView.vue` | `avatar` | Rundes 48-px-Avatar links neben dem Namen. Klick springt zum Profil-Tab. |
 | 4 | **Profil-Tab** (Bild pflegen) | `ProfilTab.vue` | `gross` | Eigene Spalte: Porträt 3:4, 200 px breit, darunter die Buttons *Bild hochladen / Ausschnitt ändern / Entfernen*. Drag & Drop auf die Fläche und Einfügen aus der Zwischenablage (Strg+V) öffnen den Upload-Dialog. Layout: `md=3` Bild + `md=9` bestehende Felder (die heutigen zwei Spalten werden zu zwei Spalten innerhalb der 9). Mobil steht das Bild oben und zentriert. |
 | 5 | **Übersicht-Tab** | `UebersichtTab.vue` | `gross` | Porträt 160 px breit neben Name, Konzept und Rang im Kopfbereich. |

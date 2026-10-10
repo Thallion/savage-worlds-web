@@ -1,5 +1,5 @@
 <template>
-  <!-- Porträt bzw. Platzhalter mit Initialen in der Setting-Farbe. avatar ist
+  <!-- Porträt bzw. Platzhalter mit Initialen in der Theme-Primärfarbe. avatar ist
        quadratisch und rund, gross/karte im Hochformat 3:4. -->
   <div
     class="portraet"
@@ -13,7 +13,7 @@
       loading="lazy"
       @error="fehler = true"
     />
-    <div v-else class="platzhalter" :style="{ backgroundColor: platzhalterFarbe(setting) }">
+    <div v-else class="platzhalter">
       <span :style="{ fontSize: `${Math.round(breite * 0.38)}px` }">{{ initialen(name) }}</span>
     </div>
   </div>
@@ -21,17 +21,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { bildUrl, initialen, platzhalterFarbe, type BildVariante } from '@/utils/charakterBild'
+import { bildUrl, initialen, type BildVariante } from '@/utils/charakterBild'
 
 const props = withDefaults(
   defineProps<{
     bildId?: string | null
     name?: string | null
-    setting?: string | null
     variante?: BildVariante
     breite?: number
   }>(),
-  { bildId: null, name: '', setting: '', variante: 'avatar', breite: 48 },
+  { bildId: null, name: '', variante: 'avatar', breite: 48 },
 )
 
 const url = computed(() => bildUrl(props.bildId, props.variante))
@@ -65,7 +64,9 @@ watch(url, () => (fehler.value = false))
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  background-color: rgba(var(--v-theme-primary), 0.18);
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
   font-family: Georgia, 'Times New Roman', serif;
   letter-spacing: 0.05em;
   user-select: none;

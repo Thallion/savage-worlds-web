@@ -91,18 +91,17 @@
           <span class="text-subtitle-1 font-weight-medium">{{ gruppe.name }}</span>
           <v-chip size="small" class="ml-3" variant="tonal">{{ gruppe.chars.length }}</v-chip>
           <!-- Überlappende Avatare, damit man den Ordner auch zugeklappt erkennt -->
-          <div v-if="gruppe.chars.length" class="avatar-stapel d-none d-sm-flex ml-4">
+          <div v-if="stapelAvatare(gruppe.chars).length" class="avatar-stapel d-none d-sm-flex ml-4">
             <CharakterPortraet
               v-for="char in stapelAvatare(gruppe.chars)"
               :key="char.id"
               :bild-id="char.bild_id"
               :name="char.char_name"
-              :setting="char.active_setting_name"
               :breite="32"
               :title="char.char_name"
             />
-            <span v-if="gruppe.chars.length > STAPEL_MAX" class="text-caption ml-2 align-self-center">
-              +{{ gruppe.chars.length - STAPEL_MAX }}
+            <span v-if="anzahlMitBild(gruppe.chars) > STAPEL_MAX" class="text-caption ml-2 align-self-center">
+              +{{ anzahlMitBild(gruppe.chars) - STAPEL_MAX }}
             </span>
           </div>
           <v-spacer />
@@ -268,9 +267,12 @@ const ordnerBearbeitenId = ref<number | null>(null)
 const hatOrdner = computed(() => store.ordnerListe.length > 0)
 
 const STAPEL_MAX = 4
-/** Bis zu vier Avatare je Ordner — Charaktere mit Porträt zuerst. */
+/** Bis zu vier Avatare je Ordner — nur Charaktere mit hochgeladenem Porträt. */
 function stapelAvatare(chars: CharakterListItem[]) {
-  return [...chars].sort((a, b) => Number(!!b.bild_id) - Number(!!a.bild_id)).slice(0, STAPEL_MAX)
+  return chars.filter((c) => c.bild_id).slice(0, STAPEL_MAX)
+}
+function anzahlMitBild(chars: CharakterListItem[]) {
+  return chars.filter((c) => c.bild_id).length
 }
 
 // Offene Expansion-Panels (Panel-Wert = Ordner-id bzw. 'ohne'). Leer = alles zu

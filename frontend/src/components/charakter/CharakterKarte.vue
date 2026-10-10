@@ -6,7 +6,6 @@
         <CharakterPortraet
           :bild-id="char.bild_id"
           :name="char.char_name"
-          :setting="char.active_setting_name"
           variante="karte"
           :breite="mobile ? 54 : 72"
         />

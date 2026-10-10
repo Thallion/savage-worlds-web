@@ -9,7 +9,6 @@
           class="cursor-pointer"
           :bild-id="store.aktuellerCharakter.bild_id"
           :name="daten.profil_daten?.Name || store.aktuellerCharakter.char_name"
-          :setting="store.aktuellerCharakter.active_setting_name"
           :breite="48"
           title="Zum Profil"
           @click="zumProfil"

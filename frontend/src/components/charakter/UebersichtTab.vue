@@ -141,8 +141,16 @@
             >
               <div class="text-subtitle-2 mb-2">{{ block.titel }}</div>
               <v-list density="compact" class="pa-0 bg-transparent">
-                <v-list-item v-for="eintrag in block.eintraege" :key="eintrag" class="px-0">
-                  <v-list-item-title class="text-body-2 text-wrap">{{ eintrag }}</v-list-item-title>
+                <v-list-item v-for="eintrag in block.eintraege" :key="eintrag.text" class="px-0">
+                  <v-list-item-title
+                    class="text-body-2 text-wrap"
+                    :class="{ 'text-decoration-line-through text-medium-emphasis': eintrag.status === 'abgekauft' }"
+                  >
+                    {{ eintrag.text }}
+                  </v-list-item-title>
+                  <v-list-item-subtitle v-if="eintrag.status" class="text-caption">
+                    {{ eintrag.status === 'abgekauft' ? 'abgekauft' : 'auf leicht reduziert' }}
+                  </v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-col>
@@ -513,14 +521,54 @@ const volkEigenschaften = computed(() => {
       ['Besonderheiten', 'besonderheiten'],
     ] as const
   )
-    .map(([titel, feld]) => ({ titel, eintraege: (volk[feld] ?? []) as string[] }))
+    .map(([titel, feld]) => ({
+      titel,
+      eintraege: ((volk[feld] ?? []) as string[]).map((text) => ({
+        text,
+        status: feld === 'handicaps' ? volkHandicapStatus(text) : undefined,
+      })),
+    }))
     .filter((block) => block.eintraege.length)
 
   return bloecke.length ? { name, bloecke } : null
 })
 
+// Nach der Erschaffung per Aufstieg abgekaufte bzw. reduzierte Handicaps der
+// Abstammung (Journal-Einträge mit details.volk), je Anzeigename. Die
+// Volk-Handicaps sind Freitexte ("Pazifist (Schwer) (...)"), daher Abgleich
+// über den Namensanfang.
+const volkHandicapAenderungen = computed(() => {
+  const katalog = mergeKatalog(einstellungenStore.aktuellesSetting?.handicaps, daten.value, 'handicaps') as Record<
+    string,
+    any
+  >
+  const anzeigename = (key: string) =>
+    String(katalog[key]?.name ?? key.replace(/_(leicht|schwer)$/, '')).toLowerCase()
+
+  const aenderungen = new Map<string, 'abgekauft' | 'reduziert'>()
+  for (const e of daten.value.steigerungs_journal?.entries ?? []) {
+    const name = e.details?.name
+    if (!e.details?.volk || !name) continue
+    if (e.type === 'handicap_entfernt') aenderungen.set(anzeigename(name), 'abgekauft')
+    else if (e.type === 'handicap_reduziert' && !aenderungen.has(anzeigename(name)))
+      aenderungen.set(anzeigename(name), 'reduziert')
+  }
+  return aenderungen
+})
+
+function volkHandicapStatus(text: string): 'abgekauft' | 'reduziert' | undefined {
+  const t = text.toLowerCase()
+  for (const [name, status] of volkHandicapAenderungen.value) {
+    if (t === name || t.startsWith(`${name} `) || t.startsWith(`${name}(`)) return status
+  }
+  return undefined
+}
+
 const volkHandicapAnzahl = computed(
-  () => volkEigenschaften.value?.bloecke.find((b) => b.titel === 'Handicaps')?.eintraege.length ?? 0,
+  () =>
+    volkEigenschaften.value?.bloecke
+      .find((b) => b.titel === 'Handicaps')
+      ?.eintraege.filter((e) => e.status !== 'abgekauft').length ?? 0,
 )
 
 const besitz = computed(() =>

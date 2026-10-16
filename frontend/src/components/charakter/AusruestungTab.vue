@@ -167,7 +167,7 @@
       </div>
 
       <!-- Katalog -->
-      <ElementEditor ref="elementEditor" typ="ausruestung" />
+      <ElementEditor ref="elementEditor" typ="ausruestung" @gespeichert="zeigeGespeichertes" />
       <div class="d-flex ga-2 flex-wrap mb-2">
         <v-text-field
           v-model="suche"
@@ -187,9 +187,16 @@
           hide-details
           style="max-width: 220px"
         />
+        <v-checkbox
+          v-model="nurEigene"
+          label="Nur eigene"
+          density="compact"
+          hide-details
+          class="flex-grow-0"
+        />
         <v-select
           v-model="sortOption"
-          :items="['Name', 'Gewicht', 'Kosten', 'Kategorie']"
+          :items="['Relevanz', 'Name', 'Gewicht', 'Kosten', 'Kategorie']"
           label="Sortierung"
           density="compact"
           hide-details
@@ -220,8 +227,12 @@
               <div>
                 {{ item.name }}
                 <span class="text-caption text-medium-emphasis">({{ item.kategorie }})</span>
+                <v-chip v-if="item.custom" size="x-small" color="primary" variant="tonal" class="ml-1">
+                  eigen
+                </v-chip>
               </div>
               <div class="text-caption text-medium-emphasis">
+                <span v-if="item.anzeigeName">{{ item.anzeigeName }} · </span>
                 {{ (item.beschreibung || '').slice(0, 110) }}
               </div>
             </td>
@@ -316,7 +327,8 @@ const elementEditor = ref<InstanceType<typeof ElementEditor> | null>(null)
 
 const suche = ref('')
 const kategorieFilter = ref<string | null>(null)
-const sortOption = ref('Name')
+const nurEigene = ref(false)
+const sortOption = ref('Relevanz')
 const sortAbsteigend = ref(false)
 const meldung = ref('')
 const meldungSichtbar = ref(false)
@@ -400,26 +412,70 @@ const besitz = computed(() =>
     .sort((a, b) => a.name.localeCompare(b.name)),
 )
 
+// Suchtext normalisieren: Groß/klein, Umlaute (ä = ae), ß = ss
+function normalisiere(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+}
+
+// Relevanz eines Gegenstands für einen Suchbegriff: Namenstreffer vor
+// Kategorie- und Beschreibungstreffern, 0 = kein Treffer
+function relevanz(item: any, begriff: string): number {
+  const name = normalisiere(item.name)
+  const langname = normalisiere(item.anzeigeName ?? '')
+  if (name.startsWith(begriff)) return 5
+  if (name.split(/[\s,/()-]+/).some((w: string) => w.startsWith(begriff))) return 4
+  if (name.includes(begriff) || langname.includes(begriff)) return 3
+  if (normalisiere(`${item.kategorie ?? ''} ${item.unterkategorie ?? ''}`).includes(begriff)) return 2
+  if (normalisiere(item.beschreibung ?? '').includes(begriff)) return 1
+  return 0
+}
+
 const gefilterterKatalog = computed(() => {
-  const s = (suche.value ?? '').toLowerCase()
+  // Mehrere Wörter: jedes muss irgendwo treffen, die Relevanz addiert sich
+  const begriffe = normalisiere(suche.value ?? '').split(/\s+/).filter(Boolean)
   const richtung = sortAbsteigend.value ? -1 : 1
+  // Relevanz greift nur, wenn sie gewählt ist; bei Gleichstand entscheidet
+  // immer der Name, sonst bleibt die Reihenfolge gleichwertiger Einträge
+  // (gleicher Preis, gleiche Kategorie) zufällig
   const vergleich: Record<string, (a: any, b: any) => number> = {
-    Name: (a, b) => a.name.localeCompare(b.name),
-    Gewicht: (a, b) => (a.gewicht ?? 0) - (b.gewicht ?? 0),
-    Kosten: (a, b) => (a.kosten ?? 0) - (b.kosten ?? 0),
-    Kategorie: (a, b) => (a.kategorie ?? '').localeCompare(b.kategorie ?? ''),
+    Relevanz: (a, b) => b.punkte - a.punkte,
+    Name: () => 0,
+    Gewicht: (a, b) => (a.item.gewicht ?? 0) - (b.item.gewicht ?? 0),
+    Kosten: (a, b) => (a.item.kosten ?? 0) - (b.item.kosten ?? 0),
+    Kategorie: (a, b) => (a.item.kategorie ?? '').localeCompare(b.item.kategorie ?? '', 'de'),
   }
-  return Object.values(katalog.value)
+  const sortierung = vergleich[sortOption.value] ?? vergleich.Name
+  return Object.entries(katalog.value)
     .filter(
-      (i: any) =>
+      ([, i]: [string, any]) =>
         i.aktiv !== false &&
-        (!kategorieFilter.value || i.kategorie === kategorieFilter.value) &&
-        (!s ||
-          i.name.toLowerCase().includes(s) ||
-          (i.unterkategorie ?? '').toLowerCase().includes(s) ||
-          (i.beschreibung ?? '').toLowerCase().includes(s)),
+        (!nurEigene.value || i.custom === true) &&
+        (!kategorieFilter.value || i.kategorie === kategorieFilter.value),
     )
-    .sort((a: any, b: any) => (vergleich[sortOption.value] ?? vergleich.Name)(a, b) * richtung)
+    // Der Katalog-Schlüssel ist der Name, unter dem das Backend kauft und
+    // bearbeitet — das name-Feld weicht in manchen Settings davon ab
+    // (HeXXen: "Seil" vs. "Seil (5 Meter)")
+    .map(([key, i]: [string, any]) => ({ ...i, name: key, anzeigeName: i.name !== key ? i.name : '' }))
+    .map((i: any) => {
+      let punkte = 0
+      for (const b of begriffe) {
+        const r = relevanz(i, b)
+        if (!r) return null
+        punkte += r
+      }
+      return { item: i, punkte }
+    })
+    .filter((t): t is { item: any; punkte: number } => t !== null)
+    .sort(
+      (a, b) =>
+        (sortierung(a, b) || a.item.name.localeCompare(b.item.name, 'de')) * richtung,
+    )
+    .map((t) => t.item)
 })
 
 function geldAnzeige(wert?: number | null): string {
@@ -448,6 +504,14 @@ function preisWert(rec: Record<string, number>, name: string, standard: number):
 function setPreis(rec: Record<string, number>, name: string, v: string | number): void {
   const n = Number(v)
   rec[name] = Number.isFinite(n) && n >= 0 ? n : 0
+}
+
+// Neu angelegten/bearbeiteten Gegenstand direkt sichtbar machen, auch wenn
+// gerade ein Filter aktiv ist, der ihn ausblenden würde
+function zeigeGespeichertes(name: string) {
+  kategorieFilter.value = null
+  nurEigene.value = false
+  suche.value = name
 }
 
 async function ausfuehren(aktion: string, name: string, extra?: Record<string, unknown>) {

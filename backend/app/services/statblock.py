@@ -23,7 +23,7 @@ mit "...").
 """
 
 from app.services.macht_auspraegungen import macht_anzeigename
-from app.services.volk_effekte import gewaehltes_volk
+from app.services.volk_effekte import gewaehltes_volk, volk_handicap_status
 
 # Anzeige-Reihenfolge nach SWADE-Statblock (Agility, Smarts, Spirit, Strength, Vigor)
 ATTRIBUT_REIHENFOLGE = ["Geschicklichkeit", "Verstand", "Willenskraft", "Stärke", "Konstitution"]
@@ -79,7 +79,8 @@ def _volk_zeilen(daten: dict, setting: dict) -> list[tuple[str, str]]:
 
     Sie stehen nur am Volk und fehlten deshalb im Statblock. Einträge, die als
     Auto-Talent/-Handicap ohnehin schon in den Zeilen darüber stehen, werden
-    nicht doppelt gelistet.
+    nicht doppelt gelistet; per Aufstieg abgekaufte Abstammungs-Handicaps
+    entfallen.
     """
     _, volk_data = gewaehltes_volk(daten, setting)
     if not volk_data:
@@ -93,6 +94,9 @@ def _volk_zeilen(daten: dict, setting: dict) -> list[tuple[str, str]]:
     ):
         bekannt = {_basisname(e) for e in gewaehlt}
         eintraege = [e for e in volk_data.get(feld) or [] if _basisname(e) not in bekannt]
+        if feld == "handicaps":
+            # Per Aufstieg abgekaufte Abstammungs-Handicaps entfallen
+            eintraege = [e for e in eintraege if volk_handicap_status(daten, setting, e) != "abgekauft"]
         zeilen.append((label, ", ".join(eintraege)))
     return zeilen
 

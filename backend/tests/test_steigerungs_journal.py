@@ -184,3 +184,18 @@ def test_bogen_cost_entries_rang_zum_zeitpunkt_der_steigerung(daten):
 
     raenge = re.findall(r"<tr><td>([^<]*)</td>", html.split("<h2>Steigerungen</h2>")[1])
     assert raenge == ["Start", "Anfänger", "Anfänger", "Anfänger", "Fortgeschritten"]
+
+
+def test_abgekauftes_abstammungs_handicap_in_bogen_und_statblock(daten):
+    d = aktion("volk/waehlen", daten, "Avionen")["charakter_daten"]  # Zerbrechlich (leicht)
+    d = mit_aufstieg(d)
+    d = aktion("handicap/entfernen", d, "Zerbrechlich")["charakter_daten"]
+    assert entries(d)[-1]["details"]["volk"] is True
+
+    assert "<s>Zerbrechlich (-1 Robustheit durch hohle Knochen)</s> — abgekauft" in bogen_html(d)
+    resp = client.post("/api/spiellogik/statblock", json={"charakter_daten": d})
+    statblock = resp.json()["statblock"]
+    assert "Nichtschwimmer" in statblock
+    assert "Zerbrechlich" not in statblock
+    resp = client.post("/api/spiellogik/charakterbogen/pdf", json={"charakter_daten": d})
+    assert resp.status_code == 200

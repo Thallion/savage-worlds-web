@@ -9,7 +9,7 @@ __pycache__/
 # Frontend
 frontend/node_modules/
 frontend/dist/
-*.log
+*.logclaude
 
 # Lokale Secrets / Deployment
 .env

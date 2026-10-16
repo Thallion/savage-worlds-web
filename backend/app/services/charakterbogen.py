@@ -29,7 +29,7 @@ from app.services.macht_auspraegungen import (
     verfuegbare_auspraegungen,
 )
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
-from app.services.volk_effekte import gewaehltes_volk
+from app.services.volk_effekte import gewaehltes_volk, volk_handicap_status
 
 ANLEGBARE_KATEGORIEN = ("Rüstung", "Schild")
 
@@ -427,6 +427,16 @@ def _attribute_fertigkeiten_sektion(daten: dict, setting: dict, werte: dict) -> 
 </div>"""
 
 
+def _volk_eintrag_html(daten: dict, setting: dict, feld: str, eintrag: str) -> str:
+    """Abgekaufte Abstammungs-Handicaps durchgestrichen, reduzierte markiert."""
+    status = volk_handicap_status(daten, setting, eintrag) if feld == "handicaps" else None
+    if status == "abgekauft":
+        return f"<s>{_esc(eintrag)}</s> — abgekauft"
+    if status == "reduziert":
+        return f"{_esc(eintrag)} — auf leicht reduziert"
+    return _esc(eintrag)
+
+
 def _volk_sektion(daten: dict, setting: dict) -> str:
     selected_volk, volk_data = gewaehltes_volk(daten, setting)
     if not selected_volk:
@@ -439,7 +449,9 @@ def _volk_sektion(daten: dict, setting: dict) -> str:
     for feld, spalte in (("talente", "Talent"), ("handicaps", "Handicap"), ("besonderheiten", "Besonderheit")):
         eintraege = volk_data.get(feld) or []
         if eintraege:
-            rows = "".join(f"<tr><td>{_esc(e)}</td></tr>\n" for e in eintraege)
+            rows = "".join(
+                f"<tr><td>{_volk_eintrag_html(daten, setting, feld, e)}</td></tr>\n" for e in eintraege
+            )
             result += _tabelle([spalte], rows)
 
     return result

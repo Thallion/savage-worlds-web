@@ -47,6 +47,7 @@ export interface SteigerungsJournalEintrag {
     stufe?: string
     punkte?: number
     leicht?: string
+    volk?: boolean
   }
 }
 

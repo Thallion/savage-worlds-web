@@ -43,6 +43,40 @@ def gewaehltes_volk(daten: dict, setting: dict | None = None) -> tuple[str | Non
     return None, None
 
 
+def volk_handicap_status(daten: dict, setting: dict, eintrag: str) -> str | None:
+    """"abgekauft" bzw. "reduziert", wenn das Abstammungs-Handicap nach der
+    Erschaffung per Aufstieg abgekauft oder auf leicht reduziert wurde.
+
+    Grundlage sind die Journal-Einträge mit details.volk (Rückgängig entfernt
+    sie wieder). Die Volk-Handicaps sind Freitexte ("Pazifist (Schwer) (...)"),
+    daher Abgleich über den Namensanfang.
+    """
+    handicaps = setting.get("handicaps") or {}
+
+    def anzeigename(key: str) -> str:
+        name = (handicaps.get(key) or {}).get("name")
+        if not name:
+            name = key[:-7] if key.endswith(("_leicht", "_schwer")) else key
+        return name.lower()
+
+    aenderungen: dict[str, str] = {}
+    for e in (daten.get("steigerungs_journal") or {}).get("entries") or []:
+        details = e.get("details") or {}
+        if not details.get("volk") or not details.get("name"):
+            continue
+        name = anzeigename(details["name"])
+        if e.get("type") == "handicap_entfernt":
+            aenderungen[name] = "abgekauft"
+        elif e.get("type") == "handicap_reduziert":
+            aenderungen.setdefault(name, "reduziert")
+
+    text = eintrag.lower()
+    for name, status in aenderungen.items():
+        if text == name or text.startswith((f"{name} ", f"{name}(")):
+            return status
+    return None
+
+
 def verfuegbare_volk_wahl(volk_data: dict) -> dict | None:
     """Offene Wahlmöglichkeit eines Volkes: {"optionen": [...], "attribute": [...]|None}.
 

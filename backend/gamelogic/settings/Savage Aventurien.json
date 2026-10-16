@@ -14654,15 +14654,6 @@
       "beschreibung": "Eiserne Handschellen.",
       "aktiv": true
     },
-    "Behälter, Karte, Schriftrolle": {
-      "name": "Behälter, Karte, Schriftrolle",
-      "kategorie": "Allgemein",
-      "gewicht": 0.5,
-      "kosten": 4,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Röhrenförmiger Behälter für Karten oder Schriftrollen.",
-      "aktiv": true
-    },
     "Kerze": {
       "name": "Kerze",
       "kategorie": "Allgemein",
@@ -14832,24 +14823,6 @@
       "kosten": 1,
       "setting": "savage_pathfinder",
       "beschreibung": "+1 ZK gegen Krankheit bei regelmäßiger Benutzung.",
-      "aktiv": true
-    },
-    "Seil, Hanf (10''/20 Meter)": {
-      "name": "Seil, Hanf (10''/20 Meter)",
-      "kategorie": "Allgemein",
-      "gewicht": 2.5,
-      "kosten": 10,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Hanfseil, 20 Meter, 0,5 Stn pro Schritt",
-      "aktiv": true
-    },
-    "Seil, Seide (10''/20 Meter)": {
-      "name": "Seil, Seide (10''/20 Meter)",
-      "kategorie": "Allgemein",
-      "gewicht": 1,
-      "kosten": 4,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Seidenseil, 20 Meter",
       "aktiv": true
     },
     "Segeltuch (Quadratmeter)": {
@@ -15500,15 +15473,6 @@
       "beschreibung": "Wahrnehmung +2, um entfernte Objekte zu erkennen.",
       "aktiv": true
     },
-    "Flasche": {
-      "name": "Flasche",
-      "kategorie": "Allgemein",
-      "gewicht": 0.5,
-      "kosten": 2,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Glasflasche, leer.",
-      "aktiv": true
-    },
     "Flickzeug": {
       "name": "Flickzeug",
       "kategorie": "Allgemein",
@@ -15534,15 +15498,6 @@
       "kosten": 4,
       "setting": "savage_pathfinder",
       "beschreibung": "Gürteltasche, 1 Aktion Zugriff",
-      "aktiv": true
-    },
-    "Karren": {
-      "name": "Karren",
-      "kategorie": "Allgemein",
-      "gewicht": 50,
-      "kosten": 30,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Karren für Saumlasten.",
       "aktiv": true
     },
     "Kette (10 Meter)": {
@@ -15581,15 +15536,6 @@
       "beschreibung": "0,5 Liter Lampenöl.",
       "aktiv": true
     },
-    "Pergament (pro Blatt)": {
-      "name": "Pergament (pro Blatt)",
-      "kategorie": "Allgemein",
-      "gewicht": 0.05,
-      "kosten": 1,
-      "setting": "savage_pathfinder",
-      "beschreibung": "1 Blatt Pergament.",
-      "aktiv": true
-    },
     "Ruderboot": {
       "name": "Ruderboot",
       "kategorie": "Allgemein",
@@ -15615,6 +15561,15 @@
       "kosten": 10,
       "setting": "savage_pathfinder",
       "beschreibung": "Hanfseil, 20 Meter",
+      "aktiv": true
+    },
+    "Seil, Seide (20 Meter)": {
+      "name": "Seil, Seide (20 Meter)",
+      "kategorie": "Allgemein",
+      "gewicht": 1.25,
+      "kosten": 100,
+      "setting": "savage_pathfinder",
+      "beschreibung": "Seidenseil, 20 Meter",
       "aktiv": true
     },
     "Stab (3,5 m)": {
@@ -15644,15 +15599,6 @@
       "beschreibung": "Tintenfläschchen, schwarz.",
       "aktiv": true
     },
-    "Krug, Keramik": {
-      "name": "Krug, Keramik",
-      "kategorie": "Allgemein",
-      "gewicht": 0.5,
-      "kosten": 0.5,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Keramikkrug, leer.",
-      "aktiv": true
-    },
     "Heiliges Symbol, Gold": {
       "name": "Heiliges Symbol, Gold",
       "kategorie": "Allgemein",
@@ -15678,15 +15624,6 @@
       "kosten": 8,
       "setting": "fantasy",
       "beschreibung": "",
-      "aktiv": true
-    },
-    "Siegelwachs, Stab": {
-      "name": "Siegelwachs, Stab",
-      "kategorie": "Allgemein",
-      "gewicht": 0.1,
-      "kosten": 1,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Siegelwachs-Stab zum Versiegeln.",
       "aktiv": true
     },
     "Kreide (Schachtel mit 12 Stück)": {
@@ -15869,15 +15806,6 @@
       "beschreibung": "Leichter Umhang mit Kapuze.",
       "aktiv": true
     },
-    "Winterkleidung": {
-      "name": "Winterkleidung",
-      "kategorie": "Kleidung",
-      "gewicht": 3.5,
-      "kosten": 8,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Winterkleidung, hält warm.",
-      "aktiv": true
-    },
     "Abenteurerpaket": {
       "name": "Abenteurerpaket",
       "kategorie": "Allgemein",
@@ -15975,15 +15903,6 @@
       "kosten": 1,
       "setting": "fantasy",
       "beschreibung": "Halbe normale Reichweite, +1W6 Schaden, kann brennbare Gegenstände entzünden. Pro Stück.",
-      "aktiv": true
-    },
-    "Schießpulver (10)": {
-      "name": "Schießpulver (10)",
-      "kategorie": "Allgemein",
-      "gewicht": 0.25,
-      "kosten": 1,
-      "setting": "fantasy",
-      "beschreibung": "Für Schwarzpulverwaffen. Enthält 10 Schuss.",
       "aktiv": true
     },
     "Schleudersteine (20)": {
@@ -16099,7 +16018,7 @@
       "gewicht": 4,
       "kosten": 300,
       "setting": "mittelalterlich",
-      "beschreibung": "Schwerer Helm mit geschlossenem Visier.",
+      "beschreibung": "Schwerer Helm mit geschlossenem Visier, -1 auf Sicht-Wahrnehmung.",
       "aktiv": true,
       "torso": 0,
       "arme": 0,
@@ -16191,7 +16110,7 @@
       "name": "Großer Schild",
       "kategorie": "Schild",
       "gewicht": 6,
-      "kosten": 20,
+      "kosten": 100,
       "setting": "mittelalterlich",
       "beschreibung": "Großer Schild für maximalen Schutz. Verringert die Bewegungsweite um 1.",
       "aktiv": true,
@@ -16307,24 +16226,6 @@
         "PB": 2
       }
     },
-    "Stab": {
-      "name": "Stab",
-      "kategorie": "Waffe",
-      "gewicht": 2,
-      "kosten": 40,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W4, Parade +1, Zweihändig.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "Stä+W4",
-        "Reichweite": "1",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
     "Entermesser": {
       "name": "Entermesser",
       "kategorie": "Waffe",
@@ -16355,7 +16256,7 @@
       "mindeststaerke": "W4",
       "eigenschaften": {
         "Schaden": "Stä+W4",
-        "Reichweite": "-",
+        "Reichweite": "nah",
         "FR": "-",
         "Schuss": "-",
         "PB": "-"
@@ -16373,7 +16274,7 @@
       "mindeststaerke": "W6",
       "eigenschaften": {
         "Schaden": "Stä+W6",
-        "Reichweite": "-",
+        "Reichweite": "nah",
         "FR": "-",
         "Schuss": "-",
         "PB": "-"
@@ -16481,7 +16382,7 @@
       "mindeststaerke": "W6",
       "eigenschaften": {
         "Schaden": "Stä+W6",
-        "Reichweite": "-",
+        "Reichweite": "nah",
         "FR": "-",
         "Schuss": "-",
         "PB": "-"
@@ -16499,7 +16400,7 @@
       "mindeststaerke": "W8",
       "eigenschaften": {
         "Schaden": "Stä+W8",
-        "Reichweite": "-",
+        "Reichweite": "nah",
         "FR": "-",
         "Schuss": "-",
         "PB": "1"
@@ -16523,78 +16424,6 @@
         "PB": "-"
       }
     },
-    "Donnerbüchse": {
-      "name": "Donnerbüchse",
-      "kategorie": "Waffe",
-      "gewicht": 6,
-      "kosten": 300,
-      "setting": "schwarzpulver",
-      "beschreibung": "Regeln wie Schrotflinte (SWAE S. 106). Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "1-3W6",
-        "Reichweite": "10/20/40",
-        "FR": 1,
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Muskete": {
-      "name": "Muskete",
-      "kategorie": "Waffe",
-      "gewicht": 7.5,
-      "kosten": 300,
-      "setting": "schwarzpulver",
-      "beschreibung": "Schwere, lange Feuerwaffe. Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W8",
-        "Reichweite": "10/20/40",
-        "FR": 1,
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Blunderbuss": {
-      "name": "Blunderbuss",
-      "kategorie": "Waffe",
-      "gewicht": 4,
-      "kosten": 2000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Streuschuss. Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "3/6/12",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Bucklergewehr": {
-      "name": "Bucklergewehr",
-      "kategorie": "Waffe",
-      "gewicht": 3,
-      "kosten": 750,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Muss zum Nachladen abgenommen werden. Immer Nebenhandabzug beim Schießen, Parade +1. Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W4",
-        "Reichweite": "3/6/12",
-        "FR": "1",
-        "Schuss": "2",
-        "PB": "2"
-      }
-    },
     "Culverin": {
       "name": "Culverin",
       "kategorie": "Waffe",
@@ -16610,276 +16439,6 @@
         "Reichweite": "10/20/40",
         "FR": "1",
         "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Doppelhakengewehr": {
-      "name": "Doppelhakengewehr",
-      "kategorie": "Waffe",
-      "gewicht": 9,
-      "kosten": 4000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Schießen ohne Halterung: –2 und der Schütze wird zu Boden geworfen. Nachladen 3.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "3W8",
-        "Reichweite": "12/24/48",
-        "FR": "1",
-        "Schuss": "2",
-        "PB": "-"
-      }
-    },
-    "Muskete Pathfinder": {
-      "name": "Muskete",
-      "kategorie": "Waffe",
-      "gewicht": 4.5,
-      "kosten": 1500,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W10",
-        "Reichweite": "10/20/40",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "2"
-      }
-    },
-    "Muskete, Axt-/Kriegshammer-": {
-      "name": "Muskete, Axt-/Kriegshammer-",
-      "kategorie": "Waffe",
-      "gewicht": 3,
-      "kosten": 1600,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Als Nahkampfwaffe: entsprechende Waffenwerte. Bei Fehlfunktion: –1 auf Kämpfenproben bis zur Reparatur. Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "8/16/32",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Muskete, doppelläufig": {
-      "name": "Muskete, doppelläufig",
-      "kategorie": "Waffe",
-      "gewicht": 5.5,
-      "kosten": 2500,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Doppelläufig. Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W8+1",
-        "Reichweite": "10/20/40",
-        "FR": "1",
-        "Schuss": "2",
-        "PB": "2"
-      }
-    },
-    "Pfefferbüchse": {
-      "name": "Pfefferbüchse",
-      "kategorie": "Waffe",
-      "gewicht": 2.5,
-      "kosten": 3000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": "1",
-        "Schuss": "6",
-        "PB": "1"
-      }
-    },
-    "Pistole": {
-      "name": "Pistole",
-      "kategorie": "Waffe",
-      "gewicht": 2,
-      "kosten": 1000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Pistole, Mantel-": {
-      "name": "Pistole, Mantel-",
-      "kategorie": "Waffe",
-      "gewicht": 0.5,
-      "kosten": 750,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W4+1",
-        "Reichweite": "3/6/12",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Pistole, doppelläufig": {
-      "name": "Pistole, doppelläufig",
-      "kategorie": "Waffe",
-      "gewicht": 2.5,
-      "kosten": 1750,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Doppelläufig. Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": "1",
-        "Schuss": "2",
-        "PB": "1"
-      }
-    },
-    "Pistole, Drachen-": {
-      "name": "Pistole, Drachen-",
-      "kategorie": "Waffe",
-      "gewicht": 1.5,
-      "kosten": 1000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Streuschuss. Nachladen 2.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Stockdegenpistole": {
-      "name": "Stockdegenpistole",
-      "kategorie": "Waffe",
-      "gewicht": 1,
-      "kosten": 350,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W4 (Fechtwaffen).",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W4+1",
-        "Reichweite": "3/6/12",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Revolver": {
-      "name": "Revolver",
-      "kategorie": "Waffe",
-      "gewicht": 2,
-      "kosten": 4000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 1.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": "1",
-        "Schuss": "6",
-        "PB": "1"
-      }
-    },
-    "Gewehr": {
-      "name": "Gewehr",
-      "kategorie": "Waffe",
-      "gewicht": 6,
-      "kosten": 5000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 1.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W8+1",
-        "Reichweite": "20/40/80",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Gewehr, Pfefferbüchse": {
-      "name": "Gewehr, Pfefferbüchse",
-      "kategorie": "Waffe",
-      "gewicht": 7.5,
-      "kosten": 7000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 1.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W8+1",
-        "Reichweite": "20/40/80",
-        "FR": "1",
-        "Schuss": "4",
-        "PB": "1"
-      }
-    },
-    "Schrotflinte": {
-      "name": "Schrotflinte",
-      "kategorie": "Waffe",
-      "gewicht": 6,
-      "kosten": 5000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Streuschuss. Nachladen 1.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": "1",
-        "Schuss": "1",
-        "PB": "1"
-      }
-    },
-    "Schrotflinte, doppelläufig": {
-      "name": "Schrotflinte, doppelläufig",
-      "kategorie": "Waffe",
-      "gewicht": 7.5,
-      "kosten": 7000,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Doppelläufig, Streuschuss. Nachladen 1.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": "1",
-        "Schuss": "2",
         "PB": "1"
       }
     },
@@ -17063,24 +16622,6 @@
         "PB": "-"
       }
     },
-    "Steinschlosspistole": {
-      "name": "Steinschlosspistole",
-      "kategorie": "Waffe",
-      "gewicht": 1.5,
-      "kosten": 150,
-      "setting": "mittelalterlich",
-      "beschreibung": "-",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W6+1",
-        "Reichweite": "5/10/20",
-        "FR": 1,
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
     "Gegengift, Phiole": {
       "name": "Gegengift, Phiole",
       "kategorie": "Allgemein",
@@ -17244,20 +16785,6 @@
       "kopf": 4,
       "mindeststaerke": "W10"
     },
-    "Schwerer Helm umschließend": {
-      "name": "Schwerer Helm umschließend",
-      "kategorie": "Rüstung",
-      "gewicht": 4,
-      "kosten": 300,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Schwerer umschließender Helm, -1 auf Sicht-Wahrnehmung.",
-      "aktiv": true,
-      "torso": 0,
-      "arme": 0,
-      "beine": 0,
-      "kopf": 4,
-      "mindeststaerke": "W10"
-    },
     "Rüstungsstacheln": {
       "name": "Rüstungsstacheln",
       "kategorie": "Rüstungsmodifikation",
@@ -17309,30 +16836,6 @@
       "panzerung": 4,
       "mindeststaerke": "W12"
     },
-    "Leichter Schild": {
-      "name": "Leichter Schild",
-      "kategorie": "Schild",
-      "gewicht": 2,
-      "kosten": 30,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Leichter Schild für grundlegenden Schutz",
-      "aktiv": true,
-      "parade": 1,
-      "deckung": 0,
-      "mindeststaerke": "W6"
-    },
-    "Schwerer Schild": {
-      "name": "Schwerer Schild",
-      "kategorie": "Schild",
-      "gewicht": 6,
-      "kosten": 100,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Schwerer Schild für maximalen Schutz. –1 Bewegungsweite",
-      "aktiv": true,
-      "parade": 2,
-      "deckung": -4,
-      "mindeststaerke": "W10"
-    },
     "Schildstacheln": {
       "name": "Schildstacheln",
       "kategorie": "Schildmodifikation",
@@ -17356,24 +16859,6 @@
         "Schaden": "2W4",
         "Reichweite": "5/10/20",
         "FR": 1,
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Hand-Repetierarmbrust": {
-      "name": "Hand-Repetierarmbrust",
-      "kategorie": "Waffe",
-      "gewicht": 1.5,
-      "kosten": 160,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nachladen 1 für eine Kartusche mit 5 Bolzen oder 1 einzelnen Bolzen",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "2W4",
-        "Reichweite": "5/10/20",
-        "FR": "1",
         "Schuss": "-",
         "PB": "-"
       }
@@ -17558,24 +17043,6 @@
         "PB": 1
       }
     },
-    "Dolch/Messer Fernkampf": {
-      "name": "Dolch/Messer",
-      "kategorie": "Waffe",
-      "gewicht": 0.5,
-      "kosten": 45,
-      "setting": "mittelalterlich",
-      "beschreibung": "Wurfdolch, Stä+W4.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "Stä+W4",
-        "Reichweite": "3/6/12",
-        "FR": "1",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
     "Dreizack Fernkampf": {
       "name": "Dreizack",
       "kategorie": "Waffe",
@@ -17702,24 +17169,6 @@
         "PB": "-"
       }
     },
-    "Handaxt Nahkampf": {
-      "name": "Handaxt",
-      "kategorie": "Waffe",
-      "gewicht": 1,
-      "kosten": 20,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W6.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "Stä+W6",
-        "Reichweite": "nah",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
     "Streitaxt": {
       "name": "Streitaxt",
       "kategorie": "Waffe",
@@ -17792,24 +17241,6 @@
         "PB": "-"
       }
     },
-    "Speer Nahkampf": {
-      "name": "Speer",
-      "kategorie": "Waffe",
-      "gewicht": 1.5,
-      "kosten": 45,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W6.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "Stä+W6",
-        "Reichweite": "1",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
     "Kurzer Speer": {
       "name": "Kurzer Speer",
       "kategorie": "Waffe",
@@ -17864,42 +17295,6 @@
         "PB": "-"
       }
     },
-    "Streitkolben leicht": {
-      "name": "Streitkolben, leicht",
-      "kategorie": "Waffe",
-      "gewicht": 1.5,
-      "kosten": 105,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W6.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "Stä+W6",
-        "Reichweite": "nah",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Streitkolben schwer": {
-      "name": "Streitkolben, schwer",
-      "kategorie": "Waffe",
-      "gewicht": 2,
-      "kosten": 105,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W6.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W8",
-      "eigenschaften": {
-        "Schaden": "Stä+W8",
-        "Reichweite": "nah",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "1"
-      }
-    },
     "Totschläger": {
       "name": "Totschläger",
       "kategorie": "Waffe",
@@ -17945,15 +17340,6 @@
       "beschreibung": "Für alle Arten von Bögen. Enthält 20 Pfeile.",
       "aktiv": true
     },
-    "Schleudersteine (10)": {
-      "name": "Schleudersteine (10)",
-      "kategorie": "Munition",
-      "gewicht": 0.5,
-      "kosten": 0.1,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Polierte Steine",
-      "aktiv": true
-    },
     "Flugpfeile (20)": {
       "name": "Flugpfeile (20)",
       "kategorie": "Munition",
@@ -17972,51 +17358,6 @@
       "beschreibung": "Kein Schaden. Platziert eine Kleine Explosionsschablone am Auftreffpunkt. Die Beleuchtung innerhalb der Schablone wird um eine Stufe verringert. Die Wolke hält zwei Runden an.",
       "aktiv": true
     },
-    "Kugeln, Feuerwaffe (30)": {
-      "name": "Kugeln, Feuerwaffe (30)",
-      "kategorie": "Munition",
-      "gewicht": 0.25,
-      "kosten": 30,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Munition für Schusswaffen. Für Kugeln aus Spezialmaterialien siehe Pathfinder for Savage Worlds.",
-      "aktiv": true
-    },
-    "Kugeln, gerillt (1)": {
-      "name": "Kugeln, gerillt (1)",
-      "kategorie": "Munition",
-      "gewicht": 0,
-      "kosten": 5,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Speziell gefertigte Kugel, auf die Gift aufgetragen werden kann. Nicht kompatibel mit alchemistischen Kartuschen.",
-      "aktiv": true
-    },
-    "Schrot (30)": {
-      "name": "Schrot (30)",
-      "kategorie": "Munition",
-      "gewicht": 0.25,
-      "kosten": 30,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Schrot für Streuschusswaffen. Kieselsteine oder anderer Schutt können stattdessen verwendet werden, verursachen aber –1 auf Schießenproben.",
-      "aktiv": true
-    },
-    "Alchemistische Kartusche, Drachenatem": {
-      "name": "Alchemistische Kartusche, Drachenatem",
-      "kategorie": "Alchemistischer Gegenstand",
-      "gewicht": 0,
-      "kosten": 40,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nur für Streuschusswaffen. Kein Schießenwurf: Alle unter der Kleinen Kegelschablone legen eine Ausweichen-Probe ab. 2W6 nichtmagischer Feuerschaden. Kritischer Fehlschlag wenn beide Schadenswürfel eine 1 zeigen.",
-      "aktiv": true
-    },
-    "Alchemistische Kartusche, Fesselschuss": {
-      "name": "Alchemistische Kartusche, Fesselschuss",
-      "kategorie": "Alchemistischer Gegenstand",
-      "gewicht": 0,
-      "kosten": 40,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Nur für Streuschusswaffen. Verringert den Waffenschaden um einen Würfeltyp. Jede getroffene Kreatur muss eine Ausweichen-Probe ablegen oder wird Verstrickt.",
-      "aktiv": true
-    },
     "Alchemistische Kartusche, Leuchtspur": {
       "name": "Alchemistische Kartusche, Leuchtspur",
       "kategorie": "Alchemistischer Gegenstand",
@@ -18024,24 +17365,6 @@
       "kosten": 10,
       "setting": "savage_pathfinder",
       "beschreibung": "Verringert den Schaden um einen Würfeltyp. Eine getroffene Kreatur wird für eine Runde geblendet. Auch als Signalrakete verwendbar. Kann nur gegen einzelne Kreaturen eingesetzt werden.",
-      "aktiv": true
-    },
-    "Alchemistische Kartusche, Metall": {
-      "name": "Alchemistische Kartusche, Metall",
-      "kategorie": "Alchemistischer Gegenstand",
-      "gewicht": 0,
-      "kosten": 15,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Macht Kugel und Schwarzpulver wasserdicht.",
-      "aktiv": true
-    },
-    "Alchemistische Kartusche, Salzschrot": {
-      "name": "Alchemistische Kartusche, Salzschrot",
-      "kategorie": "Alchemistischer Gegenstand",
-      "gewicht": 0.25,
-      "kosten": 12,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Kann in Streuschusswaffen geladen werden. Verursacht betäubenden Schaden.",
       "aktiv": true
     },
     "Doppelarmbrust": {
@@ -18076,42 +17399,6 @@
         "Schaden": "Stä+W6",
         "Reichweite": "3/6/12",
         "FR": "1",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Dolch/Messer Nahkampf": {
-      "name": "Dolch/Messer",
-      "kategorie": "Waffe",
-      "gewicht": 0.5,
-      "kosten": 45,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W4.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "Stä+W4",
-        "Reichweite": "nah",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Dreizack Nahkampf": {
-      "name": "Dreizack",
-      "kategorie": "Waffe",
-      "gewicht": 2,
-      "kosten": 80,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W6.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "Stä+W6",
-        "Reichweite": "1",
-        "FR": "-",
         "Schuss": "-",
         "PB": "-"
       }
@@ -18237,42 +17524,6 @@
       "eigenschaften": {
         "Schaden": "Stä+W4",
         "Reichweite": "1",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Keule leicht": {
-      "name": "Keule, leicht",
-      "kategorie": "Waffe",
-      "gewicht": 1,
-      "kosten": 3,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W4.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "Stä+W4",
-        "Reichweite": "nah",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Keule schwer": {
-      "name": "Keule, schwer",
-      "kategorie": "Waffe",
-      "gewicht": 2.5,
-      "kosten": 20,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W6.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "Stä+W6",
-        "Reichweite": "nah",
         "FR": "-",
         "Schuss": "-",
         "PB": "-"
@@ -18602,43 +17853,6 @@
         "PB": "3"
       }
     },
-    "Menschenfänger Pathfinder": {
-      "name": "Menschenfänger",
-      "kategorie": "Waffe",
-      "gewicht": 5,
-      "kosten": 15,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Reichweite 2, Zweihändig; kein regulärer Schaden: Bei einem Treffer kann sich das Ziel nicht vom Angreifer wegbewegen, bis es eine gegensätzliche Stärkeprobe (freie Aktion) gewinnt.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W6",
-      "eigenschaften": {
-        "Schaden": "-",
-        "Reichweite": "2",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Kanone Rundgeschoss": {
-      "name": "Kanone Rundgeschoss",
-      "kategorie": "Belagerungswaffe",
-      "gewicht": 0,
-      "kosten": 0,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Schwere Waffe, Nachladen 8. Zwei Besatzungsmitglieder können gleichzeitig nachladen. Bei Erfolg prallt die Kugel bei geradem Würfelergebnis zu einem weiteren Opfer hinter dem ersten Ziel (innerhalb von 6\") ab.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "-",
-      "eigenschaften": {
-        "Schaden": "3W6+1",
-        "Reichweite": "50/100/200",
-        "FR": "1",
-        "Schuss": "-",
-        "PB": "4",
-        "Flächenschablone": "MFS"
-      }
-    },
     "Balliste": {
       "name": "Balliste",
       "kategorie": "Belagerungswaffe",
@@ -18767,15 +17981,6 @@
       "kosten": 110,
       "setting": "mittelalterlich",
       "beschreibung": "Eine 'Fackel', die dauerhaft mit Licht verzaubert ist. Verbrennt nicht und gibt keine Hitze ab.",
-      "aktiv": true
-    },
-    "Gegengift Phiole": {
-      "name": "Gegengift, Phiole",
-      "kategorie": "Alchemistischer Gegenstand",
-      "gewicht": 0.25,
-      "kosten": 50,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Gewährt für eine Stunde einen Bonus von +4 zum Widerstand gegen Gifte.",
       "aktiv": true
     },
     "Rauchstab": {
@@ -19361,33 +18566,6 @@
       "beschreibung": "Enthält die Macht Schlummer (Rang F, 2 MP). Tabelle H-1 Gewöhnlich. Einmaliger Gebrauch. Preis: F×2×50 GM = 200 GM.",
       "aktiv": true
     },
-    "Wasserflasche (Wasserschlauch)": {
-      "name": "Wasserflasche (Wasserschlauch)",
-      "kategorie": "Allgemein",
-      "gewicht": 0.25,
-      "kosten": 5.5,
-      "setting": "savage_pathfinder",
-      "beschreibung": "Wasserschlauch für 1,5 Liter.",
-      "aktiv": true
-    },
-    "Schwert, Langschwert": {
-      "name": "Schwert, Langschwert",
-      "kategorie": "Waffe",
-      "gewicht": 1.5,
-      "kosten": 200,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W8.",
-      "aktiv": true,
-      "typ": "Nahkampf",
-      "mindeststaerke": "W8",
-      "eigenschaften": {
-        "Schaden": "Stä+W8",
-        "Reichweite": "nah",
-        "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
     "Wurfaxt": {
       "name": "Wurfaxt",
       "kategorie": "Waffe",
@@ -19402,24 +18580,6 @@
         "Schaden": "Stä+W6",
         "Reichweite": "3/6/12",
         "FR": "-",
-        "Schuss": "-",
-        "PB": "-"
-      }
-    },
-    "Dolch/Messer": {
-      "name": "Dolch/Messer",
-      "kategorie": "Waffe",
-      "gewicht": 0.5,
-      "kosten": 45,
-      "setting": "mittelalterlich",
-      "beschreibung": "Stä+W4.",
-      "aktiv": true,
-      "typ": "Fernkampf",
-      "mindeststaerke": "W4",
-      "eigenschaften": {
-        "Schaden": "Stä+W4",
-        "Reichweite": "3/6/12",
-        "FR": 1,
         "Schuss": "-",
         "PB": "-"
       }
@@ -21141,7 +20301,10 @@
       "kosten": 50,
       "setting": "savage_pathfinder",
       "beschreibung": "Holzschild, Parade +1, Deckung -2.",
-      "aktiv": true
+      "aktiv": true,
+      "parade": 1,
+      "deckung": -2,
+      "mindeststaerke": "W8"
     },
     "Lederschild": {
       "name": "Lederschild",
@@ -21150,7 +20313,10 @@
       "kosten": 30,
       "setting": "savage_pathfinder",
       "beschreibung": "Lederschild, Parade +1, Deckung -2.",
-      "aktiv": true
+      "aktiv": true,
+      "parade": 1,
+      "deckung": -2,
+      "mindeststaerke": "W8"
     },
     "Großer Lederschild": {
       "name": "Großer Lederschild",
@@ -21159,7 +20325,10 @@
       "kosten": 45,
       "setting": "savage_pathfinder",
       "beschreibung": "Großer Lederschild, Parade +2, Deckung -2.",
-      "aktiv": true
+      "aktiv": true,
+      "parade": 2,
+      "deckung": -2,
+      "mindeststaerke": "W8"
     },
     "Großschild": {
       "name": "Großschild",
@@ -21168,7 +20337,10 @@
       "kosten": 100,
       "setting": "savage_pathfinder",
       "beschreibung": "Großschild, Parade +3, Deckung -4.",
-      "aktiv": true
+      "aktiv": true,
+      "parade": 3,
+      "deckung": -4,
+      "mindeststaerke": "W10"
     },
     "Turmschild": {
       "name": "Turmschild",
@@ -21177,7 +20349,10 @@
       "kosten": 120,
       "setting": "savage_pathfinder",
       "beschreibung": "Turmschild, Parade +3, Deckung -4.",
-      "aktiv": true
+      "aktiv": true,
+      "parade": 3,
+      "deckung": -4,
+      "mindeststaerke": "W10"
     },
     "Buckler": {
       "name": "Buckler",
@@ -21186,7 +20361,10 @@
       "kosten": 50,
       "setting": "savage_pathfinder",
       "beschreibung": "Faustschild, Parade +1.",
-      "aktiv": true
+      "aktiv": true,
+      "parade": 1,
+      "deckung": 0,
+      "mindeststaerke": "W6"
     },
     "Verstärkter Holzschild": {
       "name": "Verstärkter Holzschild",
@@ -21195,7 +20373,10 @@
       "kosten": 70,
       "setting": "savage_pathfinder",
       "beschreibung": "Verstärkter Holzschild, Parade +1.",
-      "aktiv": true
+      "aktiv": true,
+      "parade": 1,
+      "deckung": 0,
+      "mindeststaerke": "W6"
     },
     "Drachentöter": {
       "name": "Drachentöter",

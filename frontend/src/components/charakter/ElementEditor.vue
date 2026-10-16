@@ -58,6 +58,7 @@ import ElementFormDialog from '@/components/elemente/ElementFormDialog.vue'
 import KraftFormDialog from '@/components/elemente/KraftFormDialog.vue'
 
 const props = defineProps<{ typ: ElementTyp }>()
+const emit = defineEmits<{ (e: 'gespeichert', name: string): void }>()
 
 const store = useCharakterStore()
 const einstellungenStore = useEinstellungenStore()
@@ -101,6 +102,7 @@ async function speichern(payload: { name: string; daten: Record<string, any>; al
   const result = await store.elementSpeichern(props.typ, payload.name, payload.daten, payload.alterName)
   if (result.success) {
     formDialog.value?.schliesse()
+    emit('gespeichert', payload.name.trim())
   } else {
     meldung.value = result.message
     meldungSichtbar.value = true

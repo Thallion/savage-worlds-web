@@ -44,7 +44,7 @@ from app.services.charakterbogen import (
 )
 from app.services.macht_auspraegungen import macht_anzeigename
 from app.services.statblock import ATTRIBUT_REIHENFOLGE
-from app.services.volk_effekte import gewaehltes_volk
+from app.services.volk_effekte import gewaehltes_volk, volk_handicap_status
 
 # DIN A4 mit schmalen Rändern
 SEITE = A4
@@ -334,6 +334,16 @@ def _attribute_fertigkeiten(bogen: _Bogen, daten: dict, setting: dict, werte: di
     return [zwei_spalten, Spacer(1, 6)]
 
 
+def _volk_eintrag(bogen: _Bogen, daten: dict, setting: dict, feld: str, eintrag: str) -> Paragraph:
+    """Abgekaufte Abstammungs-Handicaps durchgestrichen, reduzierte markiert."""
+    status = volk_handicap_status(daten, setting, eintrag) if feld == "handicaps" else None
+    if status == "abgekauft":
+        return Paragraph(f"<strike>{_xml_escape(eintrag)}</strike> – abgekauft", bogen.text)
+    if status == "reduziert":
+        return Paragraph(f"{_xml_escape(eintrag)} – auf leicht reduziert", bogen.text)
+    return bogen.p(eintrag, bogen.text)
+
+
 def _volk(bogen: _Bogen, daten: dict, setting: dict, breite: float) -> list:
     selected_volk, volk_data = gewaehltes_volk(daten, setting)
     if not selected_volk:
@@ -349,7 +359,7 @@ def _volk(bogen: _Bogen, daten: dict, setting: dict, breite: float) -> list:
         eintraege = volk_data.get(feld) or []
         if eintraege:
             zeilen = [[bogen.p(spalte.upper(), bogen.kopfzelle)]]
-            zeilen += [[bogen.p(e, bogen.text)] for e in eintraege]
+            zeilen += [[_volk_eintrag(bogen, daten, setting, feld, e)] for e in eintraege]
             flows.append(_daten_tabelle(bogen, zeilen, [breite], kopf=True))
             flows.append(Spacer(1, 4))
     return flows

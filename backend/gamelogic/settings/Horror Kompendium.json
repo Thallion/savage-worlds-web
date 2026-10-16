@@ -113,15 +113,15 @@
     "Mumie": {
       "name": "Mumie",
       "handicaps": [
-        "Langsam (Verringerte Bewegungsweite)"
+        "Langsam (Verringerte Bewegungsweite)",
+        "Schwäche: Feuer (+4 Schaden)"
       ],
       "talente": [],
       "besonderheiten": [
         "Untot (+2 Robustheit, +2 um sich von Schütteln zu erholen, kein Bonusschaden durch gezielten Schuss)",
         "Furchteinflößend (-2 auf Furchtproben von Gegnern)",
         "Panzerung +2 (Bandagierte, uralte Haut)",
-        "Regeneration (Natürliche Heilung alle 4 Stunden statt 5 Tage)",
-        "Schwäche: Feuer (+4 Schaden)"
+        "Regeneration (Natürliche Heilung alle 4 Stunden statt 5 Tage)"
       ],
       "sprachen": [
         "Alte Sprache",
@@ -161,15 +161,15 @@
       "name": "Flickenmonster",
       "handicaps": [
         "Phobie (schwer: Feuer und Flammen)",
-        "Verpeilt (Trübe Erinnerungen; Verstand nur einmal über Aufstiege steigerbar)"
+        "Verpeilt (Trübe Erinnerungen; Verstand nur einmal über Aufstiege steigerbar)",
+        "Schwäche: Feuer (+4 Schaden)"
       ],
       "talente": [],
       "besonderheiten": [
         "Untot (+2 Robustheit, +2 um sich von Schütteln zu erholen, kein Bonusschaden durch gezielten Schuss)",
         "Berserker (Talent, automatisch)",
         "Arkane Resistenz (Talent, automatisch)",
-        "Teile (+2 Würfeltypen auf Stärke und Konstitution)",
-        "Schwäche: Feuer (+4 Schaden)"
+        "Teile (+2 Würfeltypen auf Stärke und Konstitution)"
       ],
       "sprachen": [
         "Gemeinsprache"
@@ -300,7 +300,8 @@
       "handicaps": [
         "Schwäche: Sonnenlicht (2W6 Schaden pro Runde bei direktem Sonnenlicht)",
         "Schwäche: Pfahl durchs Herz (Sofortiger Tod bei gezieltem Schuss mit Holzpfahl)",
-        "Abhängigkeit (Blut: Muss einmal pro 24 Stunden Blut trinken, sonst Erschöpfung)"
+        "Abhängigkeit (Blut: Muss einmal pro 24 Stunden Blut trinken, sonst Erschöpfung)",
+        "Schwäche: Geweihtes Wasser (+4 Schaden durch geweihtes Wasser und heilige Symbole)"
       ],
       "talente": [],
       "besonderheiten": [
@@ -311,7 +312,6 @@
         "Natürliche Waffen (Biss: Stä+W4)",
         "Betörender Blick (Kann Opfer mit Willenskraft-Probe betören)",
         "Regeneration (Natürliche Heilung alle 4 Stunden statt 5 Tage)",
-        "Schwäche: Geweihtes Wasser/Symbole (+4 Schaden)",
         "Schwäche: Knoblauch (Abgestoßen)"
       ],
       "sprachen": [

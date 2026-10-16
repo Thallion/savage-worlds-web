@@ -536,7 +536,7 @@ const volkEigenschaften = computed(() => {
 // Nach der Erschaffung per Aufstieg abgekaufte bzw. reduzierte Handicaps der
 // Abstammung (Journal-Einträge mit details.volk), je Anzeigename. Die
 // Volk-Handicaps sind Freitexte ("Pazifist (Schwer) (...)"), daher Abgleich
-// über den Namensanfang.
+// über die Anfangswörter (volkHandicapPasst).
 const volkHandicapAenderungen = computed(() => {
   const katalog = mergeKatalog(einstellungenStore.aktuellesSetting?.handicaps, daten.value, 'handicaps') as Record<
     string,
@@ -556,10 +556,20 @@ const volkHandicapAenderungen = computed(() => {
   return aenderungen
 })
 
+// Wortweiser Vergleich ohne Satzzeichen ("Schwäche: Silber (...)" ↔ "Schwäche
+// (Silber)"); das erste Wort darf ein Kompositum sein ("Meeresphobie" ↔ "Phobie")
+const woerter = (text: string) => text.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean)
+
+function volkHandicapPasst(name: string, text: string): boolean {
+  const n = woerter(name)
+  const t = woerter(text)
+  if (!n.length || t.length < n.length || n.slice(1).some((w, i) => t[i + 1] !== w)) return false
+  return t[0] === n[0] || (n[0].length >= 4 && t[0].endsWith(n[0]))
+}
+
 function volkHandicapStatus(text: string): 'abgekauft' | 'reduziert' | undefined {
-  const t = text.toLowerCase()
   for (const [name, status] of volkHandicapAenderungen.value) {
-    if (t === name || t.startsWith(`${name} `) || t.startsWith(`${name}(`)) return status
+    if (volkHandicapPasst(name, text)) return status
   }
   return undefined
 }

@@ -51,7 +51,7 @@
             "name": "Gnom",
             "handicaps": [
                 "Größe -1 (Reduzierte Robustheit um 1)",
-                "Verringerte Bewegungsweite (-1 Bewegungsweite, Sprintwürfel um einen Typ reduziert)",
+                "Langsam (-1 Bewegungsweite, Sprintwürfel um einen Typ reduziert)",
                 "Zwanghaft (Beginnt mit einer verstandsbasierten Fertigkeit auf W4)"
             ],
             "talente": [],

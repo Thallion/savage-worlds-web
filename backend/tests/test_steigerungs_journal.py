@@ -199,3 +199,52 @@ def test_abgekauftes_abstammungs_handicap_in_bogen_und_statblock(daten):
     assert "Zerbrechlich" not in statblock
     resp = client.post("/api/spiellogik/charakterbogen/pdf", json={"charakter_daten": d})
     assert resp.status_code == 200
+
+
+def test_reduzierte_abstammungs_phobie_mit_eigenem_namen_im_bogen():
+    # Zwerg (Savage Aventurien): Freitext "Meeresphobie (schwer: ...)" ↔ Phobie_schwer
+    d = initialisiere_charakter_daten("Radrosch", "Savage Aventurien")
+    d = aktion("volk/waehlen", d, "Zwerg")["charakter_daten"]
+    d = mit_aufstieg(d)
+    r = aktion("handicap/reduzieren", d, "Phobie_schwer")
+    assert r["success"], r["message"]
+    assert "Meeresphobie (schwer: panische Angst vor offenem und tiefem Wasser) — auf leicht reduziert" in bogen_html(
+        r["charakter_daten"]
+    )
+
+
+@pytest.mark.parametrize(
+    "name, eintrag, erwartet",
+    [
+        ("phobie", "Meeresphobie (schwer: panische Angst)", True),
+        ("phobie", "Phobie (leicht: Geruchssinn)", True),
+        ("schwäche (silber)", "Schwäche: Silber (+4 Schaden)", True),
+        ("schwäche (pfahl)", "Schwäche: Sonnenlicht (2W6)", False),
+        ("pazifist", "Pazifist_schwer", True),
+        ("klaustrophobie", "Phobie (schwer)", False),
+        ("stur", "Sturkopf", False),
+    ],
+)
+def test_volk_handicap_passt(name, eintrag, erwartet):
+    from app.services.volk_effekte import volk_handicap_passt
+
+    assert volk_handicap_passt(name, eintrag) is erwartet
+
+
+def test_jedes_abstammungs_handicap_hat_einen_freitext():
+    # Sonst lässt sich ein Abkauf/eine Reduzierung im Volk-Block nicht markieren
+    import json
+    from pathlib import Path
+
+    from app.services.volk_effekte import volk_handicap_passt
+
+    fehlend = []
+    for pfad in sorted(Path("gamelogic/settings").glob("*.json")):
+        setting = json.loads(pfad.read_text(encoding="utf-8"))
+        handicaps = setting.get("handicaps") or {}
+        for volk_name, volk in (setting.get("voelker") or {}).items():
+            for key in (volk.get("effects") or {}).get("auto_handicaps", []):
+                name = (handicaps.get(key) or {}).get("name") or key.removesuffix("_leicht").removesuffix("_schwer")
+                if not any(volk_handicap_passt(name, t) for t in volk.get("handicaps") or []):
+                    fehlend.append(f"{pfad.stem}/{volk_name}: {key}")
+    assert not fehlend

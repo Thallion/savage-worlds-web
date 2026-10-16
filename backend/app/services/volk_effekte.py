@@ -9,6 +9,8 @@ in die Attribute geschrieben, sondern zur Laufzeit in /spiellogik/berechne aus
 voelker_selected gelesen.
 """
 
+import re
+
 from app.services.natuerliche_waffen import synchronisiere as synchronisiere_natuerliche_waffen
 from app.services.volk_wahlen import entferne_alle_spezialwahlen
 
@@ -49,7 +51,7 @@ def volk_handicap_status(daten: dict, setting: dict, eintrag: str) -> str | None
 
     Grundlage sind die Journal-Einträge mit details.volk (Rückgängig entfernt
     sie wieder). Die Volk-Handicaps sind Freitexte ("Pazifist (Schwer) (...)"),
-    daher Abgleich über den Namensanfang.
+    daher Abgleich über volk_handicap_passt.
     """
     handicaps = setting.get("handicaps") or {}
 
@@ -70,11 +72,27 @@ def volk_handicap_status(daten: dict, setting: dict, eintrag: str) -> str | None
         elif e.get("type") == "handicap_reduziert":
             aenderungen.setdefault(name, "reduziert")
 
-    text = eintrag.lower()
     for name, status in aenderungen.items():
-        if text == name or text.startswith((f"{name} ", f"{name}(")):
+        if volk_handicap_passt(name, eintrag):
             return status
     return None
+
+
+def _woerter(text: str) -> list[str]:
+    return [w for w in re.split(r"[\W_]+", text.lower()) if w]
+
+
+def volk_handicap_passt(name: str, eintrag: str) -> bool:
+    """Gehört der Volk-Freitext zum Handicap-Anzeigenamen?
+
+    Verglichen wird wortweise ohne Satzzeichen ("Schwäche: Silber (...)" ↔
+    "Schwäche (Silber)", "Pazifist_schwer" ↔ "Pazifist"); das erste Wort darf
+    ein Kompositum sein ("Meeresphobie (schwer: ...)" ↔ "Phobie").
+    """
+    n, t = _woerter(name), _woerter(eintrag)
+    if not n or len(t) < len(n) or t[1 : len(n)] != n[1:]:
+        return False
+    return t[0] == n[0] or (len(n[0]) >= 4 and t[0].endswith(n[0]))
 
 
 def verfuegbare_volk_wahl(volk_data: dict) -> dict | None:

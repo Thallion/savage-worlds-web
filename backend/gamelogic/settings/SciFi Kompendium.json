@@ -104,12 +104,13 @@
     },
     "Draken": {
       "name": "Draken",
-      "handicaps": [],
+      "handicaps": [
+        "Langsam (Bewegungsweite -1, Sprintwürfel W4)"
+      ],
       "talente": [],
       "besonderheiten": [
         "Dämmerungssicht (Halbiert Abzüge für Düstere Beleuchtung)",
         "Hartes Haupt (Kopfstoß: Stä+W4 Schaden, zählt als Hörner)",
-        "Langsam (Bewegungsweite -1, Sprintwürfel W4)",
         "Robustheit +2",
         "Ruppig (-2 auf Überredenproben)",
         "Stark (beginnt mit W6 Stärke, max. W12+1)"
@@ -550,11 +551,11 @@
     "Vierarmige": {
       "name": "Vierarmige",
       "handicaps": [
-        "Volksfeind (SL-Wahl)"
+        "Volksfeind (SL-Wahl)",
+        "Dünnhäutig (-4 auf Widerstand gegen Provozieren)"
       ],
       "talente": [],
       "besonderheiten": [
-        "Dünnhäutig (-4 auf Widerstand gegen Provozieren)",
         "Zerbrechlich (-1 Robustheit)",
         "Zusätzliche Aktion (ignoriert 2 Punkte körperliche Abzüge für Mehrfachaktionen)",
         "Zusätzliche Gliedmaßen (zweiter Satz Arme, +1 Überzahlbonus im Nahkampf, +1 auf Athletikproben)"

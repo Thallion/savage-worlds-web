@@ -940,16 +940,6 @@ def _ist_talent_duplizierbar(talent_name: str, talent_data: dict) -> bool:
     return talent_name not in gesperrt and talent_data.get("name", talent_name) not in gesperrt
 
 
-LEBENSRING_GRUNDVOLUMEN = 12
-
-
-def _lebensring_volumen(selected: list[str], setting_talente: dict) -> tuple[int, int]:
-    """(belegtes, maximales) Volumen des Lebensrings (Savage Aventurien, Geode)."""
-    belegt = sum(setting_talente.get(n, {}).get("volumen", 0) for n in selected)
-    bonus = sum(setting_talente.get(n, {}).get("volumen_bonus", 0) for n in selected)
-    return belegt, LEBENSRING_GRUNDVOLUMEN + bonus
-
-
 @router.post("/talent/waehlen", response_model=SpiellogikResponse)
 def talent_waehlen(req: SpiellogikRequest):
     daten = req.charakter_daten
@@ -996,18 +986,6 @@ def talent_waehlen(req: SpiellogikRequest):
     if konflikt:
         return SpiellogikResponse(success=False, message=konflikt)
 
-    # Savage Aventurien: Ringzauber belegen Volumen im Lebensring
-    volumen = talent_data.get("volumen", 0)
-    if volumen and not req.ignoriere_pruefungen:
-        belegt, maximum = _lebensring_volumen(selected, setting_talente)
-        if belegt + volumen > maximum:
-            return SpiellogikResponse(
-                success=False,
-                message=f"Lebensring voll: '{talent_name}' braucht {volumen} Volumen, "
-                f"belegt sind {belegt} von {maximum}",
-                bestaetigung_moeglich=True,
-            )
-
     # Bezahlung wie im Original: erst das kostenlose Pathfinder-Klassen-Talent,
     # dann freie Slots (Volks-Talent, eingelöste Punkte); während der
     # Erschaffung sonst 2 Handicap-Punkte, danach 1 Aufstieg
@@ -1015,7 +993,6 @@ def talent_waehlen(req: SpiellogikRequest):
     abgeschlossen = daten.get("char_gen_completed", False)
     erfolgsmeldung = ""
     if talent_data.get("kostenlos"):
-        # z. B. Volumenerweiterung des Lebensrings (kostet dauerhaft MP statt Aufstieg)
         zahlungsquelle = "kostenlos"
     elif _pathfinder_kostenlos_moeglich(daten, talent_data):
         zahlungsquelle = "pathfinder_kostenlos"

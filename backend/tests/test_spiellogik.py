@@ -3081,28 +3081,3 @@ def test_ah_geode_bindet_lebensring_automatisch(geode):
 def test_ringzauber_kostet_aufstieg(geode):
     d = aktion("talent/waehlen", geode, "Heilkräfte der Natur")["charakter_daten"]
     assert d["verbleibende_aufstiege"] == 9
-
-
-def test_lebensring_volumen_begrenzt(geode):
-    d = geode
-    for talent in ("Heilkräfte der Natur", "Beherrscher der Flammen", "Wasserbann"):
-        d = aktion("talent/waehlen", d, talent)["charakter_daten"]
-    r = aktion("talent/waehlen", d, "Wirbelnder Luftschild")
-    assert not r["success"] and r["bestaetigung_moeglich"]
-    assert "10 von 12" in r["message"]
-
-
-def test_volumenerweiterung_kostenlos_und_kostet_machtpunkt(geode):
-    vorher = aktion("berechne", geode)["machtpunkte"]
-    d = aktion("talent/waehlen", geode, "Volumenerweiterung I")["charakter_daten"]
-    assert d["verbleibende_aufstiege"] == 10
-    assert aktion("berechne", d)["machtpunkte"] == vorher - 1
-    for talent in ("Heilkräfte der Natur", "Beherrscher der Flammen", "Wasserbann"):
-        d = aktion("talent/waehlen", d, talent)["charakter_daten"]
-    r = aktion("talent/waehlen", d, "Wirbelnder Luftschild")
-    assert r["success"]
-    # Entfernen der Erweiterung erstattet keinen Aufstieg
-    d = aktion("talent/entfernen", r["charakter_daten"], "Volumenerweiterung I",
-               ignoriere_pruefungen=True)["charakter_daten"]
-    assert "Volumenerweiterung I" not in d["selected_talente"]
-    assert d["verbleibende_aufstiege"] == 6

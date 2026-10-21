@@ -52,6 +52,10 @@
         "Monsterschlächter"
     ],
 
+    "einmal_pro_rang_talente": {
+        "Machtpunkte": {"machtpunkte_legendaer": 2}
+    },
+
     "pathfinder_kostenlose_kategorien": [
         "Klasse",
         "Hintergrund",

@@ -39,8 +39,10 @@ from app.services.talent_effekte import (
 )
 from app.services.talent_voraussetzungen import (
     RANG_NAMEN,
+    einmal_pro_rang_regel,
     macht_kapazitaet,
     pruefe_voraussetzungen,
+    talent_kopie_raenge,
 )
 from app.services.ausruestung import (
     gesamtgewicht,
@@ -961,6 +963,17 @@ def talent_waehlen(req: SpiellogikRequest):
         return SpiellogikResponse(
             success=False, message=f"'{talent_name}' kann nicht mehrfach ausgewählt werden"
         )
+
+    # Einmal pro Rang (z. B. "Machtpunkte"), ab Legendär beliebig oft
+    if einmal_pro_rang_regel(talent_name) is not None and not req.ignoriere_pruefungen:
+        aktueller_rang = charakter_rang(daten)
+        if aktueller_rang != "Legendär" and aktueller_rang in talent_kopie_raenge(daten, talent_name):
+            return SpiellogikResponse(
+                success=False,
+                message=f"'{talent_name}' wurde im Rang {aktueller_rang} bereits gewählt — "
+                "nur einmal pro Rang (ab Legendär beliebig oft)",
+                bestaetigung_moeglich=True,
+            )
 
     # Rang-Gate gegen den Charakterrang (aus ausgegebenen Aufstiegen; bei der
     # Erschaffung Anfänger); wie im Original per Bestätigung überspringbar

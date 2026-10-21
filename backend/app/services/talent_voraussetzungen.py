@@ -14,6 +14,9 @@ nutzbar bleiben.
 
 import re
 
+from app.services.aufstiege import ausgegebene_aufstiege, rang_fuer_aufstiege
+from app.services.charakter_init import load_config
+
 ATTRIBUT_KUERZEL = {
     "STÄ": "Stärke",
     "GES": "Geschicklichkeit",
@@ -35,13 +38,56 @@ def hat_arkanen_hintergrund(daten: dict, setting_talente: dict) -> bool:
     return False
 
 
+def einmal_pro_rang_regel(talent_name: str) -> dict | None:
+    """Regel für Talente, die nur einmal pro Rang wählbar sind (ab Legendär
+    beliebig oft), z. B. {"machtpunkte_legendaer": 2} für "Machtpunkte"."""
+    return load_config("talent_config.json").get("einmal_pro_rang_talente", {}).get(talent_name)
+
+
+def talent_kopie_raenge(daten: dict, talent_name: str) -> list[str]:
+    """Rang je gewählter Kopie des Talents, zum Zeitpunkt der Wahl (vor der
+    Bezahlung, wie das Rang-Gate). Kopien aus dem Steigerungs-Journal tragen
+    den Rang aus der laufenden Aufstiegssumme; ältere (Erschaffung, Importe)
+    gelten als Anfänger."""
+    anzahl = daten.get("selected_talente", []).count(talent_name)
+    entries = (daten.get("steigerungs_journal") or {}).get("entries") or []
+
+    def kosten(eintrag: dict) -> float:
+        details = eintrag.get("details") or {}
+        if details.get("kosten_typ") != "Aufstieg":
+            return 0
+        try:
+            return float(details.get("kosten") or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    summe = max(0, ausgegebene_aufstiege(daten) - sum(kosten(e) for e in entries))
+    journal_raenge = []
+    for eintrag in entries:
+        if eintrag.get("type") == "talent_hinzugefuegt" and (eintrag.get("details") or {}).get("name") == talent_name:
+            journal_raenge.append(rang_fuer_aufstiege(summe))
+        summe += kosten(eintrag)
+    journal_raenge = journal_raenge[-anzahl:] if anzahl else []
+    return ["Anfänger"] * (anzahl - len(journal_raenge)) + journal_raenge
+
+
 def macht_kapazitaet(daten: dict, setting_talente: dict) -> tuple[int, int]:
-    """(Mächte-Slots, Machtpunkte) aus den gewählten Talenten (AH, Neue Mächte, ...)."""
+    """(Mächte-Slots, Machtpunkte) aus den gewählten Talenten (AH, Neue Mächte, ...).
+    Einmal-pro-Rang-Talente ("Machtpunkte") geben ab Legendär weniger Punkte."""
     slots = punkte = 0
     for name in daten.get("selected_talente", []):
         talent = setting_talente.get(name, {})
         slots += talent.get("neue_maechte", 0)
-        punkte += talent.get("machtpunkte", 0)
+        if einmal_pro_rang_regel(name) is None:
+            punkte += talent.get("machtpunkte", 0)
+    for name in dict.fromkeys(daten.get("selected_talente", [])):
+        regel = einmal_pro_rang_regel(name)
+        if regel is None:
+            continue
+        basis = setting_talente.get(name, {}).get("machtpunkte", 0)
+        legendaer = regel.get("machtpunkte_legendaer", basis)
+        for rang in talent_kopie_raenge(daten, name):
+            punkte += legendaer if rang == "Legendär" else basis
     return slots, punkte
 
 

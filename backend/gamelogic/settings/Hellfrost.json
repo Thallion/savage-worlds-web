@@ -3647,7 +3647,7 @@
             "voraussetzungen": [
                 "AH"
             ],
-            "beschreibung": "Erhalte 5 zusätzliche Machtpunkte, nur einmal pro Rang.",
+            "beschreibung": "Erhalte 5 zusätzliche Machtpunkte, nur einmal pro Rang. Ab Legendär beliebig oft, dann je 2 Machtpunkte.",
             "neue_maechte": 0,
             "machtpunkte": 5,
             "ausgewaehlt": false,

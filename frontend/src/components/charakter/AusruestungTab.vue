@@ -126,6 +126,14 @@
                     @update:model-value="(v: string) => setPreis(besitzPreis, eintrag.name, v)"
                   />
                   <v-btn
+                    v-if="eintrag.imKatalog"
+                    icon="mdi-pencil"
+                    size="x-small"
+                    variant="text"
+                    title="Bearbeiten"
+                    @click="elementEditor?.bearbeiteElement(eintrag.name)"
+                  />
+                  <v-btn
                     icon="mdi-plus"
                     size="x-small"
                     variant="text"
@@ -407,6 +415,7 @@ const besitz = computed(() =>
         kosten: item.kosten ?? 0,
         anlegbar: ANLEGBARE_KATEGORIEN.includes(item.kategorie),
         natuerlich: natuerlicheWaffen.value.includes(name),
+        imKatalog: name in katalog.value,
       }
     })
     .sort((a, b) => a.name.localeCompare(b.name)),

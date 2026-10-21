@@ -248,3 +248,62 @@ def test_jedes_abstammungs_handicap_hat_einen_freitext():
                 if not any(volk_handicap_passt(name, t) for t in volk.get("handicaps") or []):
                     fehlend.append(f"{pfad.stem}/{volk_name}: {key}")
     assert not fehlend
+
+
+# --- Talent "Machtpunkte": einmal pro Rang, ab Legendär beliebig oft mit 2 MP ---
+
+def _machtpunkte(d: dict) -> int:
+    from app.services.charakter_init import load_setting
+    from app.services.talent_voraussetzungen import macht_kapazitaet
+
+    return macht_kapazitaet(d, load_setting("SWAE")["talente"])[1]
+
+
+def _mit_ah(daten: dict) -> dict:
+    daten["verbleibende_talente"] = 2
+    return aktion("talent/waehlen", daten, "AH (Magie)")["charakter_daten"]
+
+
+def test_machtpunkte_nur_einmal_pro_rang(daten):
+    d = _mit_ah(daten)
+    basis = _machtpunkte(d)
+    d = aktion("talent/waehlen", d, "Machtpunkte")["charakter_daten"]
+    assert _machtpunkte(d) == basis + 5
+
+    zweite = aktion("talent/waehlen", d, "Machtpunkte")
+    assert not zweite["success"]
+    assert "einmal pro Rang" in zweite["message"]
+    assert zweite["bestaetigung_moeglich"]
+
+    # Nächster Rang: wieder wählbar
+    d = mit_aufstieg(d, anzahl=5)
+    d["verbleibende_aufstiege"] = 1  # 4 ausgegeben → Fortgeschritten
+    d = aktion("talent/waehlen", d, "Machtpunkte")
+    assert d["success"], d["message"]
+    assert _machtpunkte(d["charakter_daten"]) == basis + 10
+
+
+def test_machtpunkte_ab_legendaer_beliebig_oft_mit_2_punkten(daten):
+    d = _mit_ah(daten)
+    basis = _machtpunkte(d)
+    d = mit_aufstieg(d, anzahl=19)
+    d["verbleibende_aufstiege"] = 3  # 16 ausgegeben → Legendär
+    for _ in range(3):
+        ergebnis = aktion("talent/waehlen", d, "Machtpunkte")
+        assert ergebnis["success"], ergebnis["message"]
+        d = ergebnis["charakter_daten"]
+    assert _machtpunkte(d) == basis + 3 * 2
+
+    # Rücknahme eines Legendär-Kaufs nimmt auch nur 2 MP zurück
+    d = aktion("talent/entfernen", d, "Machtpunkte")["charakter_daten"]
+    assert _machtpunkte(d) == basis + 2 * 2
+
+
+def test_machtpunkte_rang_vor_der_buchung_zaehlt(daten):
+    """Der Kauf mit dem 16. Aufstieg zählt noch als Heroisch (wie das Rang-Gate)."""
+    d = _mit_ah(daten)
+    basis = _machtpunkte(d)
+    d = mit_aufstieg(d, anzahl=16)
+    d["verbleibende_aufstiege"] = 1  # 15 ausgegeben → Heroisch
+    d = aktion("talent/waehlen", d, "Machtpunkte")["charakter_daten"]
+    assert _machtpunkte(d) == basis + 5

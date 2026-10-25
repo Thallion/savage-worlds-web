@@ -30,6 +30,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from app.services.ausruestung import malus_fuer
 from app.services.aufstiege import charakter_rang
 from app.services.charakterbogen import (
     ANLEGBARE_KATEGORIEN,
@@ -298,7 +299,13 @@ def _attribute_fertigkeiten(bogen: _Bogen, daten: dict, setting: dict, werte: di
         n for n in attribute if n not in ATTRIBUT_REIHENFOLGE
     ]
     attr_paare = [
-        (name, _wuerfel(attribute[name].get("wert", 4), attribute[name].get("modifier", 0)))
+        (
+            name,
+            _wuerfel(
+                attribute[name].get("wert", 4),
+                attribute[name].get("modifier", 0) + malus_fuer(werte, name),
+            ),
+        )
         for name in reihenfolge
     ]
 
@@ -307,7 +314,8 @@ def _attribute_fertigkeiten(bogen: _Bogen, daten: dict, setting: dict, werte: di
         wuerfel = fert.get("wuerfel", {})
         if wuerfel.get("modifier", 0) == -2:  # ungelernt
             continue
-        fert_paare.append((name, _wuerfel(wuerfel.get("value", 4), wuerfel.get("modifier", 0))))
+        modifier = wuerfel.get("modifier", 0) + malus_fuer(werte, name)
+        fert_paare.append((name, _wuerfel(wuerfel.get("value", 4), modifier)))
 
     links = [
         bogen.band_flow("Attribute", spalte_breite), Spacer(1, 3),

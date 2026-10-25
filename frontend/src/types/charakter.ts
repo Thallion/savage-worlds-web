@@ -164,6 +164,12 @@ export interface AbgeleiteteWerte {
   groesse: number
   bennys: number
   panzerung: number
+  // Würfelseiten; steigt beim Übereinandertragen von Rüstungen (0 = keine)
+  ruestung_mindeststaerke?: number
+  schild_mindeststaerke?: number
+  // −1 je fehlendem Würfeltyp Stärke (Rüstung + Schild), gilt für die Namen in ruestung_malus_ziele
+  ruestung_malus?: number
+  ruestung_malus_ziele?: string[]
   vermoegen: number
   startkapital_gesamt: number
   startkapital_basis: number

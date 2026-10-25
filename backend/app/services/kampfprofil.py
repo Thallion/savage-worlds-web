@@ -25,7 +25,7 @@ weil der Simulator Panzerbrechend (PB) gegen die Panzerung verrechnet.
 
 import re
 
-from app.services.ausruestung import angelegte_waffen_parade, waffen_parade
+from app.services.ausruestung import angelegte_waffen_parade, malus_fuer, waffen_parade
 from app.services.statblock import _basisname
 from app.services.volk_effekte import gewaehltes_volk
 from app.services.volk_wahlen import arkane_fertigkeit_aus_ah
@@ -57,20 +57,22 @@ def _seiten(wuerfel) -> int:
     return _zahl(text.split("+")[0].split("-")[0]) if text else 0
 
 
-def _attribute(daten: dict) -> dict[str, str]:
+def _attribute(daten: dict, werte: dict) -> dict[str, str]:
     return {
-        name: _wuerfel(attr.get("wert", 4), attr.get("modifier", 0))
+        name: _wuerfel(attr.get("wert", 4), attr.get("modifier", 0) + malus_fuer(werte, name))
         for name, attr in daten.get("attribute", {}).items()
     }
 
 
-def _fertigkeiten(daten: dict) -> dict[str, str]:
+def _fertigkeiten(daten: dict, werte: dict) -> dict[str, str]:
     gelernt = {}
     for name, fert in daten.get("fertigkeiten", {}).items():
         wuerfel = fert.get("wuerfel", {})
         if wuerfel.get("modifier", 0) == UNGELERNT_MODIFIKATOR:
             continue
-        gelernt[name] = _wuerfel(wuerfel.get("value", 4), wuerfel.get("modifier", 0))
+        gelernt[name] = _wuerfel(
+            wuerfel.get("value", 4), wuerfel.get("modifier", 0) + malus_fuer(werte, name)
+        )
     return gelernt
 
 
@@ -179,8 +181,8 @@ def generiere_kampfprofil(daten: dict, setting: dict, werte: dict) -> dict:
     waffen_bonus = angelegte_waffen_parade(daten, setting)
     return {
         "name": daten.get("profil_daten", {}).get("Name") or "Unbenannter Charakter",
-        "attribute": _attribute(daten),
-        "fertigkeiten": _fertigkeiten(daten),
+        "attribute": _attribute(daten, werte),
+        "fertigkeiten": _fertigkeiten(daten, werte),
         "parade": werte.get("parade", 2) - waffen_bonus,
         "robustheit": werte.get("robustheit", 4) - panzerung,
         "panzerung": panzerung,

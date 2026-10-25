@@ -149,9 +149,91 @@ def traegt_ruestung(daten: dict, setting: dict) -> bool:
     return next(_angelegte_items(daten, setting, "Rüstung"), None) is not None
 
 
+TREFFERZONEN = ("torso", "arme", "beine", "kopf")
+
+
+def _geschichtete_panzerung(werte: list[int]) -> int:
+    """Mehrere Rüstungen übereinander (SWAE S. 66): die stärkste zählt voll,
+    jede schwächere addiert ihren halben Wert (abgerundet)."""
+    werte = sorted((w for w in werte if w > 0), reverse=True)
+    if not werte:
+        return 0
+    return werte[0] + sum(w // 2 for w in werte[1:])
+
+
 def panzerung_torso(daten: dict, setting: dict) -> int:
     """Angelegte Rüstung am Torso zählt nach SWAE auf die Robustheit."""
-    return sum(item.get("torso", 0) or 0 for item in _angelegte_items(daten, setting, "Rüstung"))
+    return _geschichtete_panzerung(
+        [item.get("torso", 0) or 0 for item in _angelegte_items(daten, setting, "Rüstung")]
+    )
+
+
+def _wuerfel_seiten(wert) -> int:
+    m = re.search(r"\d+", str(wert or ""))
+    return int(m.group()) if m else 0
+
+
+def ruestung_mindeststaerke(daten: dict, setting: dict) -> int:
+    """Benötigte Stärke (Würfelseiten) für die angelegten Rüstungen.
+
+    Liegt eine schwächere Rüstung in einer Trefferzone unter einer schwereren,
+    steigt die Mindeststärke der schwereren um einen Würfeltyp (max. W12).
+    """
+    ruestungen = list(_angelegte_items(daten, setting, "Rüstung"))
+    benoetigt = 0
+    for i, item in enumerate(ruestungen):
+        seiten = _wuerfel_seiten(item.get("mindeststaerke"))
+        ueberlagert = any(
+            (item.get(zone) or 0) > 0
+            and 0 < (andere.get(zone) or 0)
+            # Gleichstand: nur eine der beiden gilt als die schwerere
+            and ((andere.get(zone) or 0) < item[zone] or ((andere.get(zone) or 0) == item[zone] and j > i))
+            for j, andere in enumerate(ruestungen)
+            if j != i
+            for zone in TREFFERZONEN
+        )
+        if ueberlagert and seiten:
+            seiten = min(seiten + 2, 12)
+        benoetigt = max(benoetigt, seiten)
+    return benoetigt
+
+
+def schild_mindeststaerke(daten: dict, setting: dict) -> int:
+    """Benötigte Stärke (Würfelseiten) für die angelegten Schilde."""
+    return max(
+        (_wuerfel_seiten(item.get("mindeststaerke")) for item in _angelegte_items(daten, setting, "Schild")),
+        default=0,
+    )
+
+
+def _fehlende_wuerfeltypen(staerke: int, mindeststaerke: int) -> int:
+    return max(0, mindeststaerke - staerke) // 2
+
+
+def ruestung_malus(daten: dict, setting: dict) -> int:
+    """Zu schwere Rüstung bzw. zu schwerer Schild (SWAE): −1 je Würfeltyp, den
+    die Stärke unter der Mindeststärke liegt, auf Geschicklichkeit und deren
+    Fertigkeiten. Rüstung und Schild zählen getrennt und addieren sich."""
+    staerke = daten.get("attribute", {}).get("Stärke", {}).get("wert", 4)
+    return -(
+        _fehlende_wuerfeltypen(staerke, ruestung_mindeststaerke(daten, setting))
+        + _fehlende_wuerfeltypen(staerke, schild_mindeststaerke(daten, setting))
+    )
+
+
+def ruestung_malus_ziele(daten: dict, setting: dict) -> list[str]:
+    """Geschicklichkeit und alle Fertigkeiten des Charakters, die darauf basieren."""
+    fertigkeit_attribute = setting.get("fertigkeiten_daten", {})
+    return ["Geschicklichkeit"] + [
+        name
+        for name in daten.get("fertigkeiten", {})
+        if "Geschicklichkeit" in (fertigkeit_attribute.get(name) or [])
+    ]
+
+
+def malus_fuer(werte: dict, name: str) -> int:
+    """Rüstungsabzug aus /berechne für ein Attribut oder eine Fertigkeit."""
+    return werte.get("ruestung_malus", 0) if name in werte.get("ruestung_malus_ziele", ()) else 0
 
 
 # "Parade +1" / "Parade -1" im Beschreibungstext einer Waffe. Bedingte

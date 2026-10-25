@@ -22,6 +22,7 @@ Die Ausrüstung wird vollständig gelistet (das Original kürzte nach 8 Einträg
 mit "...").
 """
 
+from app.services.ausruestung import malus_fuer
 from app.services.macht_auspraegungen import macht_anzeigename
 from app.services.volk_effekte import gewaehltes_volk, volk_handicap_status
 
@@ -34,24 +35,25 @@ def _wuerfel(wert: int, modifier: int = 0) -> str:
     return f"W{wert}"
 
 
-def _attribute(daten: dict) -> str:
+def _attribute(daten: dict, werte: dict) -> str:
     attribute = daten.get("attribute", {})
     reihenfolge = [n for n in ATTRIBUT_REIHENFOLGE if n in attribute] + [
         n for n in attribute if n not in ATTRIBUT_REIHENFOLGE
     ]
     return ", ".join(
-        f"{name} {_wuerfel(attribute[name].get('wert', 4), attribute[name].get('modifier', 0))}"
+        f"{name} {_wuerfel(attribute[name].get('wert', 4), attribute[name].get('modifier', 0) + malus_fuer(werte, name))}"
         for name in reihenfolge
     )
 
 
-def _fertigkeiten(daten: dict) -> str:
+def _fertigkeiten(daten: dict, werte: dict) -> str:
     gelernt = []
     for name, fert in sorted(daten.get("fertigkeiten", {}).items()):
         wuerfel = fert.get("wuerfel", {})
         if wuerfel.get("modifier", 0) == -2:  # ungelernt
             continue
-        gelernt.append(f"{name} {_wuerfel(wuerfel.get('value', 4), wuerfel.get('modifier', 0))}")
+        modifier = wuerfel.get("modifier", 0) + malus_fuer(werte, name)
+        gelernt.append(f"{name} {_wuerfel(wuerfel.get('value', 4), modifier)}")
     return ", ".join(gelernt)
 
 
@@ -172,8 +174,8 @@ def generiere_statblock(daten: dict, setting: dict, werte: dict) -> str:
     elif setting_name:
         zeilen.append(f"Setting: {setting_name}")
 
-    zeilen.append(f"Attribute: {_attribute(daten)}")
-    fertigkeiten = _fertigkeiten(daten)
+    zeilen.append(f"Attribute: {_attribute(daten, werte)}")
+    fertigkeiten = _fertigkeiten(daten, werte)
     if fertigkeiten:
         zeilen.append(f"Fertigkeiten: {fertigkeiten}")
 

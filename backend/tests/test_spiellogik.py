@@ -1019,6 +1019,10 @@ def test_berechne_basiswerte(daten):
     assert w == {
         "parade": 2, "robustheit": 4, "bewegungsweite": 6, "groesse": 0, "bennys": 3,
         "panzerung": 0,
+        "ruestung_mindeststaerke": 0,
+        "schild_mindeststaerke": 0,
+        "ruestung_malus": 0,
+        "ruestung_malus_ziele": [],
         "vermoegen": 500,
         "startkapital_gesamt": 500,
         "startkapital_basis": 500,
@@ -3081,3 +3085,85 @@ def test_ah_geode_bindet_lebensring_automatisch(geode):
 def test_ringzauber_kostet_aufstieg(geode):
     d = aktion("talent/waehlen", geode, "Heilkräfte der Natur")["charakter_daten"]
     assert d["verbleibende_aufstiege"] == 9
+
+
+def test_ruestungen_uebereinander_swae_beispiel():
+    """SWAE S. 66: Kettenhemd (+3) unter Plattenrüstung (+4) ergibt +5,
+    die Mindeststärke der Plattenrüstung steigt von W10 auf W12."""
+    from app.services.ausruestung import panzerung_torso, ruestung_mindeststaerke
+
+    setting = {
+        "ausruestung": {
+            "Kettenhemd": {"kategorie": "Rüstung", "torso": 3, "arme": 3, "mindeststaerke": "W8"},
+            "Plattenrüstung": {"kategorie": "Rüstung", "torso": 4, "mindeststaerke": "W10"},
+            "Lederhaube": {"kategorie": "Rüstung", "kopf": 2, "mindeststaerke": "W6"},
+        }
+    }
+    daten = {"ausruestung_selected": {"Plattenrüstung": {"anzahl": 1, "angelegt": True}}}
+    assert panzerung_torso(daten, setting) == 4
+    assert ruestung_mindeststaerke(daten, setting) == 10
+
+    daten["ausruestung_selected"]["Kettenhemd"] = {"anzahl": 1, "angelegt": True}
+    assert panzerung_torso(daten, setting) == 5
+    assert ruestung_mindeststaerke(daten, setting) == 12
+
+    # Rüstungen ohne gemeinsame Trefferzone überlagern sich nicht
+    daten = {
+        "ausruestung_selected": {
+            "Kettenhemd": {"anzahl": 1, "angelegt": True},
+            "Lederhaube": {"anzahl": 1, "angelegt": True},
+        }
+    }
+    assert panzerung_torso(daten, setting) == 3
+    assert ruestung_mindeststaerke(daten, setting) == 8
+
+
+def test_ruestung_zu_schwer_gibt_abzug_auf_geschicklichkeit():
+    """Stärke W8 bei Mindeststärke W12 → −2 auf Geschicklichkeit und deren Fertigkeiten."""
+    from app.services.ausruestung import malus_fuer, ruestung_malus, ruestung_malus_ziele
+
+    setting = {
+        "fertigkeiten_daten": {"Athletik": ["Geschicklichkeit"], "Wahrnehmung": ["Verstand"]},
+        "ausruestung": {
+            "Plattenrüstung": {"kategorie": "Rüstung", "torso": 4, "mindeststaerke": "W12"},
+        },
+    }
+    daten = {
+        "attribute": {"Stärke": {"wert": 8, "modifier": 0}},
+        "fertigkeiten": {"Athletik": {}, "Wahrnehmung": {}},
+        "ausruestung_selected": {"Plattenrüstung": {"anzahl": 1, "angelegt": False}},
+    }
+    assert ruestung_malus(daten, setting) == 0
+
+    daten["ausruestung_selected"]["Plattenrüstung"]["angelegt"] = True
+    assert ruestung_malus(daten, setting) == -2
+    werte = {"ruestung_malus": -2, "ruestung_malus_ziele": ruestung_malus_ziele(daten, setting)}
+    assert malus_fuer(werte, "Geschicklichkeit") == -2
+    assert malus_fuer(werte, "Athletik") == -2
+    assert malus_fuer(werte, "Wahrnehmung") == 0
+
+    daten["attribute"]["Stärke"]["wert"] = 12
+    assert ruestung_malus(daten, setting) == 0
+
+
+def test_schild_zu_schwer_gibt_abzug_und_addiert_sich_mit_ruestung():
+    from app.services.ausruestung import ruestung_malus, schild_mindeststaerke
+
+    setting = {
+        "ausruestung": {
+            "Großer Schild": {"kategorie": "Schild", "parade": 2, "mindeststaerke": "W10"},
+            "Kettenhemd": {"kategorie": "Rüstung", "torso": 3, "mindeststaerke": "W8"},
+        }
+    }
+    daten = {
+        "attribute": {"Stärke": {"wert": 6, "modifier": 0}},
+        "ausruestung_selected": {"Großer Schild": {"anzahl": 1, "angelegt": True}},
+    }
+    assert schild_mindeststaerke(daten, setting) == 10
+    assert ruestung_malus(daten, setting) == -2
+
+    daten["ausruestung_selected"]["Kettenhemd"] = {"anzahl": 1, "angelegt": True}
+    assert ruestung_malus(daten, setting) == -3
+
+    daten["attribute"]["Stärke"]["wert"] = 10
+    assert ruestung_malus(daten, setting) == 0

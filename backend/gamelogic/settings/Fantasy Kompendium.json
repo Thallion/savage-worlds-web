@@ -4822,7 +4822,7 @@
       "name": "Zögerlich",
       "stufe": "leicht",
       "punkte": 1,
-      "beschreibung": "Der Charakter zweifelt an seinen Fähigkeiten und zögert in kritischen Situationen.",
+      "beschreibung": "Der Charakter zweifelt an seinen Fähigkeiten und zögert in kritischen Situationen. Ziehe zwei Aktionskarten und nimm die schlechtere (außer Joker, die darfst du behalten).",
       "ausgewaehlt": false,
       "aktiv": true,
       "custom": false
@@ -7793,6 +7793,20 @@
       "arme": 0,
       "beine": 2,
       "kopf": 0,
+      "mindeststaerke": "W6"
+    },
+    "Lederhaube": {
+      "name": "Lederhaube",
+      "kategorie": "Rüstung",
+      "gewicht": 0.5,
+      "kosten": 10,
+      "setting": "mittelalterlich",
+      "beschreibung": "Leichte Lederhaube schützt den Kopf",
+      "aktiv": true,
+      "torso": 0,
+      "arme": 0,
+      "beine": 0,
+      "kopf": 2,
       "mindeststaerke": "W6"
     },
     "Ledertunika": {

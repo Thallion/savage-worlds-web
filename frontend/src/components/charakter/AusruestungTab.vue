@@ -17,6 +17,17 @@
         </strong>
         <span v-if="ueberladen"> (überladen!)</span>
         <span v-if="(werte?.panzerung ?? 0) > 0"> — Panzerung: +{{ werte?.panzerung }}</span>
+        <span v-if="ruestungMindeststaerke">
+          — Mindeststärke Rüstung:
+          <strong :class="zuSchwachFuer(ruestungMindeststaerke) ? 'text-error' : ''">W{{ ruestungMindeststaerke }}</strong>
+        </span>
+        <span v-if="schildMindeststaerke">
+          — Mindeststärke Schild:
+          <strong :class="zuSchwachFuer(schildMindeststaerke) ? 'text-error' : ''">W{{ schildMindeststaerke }}</strong>
+        </span>
+        <span v-if="werte?.ruestung_malus">
+          (Stärke zu gering: {{ werte.ruestung_malus }} auf Geschicklichkeit und deren Fertigkeiten)
+        </span>
       </v-alert>
 
       <!-- Vermögen & Währung anpassen (Original: Vermögens-Popup) -->
@@ -388,6 +399,11 @@ const erschaffungAbgeschlossen = computed(() => daten.value.char_gen_completed =
 const ueberladen = computed(
   () => (werte.value?.gesamtgewicht ?? 0) > (werte.value?.traglast ?? Infinity),
 )
+const ruestungMindeststaerke = computed(() => werte.value?.ruestung_mindeststaerke ?? 0)
+const schildMindeststaerke = computed(() => werte.value?.schild_mindeststaerke ?? 0)
+function zuSchwachFuer(mindeststaerke: number): boolean {
+  return (daten.value.attribute?.['Stärke']?.wert ?? 4) < mindeststaerke
+}
 
 const katalog = computed<Record<string, any>>(() =>
   mergeKatalog(einstellungenStore.aktuellesSetting?.ausruestung, daten.value, 'ausruestung'),

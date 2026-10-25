@@ -22,6 +22,7 @@ import functools
 import html
 from pathlib import Path
 
+from app.services.ausruestung import malus_fuer
 from app.services.aufstiege import rang_fuer_aufstiege
 from app.services.macht_auspraegungen import (
     gewaehlte_auspraegungen,
@@ -404,7 +405,7 @@ def _attribute_fertigkeiten_sektion(daten: dict, setting: dict, werte: dict) -> 
     attr_rows = ""
     for name in reihenfolge:
         attr = attribute[name]
-        kombi = _wuerfel(attr.get("wert", 4), attr.get("modifier", 0))
+        kombi = _wuerfel(attr.get("wert", 4), attr.get("modifier", 0) + malus_fuer(werte, name))
         attr_rows += f'<tr><td>{_esc(name)}</td><td class="wert">{_esc(kombi)}</td></tr>\n'
 
     left_html = "<h2>Attribute</h2>\n" + _tabelle(None, attr_rows)
@@ -414,7 +415,7 @@ def _attribute_fertigkeiten_sektion(daten: dict, setting: dict, werte: dict) -> 
         wuerfel = fert.get("wuerfel", {})
         if wuerfel.get("modifier", 0) == -2:  # ungelernt
             continue
-        kombi = _wuerfel(wuerfel.get("value", 4), wuerfel.get("modifier", 0))
+        kombi = _wuerfel(wuerfel.get("value", 4), wuerfel.get("modifier", 0) + malus_fuer(werte, name))
         fert_rows += f'<tr><td>{_esc(name)}</td><td class="wert">{_esc(kombi)}</td></tr>\n'
 
     left_html += "\n<h2>Fertigkeiten</h2>\n" + _tabelle(None, fert_rows)

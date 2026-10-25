@@ -48,6 +48,10 @@ from app.services.ausruestung import (
     gesamtgewicht,
     kaufe_ausruestung,
     panzerung_torso,
+    ruestung_malus,
+    ruestung_malus_ziele,
+    ruestung_mindeststaerke,
+    schild_mindeststaerke,
     schild_parade,
     angelegte_waffen_parade,
     setze_angelegt,
@@ -1857,6 +1861,7 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
     )
 
     groesse = boni["groesse"] + cyber_boni["groesse"]
+    malus = ruestung_malus(daten, setting)
     panzerung = panzerung_torso(daten, setting) + cyber_boni["panzerung"] + boni["panzerung"]
     parade = (
         2
@@ -1906,6 +1911,10 @@ def berechne_abgeleitete_werte(req: SpiellogikRequest):
         "groesse": groesse,
         "bennys": bennys,
         "panzerung": panzerung,
+        "ruestung_mindeststaerke": ruestung_mindeststaerke(daten, setting),
+        "schild_mindeststaerke": schild_mindeststaerke(daten, setting),
+        "ruestung_malus": malus,
+        "ruestung_malus_ziele": ruestung_malus_ziele(daten, setting) if malus else [],
         "vermoegen": geld_verfuegbar,
         "startkapital_gesamt": geld_gesamt,
         "startkapital_basis": startkapital_basis(setting, daten),

@@ -73,7 +73,7 @@
             <tbody>
               <tr v-for="(attr, name) in daten.attribute" :key="name">
                 <td class="font-weight-medium">{{ name }}</td>
-                <td>{{ formatWuerfel(attr.wert, attr.modifier) }}</td>
+                <td>{{ formatWuerfel(attr.wert, attr.modifier + ruestungMalus(String(name))) }}</td>
               </tr>
             </tbody>
           </v-table>
@@ -121,7 +121,14 @@
             <tbody>
               <tr v-for="(fert, name) in aktiveFertigkeiten" :key="name">
                 <td class="text-body-2">{{ name }}</td>
-                <td>{{ formatWuerfel(fert.wuerfel?.value ?? 4, fert.wuerfel?.modifier ?? 0) }}</td>
+                <td>
+                  {{
+                    formatWuerfel(
+                      fert.wuerfel?.value ?? 4,
+                      (fert.wuerfel?.modifier ?? 0) + ruestungMalus(String(name)),
+                    )
+                  }}
+                </td>
               </tr>
             </tbody>
           </v-table>
@@ -630,6 +637,12 @@ const aktiveFertigkeiten = computed(() => {
   }
   return result
 })
+
+// Zu schwere Rüstung: Abzug auf Geschicklichkeit und deren Fertigkeiten (aus /berechne)
+function ruestungMalus(name: string): number {
+  const w = store.abgeleiteteWerte
+  return w?.ruestung_malus_ziele?.includes(name) ? (w.ruestung_malus ?? 0) : 0
+}
 
 function formatWuerfel(wert: number, modifier: number): string {
   if (modifier > 0) return `W${wert}+${modifier}`

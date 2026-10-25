@@ -2865,15 +2865,6 @@
             "aktiv": true,
             "custom": false
         },
-        "Stur_schwer": {
-            "name": "Stur",
-            "stufe": "schwer",
-            "punkte": 2,
-            "beschreibung": "Der Charakter will seinen Willen durchsetzen und gibt nie Fehler zu.",
-            "ausgewaehlt": false,
-            "aktiv": true,
-            "custom": false
-        },
         "Tick": {
             "name": "Tick",
             "stufe": "leicht",
@@ -2959,7 +2950,7 @@
             "name": "Zögerlich",
             "stufe": "leicht",
             "punkte": 1,
-            "beschreibung": "Der Charakter zweifelt an seinen Fähigkeiten und zögert in kritischen Situationen.",
+            "beschreibung": "Der Charakter zweifelt an seinen Fähigkeiten und zögert in kritischen Situationen. Ziehe zwei Aktionskarten und nimm die schlechtere (außer Joker, die darfst du behalten).",
             "ausgewaehlt": false,
             "aktiv": true,
             "custom": false

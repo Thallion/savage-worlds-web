@@ -1,0 +1,11 @@
+[Unit]
+Description=Savage-Worlds-Chargen: tägliches Backup
+
+[Timer]
+# Vor Auto-Reboot (03:30) und Image-Update (So 04:00)
+OnCalendar=*-*-* 02:30
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

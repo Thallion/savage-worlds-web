@@ -1,0 +1,12 @@
+# Nächtliches Backup von data/ (siehe scripts/pi-backup.sh).
+# Installation:
+#   sudo cp scripts/systemd/sw-chargen-backup.* /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now sw-chargen-backup.timer
+[Unit]
+Description=Savage-Worlds-Chargen: Backup von data/
+RequiresMountsFor=/media/plex2
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/exnef/savage-worlds-web
+ExecStart=/home/exnef/savage-worlds-web/scripts/pi-backup.sh

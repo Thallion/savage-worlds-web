@@ -1,0 +1,14 @@
+# Container-Update der App auf dem Pi (siehe scripts/pi-auto-update.sh).
+# Installation:
+#   sudo cp scripts/systemd/sw-chargen-update.* /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now sw-chargen-update.timer
+[Unit]
+Description=Savage-Worlds-Chargen: Docker-Images aktualisieren
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/exnef/savage-worlds-web
+ExecStart=/home/exnef/savage-worlds-web/scripts/pi-auto-update.sh
+TimeoutStartSec=2h

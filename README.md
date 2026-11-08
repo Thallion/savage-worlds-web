@@ -64,7 +64,7 @@ cd frontend && npm install && npm run build && cd ..
 CHARGEN_SECRET_KEY=$(openssl rand -hex 32) docker compose up -d
 ```
 
-Die App ist dann unter Port 80 erreichbar. Die Datenbank liegt persistent im Volume `./data`.
+Die App ist dann lokal unter Port 80 (`127.0.0.1`) erreichbar, öffentlich über den Cloudflare-Tunnel. Für direkten LAN-Zugriff in `docker-compose.yml` `127.0.0.1:80:80` durch `80:80` ersetzen (Achtung: Docker umgeht ufw). Die Datenbank liegt persistent im Volume `./data`.
 
 ## Projektstruktur
 

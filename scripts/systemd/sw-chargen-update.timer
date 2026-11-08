@@ -1,0 +1,10 @@
+[Unit]
+Description=Savage-Worlds-Chargen: wöchentliches Image-Update
+
+[Timer]
+OnCalendar=Sun *-*-* 04:00
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

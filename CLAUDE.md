@@ -17,7 +17,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload --port 8000     # dev server, run from backend/
 ```
 
-- API docs: http://localhost:8000/api/docs (Swagger), health check at `/api/health`.
+- API docs: http://localhost:8000/api/docs (Swagger; disabled in Docker via `CHARGEN_API_DOCS=false`), health check at `/api/health`.
 - SQLite DB is created automatically at `backend/data/chargen.db` on startup (`Base.metadata.create_all`; no Alembic migrations yet — schema changes require deleting the DB or writing a migration).
 - Config via env vars with `CHARGEN_` prefix (see `app/config.py`): `CHARGEN_SECRET_KEY`, `CHARGEN_DATABASE_URL`, etc.
 - Tests: `pip install -r requirements-dev.txt`, then `python -m pytest tests/` (run from `backend/`). Single test: `python -m pytest tests/test_spiellogik.py -k <name>`. The spiellogik endpoints are stateless dict-transformers, so those tests need no DB.
@@ -49,7 +49,7 @@ Game content (rules data) is plain JSON, not code:
 
 - `backend/gamelogic/settings/*.json` — one file per campaign setting (SWAE, Deadlands, Hellfrost, …). The filename stem **is** the setting name used in `active_setting_name` and the `/api/settings` endpoints. Each file contains that setting's voelker, talente, handicaps, maechte, etc.
 - `backend/gamelogic/config/*.json` — setting-independent base config.
-- User-created settings (Setting-Verwaltung: leer/Kopie, Zusammenführung, aus Charakter, Elementauswahl — `app/services/setting_verwaltung.py`, write endpoints on `/api/settings`) are stored as JSON in `backend/data/settings/`; `load_setting` resolves names against the native directory first, then this one.
+- User-created settings (Setting-Verwaltung: leer/Kopie, Zusammenführung, aus Charakter, Elementauswahl — `app/services/setting_verwaltung.py`, write endpoints on `/api/settings`) are stored as JSON in `backend/data/settings/`; `load_setting` resolves names against the native directory first, then this one. Everyone may read/use them, but only the creator (`besitzer_id` inside the JSON, stripped from API output) or an admin (`CHARGEN_ADMIN_EMAILS`) may modify/delete them; legacy files without `besitzer_id` are admin-only.
 - `backend/gamelogic/models/*.py` are Python classes ported from the Kivy app but are currently **not imported by the API** — the spiellogik endpoints operate directly on dicts. Check before assuming they are wired in.
 
 Auth: hand-rolled and minimal on purpose. JWT encode/decode is implemented locally in `backend/app/jwt_utils.py` (HS256 via hmac; PyJWT is in requirements but unused), passwords are PBKDF2-hashed in `app/api/auth.py`, and `get_current_user` in `app/api/deps.py` guards all `/api/charaktere` routes (users only see their own characters). The frontend keeps the token in `localStorage` and attaches it in `frontend/src/api/client.ts`, a thin fetch wrapper — no axios.

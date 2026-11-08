@@ -92,7 +92,7 @@
               @click.stop="exportiereSetting(setting.name)"
             />
             <v-btn
-              v-if="setting.custom"
+              v-if="setting.bearbeitbar"
               icon="mdi-delete"
               size="small"
               variant="text"
@@ -109,6 +109,7 @@
       v-model="detailOffen"
       :setting-name="detailName"
       :custom="detailCustom"
+      :bearbeitbar="detailBearbeitbar"
       @geaendert="detailName = $event"
     />
 
@@ -137,6 +138,7 @@ const importDatei = ref<HTMLInputElement>()
 const detailOffen = ref(false)
 const detailName = ref('')
 const detailCustom = ref(false)
+const detailBearbeitbar = ref(false)
 const hinweise = ref<string[]>([])
 const erfolg = ref('')
 const meldung = ref('')
@@ -150,6 +152,7 @@ onMounted(async () => {
 function oeffneDetail(setting: SettingListItem) {
   detailName.value = setting.name
   detailCustom.value = setting.custom
+  detailBearbeitbar.value = setting.bearbeitbar
   detailOffen.value = true
 }
 

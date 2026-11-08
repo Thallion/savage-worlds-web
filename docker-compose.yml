@@ -6,8 +6,12 @@ services:
     volumes:
       - ./data:/app/data
     environment:
-      - CHARGEN_SECRET_KEY=${CHARGEN_SECRET_KEY:-change-me-in-production}
+      # Ohne Secret startet der Container nicht (kein unsicherer Standardwert)
+      - CHARGEN_SECRET_KEY=${CHARGEN_SECRET_KEY:?CHARGEN_SECRET_KEY fehlt in .env (openssl rand -hex 32)}
       - CHARGEN_DATABASE_URL=sqlite:///./data/chargen.db
+      - CHARGEN_API_DOCS=false
+      # Kommagetrennte E-Mails, die alle eigenen Settings verwalten dürfen
+      - CHARGEN_ADMIN_EMAILS=${CHARGEN_ADMIN_EMAILS:-}
     restart: unless-stopped
 
   nginx:

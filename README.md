@@ -48,12 +48,17 @@ Das Backend liest Umgebungsvariablen mit dem Präfix `CHARGEN_` (siehe `backend/
 
 | Variable | Default | Beschreibung |
 |---|---|---|
-| `CHARGEN_SECRET_KEY` | Unsicherer Platzhalter | JWT-Signaturschlüssel — in Produktion setzen (`openssl rand -hex 32`) |
+| `CHARGEN_SECRET_KEY` | Unsicherer Platzhalter | JWT-Signaturschlüssel — in Produktion setzen (`openssl rand -hex 32`); `docker-compose.yml` startet ohne ihn nicht |
 | `CHARGEN_DATABASE_URL` | `sqlite:///./data/chargen.db` | SQLAlchemy-Datenbank-URL |
 | `CHARGEN_ACCESS_TOKEN_EXPIRE_MINUTES` | `1440` | Token-Gültigkeit (24 h) |
 | `CHARGEN_BILDER_PATH` | `data/bilder` | Ablage der Charakterporträts (beim Backup neben `chargen.db` mitsichern) |
 | `CHARGEN_BILD_MAX_UPLOAD_MB` | `8` | Maximale Größe eines Porträt-Uploads |
 | `CHARGEN_BILD_KONTINGENT_MB` | `50` | Porträt-Speicher pro Konto |
+| `CHARGEN_ADMIN_EMAILS` | leer | Kommagetrennte E-Mails, die alle eigenen Settings bearbeiten/löschen dürfen (sonst nur der Ersteller) |
+| `CHARGEN_SETTINGS_MAX_PRO_NUTZER` | `25` | Maximale Anzahl eigener Settings pro Konto |
+| `CHARGEN_SETTING_MAX_MB` | `5` | Maximale Größe eines eigenen Settings |
+| `CHARGEN_PASSWORT_MIN_LAENGE` | `8` | Mindestlänge für neue Passwörter |
+| `CHARGEN_API_DOCS` | `true` | Swagger/ReDoc unter `/api/docs` (in `docker-compose.yml` aus) |
 
 ## Produktion / Docker
 

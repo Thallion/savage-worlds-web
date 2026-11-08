@@ -18,8 +18,8 @@
         <v-progress-linear v-if="ladend" indeterminate color="primary" />
 
         <template v-if="setting">
-          <!-- Metadaten: bei eigenen Settings bearbeitbar -->
-          <template v-if="custom">
+          <!-- Metadaten: bei eigenen Settings des Nutzers bearbeitbar -->
+          <template v-if="bearbeitbar">
             <v-row dense>
               <v-col cols="12" sm="5">
                 <v-text-field v-model="neuerName" label="Name" density="compact" />
@@ -41,8 +41,12 @@
             </v-row>
           </template>
           <p v-else class="text-body-2 text-grey mb-4">{{ setting.description }}</p>
+          <v-alert v-if="custom && !bearbeitbar" type="info" variant="tonal" density="compact" class="mb-4">
+            Dieses Setting gehört einem anderen Nutzer. Du kannst es benutzen und als Kopie
+            übernehmen, aber nicht ändern.
+          </v-alert>
 
-          <p v-if="custom" class="text-caption text-grey mb-2">
+          <p v-if="bearbeitbar" class="text-caption text-grey mb-2">
             Elemente anklicken, um sie zu bearbeiten; das × entfernt sie aus dem Setting.
           </p>
           <v-expansion-panels variant="accordion">
@@ -65,7 +69,7 @@
                   :key="elementName"
                   size="small"
                   class="mr-1 mb-1"
-                  :closable="custom"
+                  :closable="bearbeitbar"
                   :link="istEditierbar(typ, elementName)"
                   @click="bearbeiteElement(typ, elementName)"
                   @click:close="entferneElement(typ, elementName)"
@@ -76,7 +80,7 @@
             </v-expansion-panel>
           </v-expansion-panels>
 
-          <template v-if="custom">
+          <template v-if="bearbeitbar">
             <!-- Ganz neue Elemente anlegen (gleiche Formulare wie im Charakter-Editor) -->
             <v-divider class="my-4" />
             <div class="text-subtitle-1 mb-2">Neues Element erstellen</div>
@@ -158,6 +162,8 @@ const props = defineProps<{
   modelValue: boolean
   settingName: string
   custom: boolean
+  // Nur Besitzer (oder Admin) dürfen ein eigenes Setting ändern
+  bearbeitbar: boolean
 }>()
 const emit = defineEmits<{
   (e: 'update:modelValue', wert: boolean): void
@@ -209,7 +215,7 @@ const eigeneVoelker = computed(() =>
 )
 
 function istEditierbar(typ: string, elementName: string): boolean {
-  if (!props.custom) return false
+  if (!props.bearbeitbar) return false
   if (typ === 'voelker') return volkEditierbar(elementName)
   return typ === 'fertigkeiten_daten' || typ in TYP_LABEL
 }

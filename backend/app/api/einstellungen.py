@@ -3,8 +3,10 @@ Settings (Erstellen leer/als Kopie, Zusammenführung, Aus Charakter,
 Elementauswahl; Original: CustomElementManager + setting_merge.py).
 
 Lesen ist offen, alle schreibenden Endpoints erfordern Login. Eigene Settings
-gelten instanzweit (wie die custom_*.json der Kivy-App) — gelöscht oder
-umbenannt werden kann nur, was kein Charakter gerade benutzt.
+gelten instanzweit (wie die custom_*.json der Kivy-App): jeder darf sie
+benutzen, ändern/löschen aber nur ihr Besitzer oder ein Admin
+(CHARGEN_ADMIN_EMAILS). Gelöscht oder umbenannt werden kann nur, was kein
+Charakter gerade benutzt.
 """
 
 import copy
@@ -13,7 +15,8 @@ from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, get_optional_user, ist_admin
+from app.config import settings
 from app.db.database import get_db
 from app.db import models as db_models
 from app.schemas.einstellungen import (
@@ -30,9 +33,42 @@ from app.services.charakter_init import load_config, load_setting
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 
+def _darf_bearbeiten(user: db_models.User | None, besitzer_id: int | None) -> bool:
+    if user is None:
+        return False
+    return ist_admin(user) or (besitzer_id is not None and besitzer_id == user.id)
+
+
+def _pruefe_schreibrecht(setting_name: str, user: db_models.User) -> None:
+    """Nur für eigene Settings — mitgelieferte lehnt der Service selbst ab."""
+    if sv.ist_custom_setting(setting_name) and not _darf_bearbeiten(
+        user, sv.besitzer_von(setting_name)
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail=f"'{setting_name}' gehört einem anderen Nutzer und kann nur "
+            "von diesem bearbeitet werden",
+        )
+
+
+def _pruefe_kontingent(user: db_models.User) -> None:
+    if ist_admin(user):
+        return
+    if sv.anzahl_eigener_settings(user.id) >= settings.settings_max_pro_nutzer:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Du hast bereits {settings.settings_max_pro_nutzer} eigene Settings "
+            "— bitte zuerst eines löschen",
+        )
+
+
 @router.get("")
-def list_settings():
-    return sv.liste_settings()
+def list_settings(current_user: db_models.User | None = Depends(get_optional_user)):
+    liste = sv.liste_settings()
+    for eintrag in liste:
+        besitzer_id = eintrag.pop("besitzer_id")
+        eintrag["bearbeitbar"] = eintrag["custom"] and _darf_bearbeiten(current_user, besitzer_id)
+    return liste
 
 
 @router.get("/volkseigenarten")
@@ -43,12 +79,18 @@ def get_volkseigenarten():
 
 
 @router.get("/{setting_name}")
-def get_setting(setting_name: str):
+def get_setting(
+    setting_name: str,
+    current_user: db_models.User | None = Depends(get_optional_user),
+):
     try:
         setting = load_setting(setting_name)
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
+    besitzer_id = setting.get(sv.BESITZER_KEY)
+    setting = sv.ohne_besitzer(setting)
     setting["custom"] = sv.ist_custom_setting(setting_name)
+    setting["bearbeitbar"] = setting["custom"] and _darf_bearbeiten(current_user, besitzer_id)
     return setting
 
 
@@ -61,7 +103,7 @@ def export_setting(setting_name: str):
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail=f"Setting '{setting_name}' nicht gefunden")
     return JSONResponse(
-        content=setting,
+        content=sv.ohne_besitzer(setting),
         headers={
             "Content-Disposition": f'attachment; filename="{setting_name}.json"'
         },
@@ -95,6 +137,7 @@ def erstelle_setting(
     name, fehler = sv.pruefe_neuer_name(req.name)
     if name is None:
         raise HTTPException(status_code=422, detail=fehler)
+    _pruefe_kontingent(current_user)
 
     konflikte: list[dict] = []
     warnungen: list[str] = []
@@ -140,7 +183,10 @@ def erstelle_setting(
     elif not setting.get("description"):
         setting["description"] = f"Eigenes Setting von {current_user.benutzername}"
 
-    sv.speichere_custom_setting(name, setting)
+    try:
+        sv.speichere_custom_setting(name, setting, besitzer_id=current_user.id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     return _antwort(name, setting, konflikte, warnungen)
 
 
@@ -152,8 +198,9 @@ def import_setting(
     """Importiert ein Setting-JSON (eigener Export oder Kivy custom_*.json) als
     neues eigenes Setting. Der Name kommt aus dem JSON und wird bei Kollision
     mit einem vorhandenen Setting nummeriert."""
+    _pruefe_kontingent(current_user)
     try:
-        gespeichert, name = sv.importiere_setting(setting)
+        gespeichert, name = sv.importiere_setting(setting, besitzer_id=current_user.id)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
     return _antwort(name, gespeichert)
@@ -166,6 +213,7 @@ def update_setting(
     db: Session = Depends(get_db),
     current_user: db_models.User = Depends(get_current_user),
 ):
+    _pruefe_schreibrecht(setting_name, current_user)
     if req.neuer_name is not None and req.neuer_name.strip() != setting_name:
         anzahl = _verwendet_von(db, setting_name)
         if anzahl:
@@ -174,7 +222,12 @@ def update_setting(
                 detail=f"'{setting_name}' wird von {anzahl} Charakter(en) benutzt "
                 "und kann nicht umbenannt werden",
             )
-    setting, name, fehler = sv.aktualisiere_metadaten(setting_name, req.beschreibung, req.neuer_name)
+    try:
+        setting, name, fehler = sv.aktualisiere_metadaten(
+            setting_name, req.beschreibung, req.neuer_name
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     if setting is None:
         raise HTTPException(status_code=404 if "nicht gefunden" in fehler else 422, detail=fehler)
     return _antwort(name, setting)
@@ -186,6 +239,7 @@ def delete_setting(
     db: Session = Depends(get_db),
     current_user: db_models.User = Depends(get_current_user),
 ):
+    _pruefe_schreibrecht(setting_name, current_user)
     anzahl = _verwendet_von(db, setting_name)
     if anzahl:
         raise HTTPException(
@@ -204,7 +258,11 @@ def elemente_hinzufuegen(
     req: ElementeHinzufuegenRequest,
     current_user: db_models.User = Depends(get_current_user),
 ):
-    setting, fehler, fehlend = sv.elemente_hinzufuegen(setting_name, req.quelle, req.elemente)
+    _pruefe_schreibrecht(setting_name, current_user)
+    try:
+        setting, fehler, fehlend = sv.elemente_hinzufuegen(setting_name, req.quelle, req.elemente)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     if setting is None:
         raise HTTPException(status_code=404 if "nicht gefunden" in fehler else 422, detail=fehler)
     return _antwort(setting_name, setting, warnungen=[f"Nicht gefunden: {e}" for e in fehlend])
@@ -218,9 +276,13 @@ def element_setzen(
 ):
     """Legt ein ganz neues Element im eigenen Setting an oder bearbeitet ein
     vorhandenes (alter_name gesetzt = Bearbeiten/Umbenennen)."""
-    setting, fehler = sv.element_setzen(
-        setting_name, req.typ, req.element_name, req.element_daten, req.alter_name
-    )
+    _pruefe_schreibrecht(setting_name, current_user)
+    try:
+        setting, fehler = sv.element_setzen(
+            setting_name, req.typ, req.element_name, req.element_daten, req.alter_name
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
     if setting is None:
         raise HTTPException(status_code=404 if "nicht gefunden" in fehler else 422, detail=fehler)
     return _antwort(setting_name, setting)
@@ -232,6 +294,7 @@ def element_entfernen(
     req: ElementEntfernenRequest,
     current_user: db_models.User = Depends(get_current_user),
 ):
+    _pruefe_schreibrecht(setting_name, current_user)
     setting, fehler = sv.element_entfernen(setting_name, req.typ, req.element_name)
     if setting is None:
         raise HTTPException(status_code=404 if "nicht gefunden" in fehler else 422, detail=fehler)

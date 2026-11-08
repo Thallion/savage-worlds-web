@@ -59,8 +59,10 @@ _bild_waisen_aufraeumen()
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    docs_url="/api/docs" if settings.api_docs else None,
+    redoc_url="/api/redoc" if settings.api_docs else None,
+    # Unter /api, damit Vite-Proxy und nginx das Schema mit ausliefern
+    openapi_url="/api/openapi.json" if settings.api_docs else None,
 )
 
 app.add_middleware(

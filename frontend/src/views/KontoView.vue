@@ -24,6 +24,7 @@
               <v-text-field
                 v-model="neuesPasswort"
                 label="Neues Passwort"
+                hint="Mindestens 8 Zeichen"
                 type="password"
                 prepend-inner-icon="mdi-lock-plus"
                 required
@@ -116,6 +117,10 @@ async function handlePasswortAendern() {
 
   if (neuesPasswort.value !== neuesPasswortBestaetigung.value) {
     pwError.value = 'Neue Passwörter stimmen nicht überein'
+    return
+  }
+  if (neuesPasswort.value.length < 8) {
+    pwError.value = 'Das Passwort muss mindestens 8 Zeichen lang sein'
     return
   }
 

@@ -69,6 +69,12 @@ _BASIS_KEYS = ("attribute", "settingregeln", "startgeld", "waehrung", "cyberware
 
 _VERBOTENE_ZEICHEN = set('/\\:*?"<>|')
 
+# User-ID des Erstellers eines eigenen Settings, liegt mit im JSON. Lesen und
+# Benutzen darf jeder; ändern/löschen nur der Besitzer (oder ein Admin, siehe
+# api/einstellungen.py). Settings ohne Besitzer stammen aus der Zeit vor der
+# Prüfung und sind nur für Admins bearbeitbar.
+BESITZER_KEY = "besitzer_id"
+
 
 # --- Verzeichnisse & Laden -------------------------------------------------
 
@@ -91,6 +97,26 @@ def ist_custom_setting(name: str) -> bool:
     return (settings.custom_settings_path / f"{name}.json").exists()
 
 
+def besitzer_von(name: str) -> int | None:
+    """Besitzer eines eigenen Settings (None: kein Besitzer oder kein eigenes)."""
+    if not ist_custom_setting(name):
+        return None
+    try:
+        with open(settings.custom_settings_path / f"{name}.json", "r", encoding="utf-8") as f:
+            return json.load(f).get(BESITZER_KEY)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def anzahl_eigener_settings(user_id: int) -> int:
+    return sum(1 for s in liste_settings() if s["custom"] and s["besitzer_id"] == user_id)
+
+
+def ohne_besitzer(setting: dict) -> dict:
+    """Setting für die Ausgabe (API/Export) — die interne User-ID gehört nicht dazu."""
+    return {k: v for k, v in setting.items() if k != BESITZER_KEY}
+
+
 def liste_settings() -> list[dict]:
     """Alle Settings (native + eigene) mit Beschreibung und Element-Statistik."""
     ergebnis = []
@@ -108,6 +134,7 @@ def liste_settings() -> list[dict]:
                     "name": path.stem,
                     "datei": path.name,
                     "custom": custom,
+                    "besitzer_id": setting.get(BESITZER_KEY) if custom else None,
                     "beschreibung": setting.get("description", ""),
                     "statistik": statistik(setting),
                 }
@@ -137,13 +164,21 @@ def pruefe_neuer_name(name: str) -> tuple[str | None, str]:
     return name, ""
 
 
-def speichere_custom_setting(name: str, setting: dict) -> None:
+def speichere_custom_setting(name: str, setting: dict, besitzer_id: int | None = None) -> None:
+    """Schreibt ein eigenes Setting. besitzer_id nur beim Anlegen/Importieren
+    angeben — beim Bearbeiten bleibt der Besitzer aus dem geladenen JSON.
+    ValueError, wenn das Setting die Größengrenze überschreitet."""
     setting["name"] = name
+    if besitzer_id is not None:
+        setting[BESITZER_KEY] = besitzer_id
     # voelker_selected konsistent zum Völker-Bestand halten (Kivy-Altlast,
     # steht so auch in den nativen Setting-Dateien)
     setting["voelker_selected"] = {volk: False for volk in setting.get("voelker") or {}}
+    inhalt = json.dumps(setting, ensure_ascii=False, indent=2)
+    if len(inhalt.encode("utf-8")) > settings.setting_max_mb * 1024 * 1024:
+        raise ValueError(f"Das Setting ist zu groß (maximal {settings.setting_max_mb} MB)")
     with open(custom_dir() / f"{name}.json", "w", encoding="utf-8") as f:
-        json.dump(setting, f, ensure_ascii=False, indent=2)
+        f.write(inhalt)
 
 
 # Schlüssel, an denen ein Setting-JSON erkennbar ist (Element-Kataloge). Ein
@@ -165,7 +200,9 @@ def _freier_name(basis: str) -> str:
     return name
 
 
-def importiere_setting(setting: dict, wunschname: str | None = None) -> tuple[dict, str]:
+def importiere_setting(
+    setting: dict, wunschname: str | None = None, besitzer_id: int | None = None
+) -> tuple[dict, str]:
     """Speichert ein importiertes Setting-JSON (eigener Export oder Kivy
     custom_*.json) als neues eigenes Setting. Kollidierende Namen werden
     nummeriert. Gibt (setting, name) zurück; ValueError bei ungültigem JSON."""
@@ -179,8 +216,9 @@ def importiere_setting(setting: dict, wunschname: str | None = None) -> tuple[di
     setting = copy.deepcopy(setting)
     # Marker aus get_setting gehört nicht in die gespeicherte Datei
     setting.pop("custom", None)
+    setting.pop(BESITZER_KEY, None)
     name = _freier_name(str(wunschname or setting.get("name") or "Importiertes Setting"))
-    speichere_custom_setting(name, setting)
+    speichere_custom_setting(name, setting, besitzer_id)
     return setting, name
 
 
@@ -225,7 +263,7 @@ def fuehre_zusammen(quellen: list[str]) -> tuple[dict, list[dict]]:
     for quelle in quellen:
         setting = load_setting(quelle)
         for key, wert in setting.items():
-            if key in ("name", "description", "voelker_selected"):
+            if key in ("name", "description", "voelker_selected", BESITZER_KEY):
                 continue
             if key in ELEMENT_KOLLEKTIONEN and isinstance(wert, dict):
                 ziel = ergebnis.setdefault(key, {})

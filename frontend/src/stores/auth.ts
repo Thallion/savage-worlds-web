@@ -41,10 +41,13 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function passwortAendern(aktuellesPasswort: string, neuesPasswort: string) {
-    await api.put('/auth/passwort', {
+    // Alte Tokens werden serverseitig ungültig — mit dem neuen weiterarbeiten
+    const data = await api.put<{ access_token: string }>('/auth/passwort', {
       aktuelles_passwort: aktuellesPasswort,
       neues_passwort: neuesPasswort,
     })
+    token.value = data.access_token
+    localStorage.setItem('token', data.access_token)
   }
 
   async function accountLoeschen(passwort: string) {

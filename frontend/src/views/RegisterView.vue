@@ -22,6 +22,7 @@
               <v-text-field
                 v-model="passwort"
                 label="Passwort"
+                hint="Mindestens 8 Zeichen"
                 type="password"
                 prepend-inner-icon="mdi-lock"
                 required
@@ -74,6 +75,10 @@ async function handleRegister() {
 
   if (passwort.value !== passwortBestaetigung.value) {
     error.value = 'Passwörter stimmen nicht überein'
+    return
+  }
+  if (passwort.value.length < 8) {
+    error.value = 'Das Passwort muss mindestens 8 Zeichen lang sein'
     return
   }
 

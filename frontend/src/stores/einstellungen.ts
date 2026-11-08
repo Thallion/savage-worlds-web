@@ -6,6 +6,8 @@ export interface SettingListItem {
   name: string
   datei: string
   custom: boolean
+  // Eigenes Setting des angemeldeten Nutzers (oder Admin) — nur dann änderbar
+  bearbeitbar: boolean
   beschreibung: string
   statistik: Record<string, number>
 }
